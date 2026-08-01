@@ -285,7 +285,7 @@ export default async function HomePage() {
               text: 'Собрать всю команду в одну композицию в неочевидном месте.',
             },
             {
-              src: '/assets/tile-tower.webp',
+              src: '/assets/tile-plaza.webp',
               title: 'Городской типаж',
               text: 'Познакомиться с local-персонажем и сфотографироваться с его согласия.',
             },

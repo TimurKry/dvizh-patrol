@@ -160,6 +160,7 @@ data/           образцы файлов импорта
 | [TASK_IMPORT_FORMAT.md](docs/TASK_IMPORT_FORMAT.md) | Формат JSON и CSV |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Установка с нуля |
 | [GOING_LIVE.md](docs/GOING_LIVE.md) | Домен, бесплатный хостинг, секретность заданий |
+| [PHOTOS.md](docs/PHOTOS.md) | Какие фотографии нужны и в каком виде |
 | [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) | Руководство организатора |
 | [PARTICIPANT_GUIDE.md](docs/PARTICIPANT_GUIDE.md) | Памятка участника |
 | [PRIVACY.md](docs/PRIVACY.md) | Приватность технически |
@@ -240,6 +241,7 @@ const tiles = [
   { name: 'tile-facade', left: 60,  top: 1110, width: 300, height: 180 },
   { name: 'tile-arcade', left: 930, top: 1085, width: 190, height: 195 },
   { name: 'tile-square', left: 780, top: 1050, width: 280, height: 235 },
+  { name: 'tile-plaza',  left: 620, top: 1140, width: 230, height: 150 },
 ];
 (async () => {
   for (const t of tiles) {
@@ -255,6 +257,16 @@ const tiles = [
     .resize(1600)
     .webp({ quality: 88 })
     .toFile('public/assets/hero-city.webp');
+
+  // Картинка превью ссылки. Обрезана до нижней строки постера:
+  // «20+ фото-заданий» разъедется с реальным числом заданий.
+  const card = await sharp(src)
+    .extract({ left: 0, top: 818, width: 1122, height: 557 })
+    .toBuffer();
+  await sharp(card)
+    .resize(1200, 630, { fit: 'contain', background: '#f0dbc9' })
+    .jpeg({ quality: 90 })
+    .toFile('public/assets/og-image.jpg');
 })();
 "
 ```

@@ -3,16 +3,22 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
+/**
+ * Пакет server-only бросает исключение вне сборки Next.js.
+ * В тестах модули и так исполняются в Node, поэтому подменяем
+ * его пустышкой — сам запрет остаётся в силе при сборке.
+ */
+const alias = {
+  '@': root.replace(/\/$/, ''),
+  'server-only': fileURLToPath(new URL('./tests/stubs/server-only.ts', import.meta.url)),
+};
+
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': root.replace(/\/$/, ''),
-    },
-  },
+  resolve: { alias },
   test: {
     projects: [
       {
-        resolve: { alias: { '@': root.replace(/\/$/, '') } },
+        resolve: { alias },
         test: {
           name: 'unit',
           environment: 'node',
@@ -21,7 +27,7 @@ export default defineConfig({
         },
       },
       {
-        resolve: { alias: { '@': root.replace(/\/$/, '') } },
+        resolve: { alias },
         test: {
           name: 'integration',
           environment: 'node',

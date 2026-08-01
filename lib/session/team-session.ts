@@ -1,8 +1,8 @@
 import 'server-only';
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { env } from '@/lib/env';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { issueToken, verifyCookieValue, type IssuedToken } from '@/lib/session/token';
 import type { EventRow, TeamMemberRow, TeamRow } from '@/types/database';
 
 /**
@@ -36,51 +36,15 @@ export interface TeamSessionContext {
   event: EventRow;
 }
 
-interface IssuedToken {
-  /** Значение для cookie. */
-  cookieValue: string;
-  /** Что кладётся в team_sessions.token_hash. */
-  tokenHash: string;
-}
-
-// ═══ Криптография ══════════════════════════════════════════════
-
-function sign(token: string): string {
-  return createHmac('sha256', env().SESSION_SECRET).update(token).digest('base64url');
-}
-
-function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
-}
+// ═══ Токены ════════════════════════════════════════════════════
 
 /** Создаёт новый токен сессии. В базу уходит только хэш. */
 export function issueSessionToken(): IssuedToken {
-  const token = randomBytes(32).toString('base64url');
-  return {
-    cookieValue: `${token}.${sign(token)}`,
-    tokenHash: hashToken(token),
-  };
+  return issueToken(env().SESSION_SECRET);
 }
 
-/**
- * Проверяет подпись и возвращает хэш токена.
- *
- * Подпись отсекает мусор и подобранные значения до обращения
- * к базе. Сравнение постоянное по времени.
- */
 function parseCookie(value: string): string | null {
-  const separator = value.lastIndexOf('.');
-  if (separator <= 0) return null;
-
-  const token = value.slice(0, separator);
-  const provided = value.slice(separator + 1);
-  const expected = sign(token);
-
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-
-  return hashToken(token);
+  return verifyCookieValue(value, env().SESSION_SECRET);
 }
 
 // ═══ Cookie ════════════════════════════════════════════════════

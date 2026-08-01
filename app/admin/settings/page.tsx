@@ -7,6 +7,7 @@ import { Tag } from '@/components/ui/status-badge';
 import { requireAdmin } from '@/lib/auth/admin';
 import { env, isAiConfigured } from '@/lib/env';
 import { getCurrentEvent } from '@/lib/data/event';
+import { retentionCutoff } from '@/lib/retention';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,7 @@ export default async function AdminSettingsPage() {
 
   const db = supabaseAdmin();
   const retention = event.photo_retention_days ?? config.PHOTO_RETENTION_DAYS;
-  const cutoff = new Date(Date.now() - retention * 86_400_000).toISOString();
+  const cutoff = retentionCutoff(retention);
 
   const [{ count: expiring }, { count: withFiles }] = await Promise.all([
     db

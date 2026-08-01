@@ -43,7 +43,11 @@ init_cluster() {
   mkdir -p "$PGDATA" "$PGSOCKET"
   chown postgres:postgres "$PGDATA" "$PGSOCKET"
   chmod 700 "$PGDATA"
-  as_postgres "$PG_BIN/initdb -D $PGDATA -A trust -E UTF8 --locale=C" >/dev/null
+  # Локаль обязательно юникодная: с --locale=C функция lower()
+  # не понимает кириллицу, и уникальный индекс по имени команды
+  # начинает пропускать «Трамвай» и «трамвай» как разные.
+  # На Supabase локаль UTF-8, тестовая база должна совпадать.
+  as_postgres "$PG_BIN/initdb -D $PGDATA -A trust -E UTF8 --locale=C.UTF-8" >/dev/null
   # Слушаем только loopback: наружу база не выставляется.
   {
     echo "listen_addresses = '127.0.0.1'"

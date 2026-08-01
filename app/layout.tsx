@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Literata } from 'next/font/google';
+import { ServiceWorkerRegistration } from '@/components/pwa/service-worker';
 import './globals.css';
 
 /**
@@ -83,6 +84,7 @@ export default function RootLayout({
           Перейти к содержимому
         </a>
         {children}
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

@@ -27,17 +27,20 @@ export function NavShell({
   action: { href: string; label: string } | null;
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
-  // Переход по ссылке закрывает меню.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  // Меню помнит, на каком маршруте его открыли. Как только
+  // маршрут меняется, оно закрывается само — без эффекта,
+  // который дёргал бы состояние после отрисовки.
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const open = openedOn === pathname;
+  const setOpen = (next: boolean) => setOpenedOn(next ? pathname : null);
 
+  // Escape закрывает меню. Подписка на клавиатуру — это как раз
+  // тот случай, для которого эффект и предназначен.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') setOpenedOn(null);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -100,7 +103,7 @@ export function NavShell({
 
             <button
               type="button"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => setOpen(!open)}
               aria-expanded={open}
               aria-controls="nav-mobile-menu"
               className={cn(

@@ -41,7 +41,7 @@ export default async function HomePage() {
       <div className="page-well py-24">
         <Eyebrow>Движ-Патруль</Eyebrow>
         <h1 className="mt-4 text-heading-lg md:text-display">Мероприятие ещё не опубликовано</h1>
-        <p className="mt-4 max-w-prose text-body text-stone">
+        <p className="mt-4 max-w-prose text-body text-sepia">
           Квест готовится. Загляните позже — здесь появятся дата, стоимость и кнопка
           регистрации команды.
         </p>
@@ -79,15 +79,15 @@ export default async function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{event.city}</Eyebrow>
 
-            <h1 className="mt-4 text-[52px] leading-[0.9] tracking-[-2.6px] md:text-display-xl">
+            <h1 className="mt-4 text-[54px] leading-[0.88] md:text-display-xl">
               Движ-Патруль
             </h1>
 
-            <p className="mt-5 text-subheading text-stone md:text-heading-sm">
+            <p className="poster-label mt-4 text-caption text-brick md:text-body">
               {event.subtitle ?? 'Городской фото-квест'}
             </p>
 
-            <p className="mx-auto mt-6 max-w-prose text-body text-stone">
+            <p className="mx-auto mt-6 max-w-prose text-body text-sepia">
               Команда до {event.team_size} человек, {taskCount || '30+'}{' '}
               {taskCount ? tasksWord(taskCount) : 'заданий'} по центру Лейпцига и один вечер,
               который потом ещё долго пересказывают. Маршрута нет — вы сами решаете, куда идти.
@@ -131,7 +131,7 @@ export default async function HomePage() {
 
       {/* ═══ Постер ══════════════════════════════════════════ */}
       <section className="page-well">
-        <div className="overflow-hidden rounded-[16px] border border-hairline bg-paper-white">
+        <div className="overflow-hidden rounded-[16px] border border-hairline bg-paper">
           <Image
             src="/assets/dvizh-patrol-poster.jpg"
             alt={`Постер мероприятия «Движ-Патруль», ${event.city}, ${formatEventDate(event)}`}
@@ -146,6 +146,7 @@ export default async function HomePage() {
 
       {/* ═══ Факты ═══════════════════════════════════════════ */}
       <section className="page-well mt-12 md:mt-20">
+        <div className="brick-rule mb-6" />
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             { term: 'Дата', value: formatEventDate(event), note: formatEventDateLong(event) },
@@ -158,9 +159,9 @@ export default async function HomePage() {
             },
           ].map((fact) => (
             <Card key={fact.term} className="flex flex-col gap-1">
-              <dt className="text-caption text-stone">{fact.term}</dt>
-              <dd className="text-heading-sm font-normal tracking-[-0.48px]">{fact.value}</dd>
-              <p className="text-caption text-pebble">{fact.note}</p>
+              <dt className="poster-label text-caption text-sand">{fact.term}</dt>
+              <dd className="poster-figure text-heading-sm text-brick">{fact.value}</dd>
+              <p className="text-caption text-sand">{fact.note}</p>
             </Card>
           ))}
         </dl>
@@ -207,9 +208,9 @@ export default async function HomePage() {
             },
           ].map((step) => (
             <li key={step.n} className="flex flex-col gap-2">
-              <span className="text-caption font-medium text-pebble">{step.n}</span>
+              <span className="poster-figure text-heading-sm text-brick">{step.n}</span>
               <h3 className="text-subheading font-normal">{step.title}</h3>
-              <p className="text-body text-stone">{step.text}</p>
+              <p className="text-body text-sepia">{step.text}</p>
             </li>
           ))}
         </ol>
@@ -264,7 +265,7 @@ export default async function HomePage() {
                 />
               </div>
               <h3 className="text-subheading font-normal">{example.title}</h3>
-              <p className="text-body text-stone">{example.text}</p>
+              <p className="text-body text-sepia">{example.text}</p>
             </article>
           ))}
         </div>
@@ -275,7 +276,7 @@ export default async function HomePage() {
         <Card className="flex flex-col gap-4 p-6">
           <Eyebrow>Коротко</Eyebrow>
           <h2 className="text-heading-sm">Правила</h2>
-          <ul className="flex flex-col gap-3 text-body text-stone">
+          <ul className="flex flex-col gap-3 text-body text-sepia">
             {[
               'Каждое задание засчитывается команде один раз.',
               'Число попыток задаётся отдельно для каждого задания.',
@@ -284,7 +285,7 @@ export default async function HomePage() {
               'Результат подтверждает организатор, его решение окончательное.',
             ].map((rule) => (
               <li key={rule} className="flex gap-3">
-                <span aria-hidden="true" className="text-pebble">
+                <span aria-hidden="true" className="text-sand">
                   —
                 </span>
                 <span>{rule}</span>
@@ -299,11 +300,11 @@ export default async function HomePage() {
         <Card className="flex flex-col gap-4 p-6">
           <Eyebrow>После финиша</Eyebrow>
           <h2 className="text-heading-sm">BBQ</h2>
-          <p className="text-body text-stone">
+          <p className="text-body text-sepia">
             Когда последняя фотография отправлена, а рейтинг заморожен, начинается вторая часть
             вечера — барбекю. Там же объявляются результаты и разбираются самые спорные кадры.
           </p>
-          <p className="text-body text-stone">
+          <p className="text-body text-sepia">
             Участие в BBQ входит в стоимость. Если у вас есть ограничения по еде, предупредите
             организатора заранее.
           </p>

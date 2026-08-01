@@ -48,13 +48,13 @@ export default async function SubmissionPage({
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <Link
           href="/submissions"
-          className="inline-flex items-center gap-2 text-caption text-stone hover:text-ink-black"
+          className="inline-flex items-center gap-2 text-caption text-sepia hover:text-ink"
         >
           <span aria-hidden="true">←</span> Все отправки
         </Link>
 
         <header className="flex flex-col gap-3">
-          {task && <p className="text-caption text-pebble">Задание {task.number}</p>}
+          {task && <p className="text-caption text-sand">Задание {task.number}</p>}
           <h1 className="text-heading">{task?.title ?? 'Задание удалено'}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={submission.status} />
@@ -76,7 +76,7 @@ export default async function SubmissionPage({
 
         <Notice icon={presentation.icon}>
           <p className="font-medium">{presentation.label}</p>
-          <p className="mt-1 text-stone">{presentation.hint}</p>
+          <p className="mt-1 text-sepia">{presentation.hint}</p>
         </Notice>
 
         {submission.status === 'accepted' && (
@@ -90,7 +90,7 @@ export default async function SubmissionPage({
 
         {submission.review_reason && submission.status !== 'accepted' && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
               Причина
             </h2>
             <p className="text-body">
@@ -101,7 +101,7 @@ export default async function SubmissionPage({
 
         {submission.admin_comment && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
               Комментарий организатора
             </h2>
             <p className="text-body">{submission.admin_comment}</p>
@@ -112,7 +112,7 @@ export default async function SubmissionPage({
             технических подробностей: участнику важен вывод. */}
         {submission.ai_result?.reason && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
               Автоматическая проверка
             </h2>
             <p className="text-body">{submission.ai_result.reason}</p>
@@ -125,7 +125,7 @@ export default async function SubmissionPage({
               К заданию
             </ButtonLink>
             {submission.status === 'rejected' && (
-              <p className="self-center text-caption text-stone">
+              <p className="self-center text-caption text-sepia">
                 Если попытки остались, можно отправить другую фотографию.
               </p>
             )}
@@ -133,7 +133,7 @@ export default async function SubmissionPage({
         )}
 
         {task && submission.status === 'rejected' && (
-          <p className="text-caption text-stone">
+          <p className="text-caption text-sepia">
             Всего попыток по заданию: {task.max_attempts} {attemptsWord(task.max_attempts)}.
           </p>
         )}

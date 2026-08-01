@@ -56,7 +56,7 @@ export function NavShell({
           aria-label="Основная навигация"
           className={cn(
             'flex items-center gap-2 rounded-[9999px] border border-hairline',
-            'bg-paper-white px-3 py-2',
+            'bg-paper px-3 py-2',
           )}
         >
           <Link
@@ -77,8 +77,8 @@ export function NavShell({
                   className={cn(
                     'inline-flex items-center rounded-[9999px] px-3 py-2 text-body transition-colors',
                     isActive(link.href)
-                      ? 'bg-ink-black text-paper-white'
-                      : 'text-stone hover:bg-ink-wash hover:text-ink-black',
+                      ? 'bg-brick text-paper'
+                      : 'text-sepia hover:bg-ink-wash hover:text-ink',
                   )}
                 >
                   {link.label}
@@ -92,9 +92,9 @@ export function NavShell({
               <Link
                 href={action.href}
                 className={cn(
-                  'hidden items-center rounded-[9999px] border border-ink-black bg-ink-black',
-                  'px-4 py-2 text-caption font-medium text-paper-white sm:inline-flex',
-                  'hover:bg-[#232323]',
+                  'hidden items-center rounded-[9999px] border border-ink bg-ink',
+                  'px-4 py-2 text-caption font-medium text-paper sm:inline-flex',
+                  '',
                 )}
               >
                 {action.label}
@@ -108,7 +108,7 @@ export function NavShell({
               aria-controls="nav-mobile-menu"
               className={cn(
                 'inline-flex h-11 w-11 items-center justify-center rounded-[9999px] md:hidden',
-                'border border-hairline text-ink-black hover:bg-ink-wash',
+                'border border-hairline text-ink hover:bg-ink-wash',
               )}
             >
               <span className="sr-only">{open ? 'Закрыть меню' : 'Открыть меню'}</span>
@@ -137,7 +137,7 @@ export function NavShell({
         {open && (
           <div
             id="nav-mobile-menu"
-            className="mt-2 rounded-[16px] border border-hairline bg-paper-white p-2 md:hidden"
+            className="mt-2 rounded-[16px] border border-hairline bg-paper p-2 md:hidden"
           >
             <ul className="flex flex-col">
               {links.map((link) => (
@@ -147,7 +147,7 @@ export function NavShell({
                     aria-current={isActive(link.href) ? 'page' : undefined}
                     className={cn(
                       'flex min-h-[48px] items-center rounded-[12px] px-4 text-body',
-                      isActive(link.href) ? 'bg-ink-wash font-medium' : 'text-stone',
+                      isActive(link.href) ? 'bg-ink-wash font-medium' : 'text-sepia',
                     )}
                   >
                     {link.label}
@@ -158,7 +158,7 @@ export function NavShell({
                 <li className="mt-1 border-t border-hairline pt-1">
                   <Link
                     href={action.href}
-                    className="flex min-h-[48px] items-center rounded-[12px] bg-ink-black px-4 text-body font-medium text-paper-white"
+                    className="flex min-h-[48px] items-center rounded-[12px] bg-ink px-4 text-body font-medium text-paper"
                   >
                     {action.label}
                   </Link>

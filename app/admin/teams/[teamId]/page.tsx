@@ -84,12 +84,12 @@ export default async function AdminTeamPage({
   return (
     <div className="page-well flex max-w-4xl flex-col gap-8 py-8">
       <div>
-        <Link href="/admin/teams" className="text-caption text-stone hover:text-ink-black">
+        <Link href="/admin/teams" className="text-caption text-sepia hover:text-ink">
           ← Все команды
         </Link>
         <Eyebrow className="mt-4">{TEAM_STATUS_TEXT[team.status]}</Eyebrow>
         <h1 className="mt-2 text-heading">{team.name}</h1>
-        <p className="mt-1 text-body text-stone">
+        <p className="mt-1 text-body text-sepia">
           Капитан: {team.captain_name}
           {team.contact && ` · ${team.contact}`}
         </p>
@@ -157,7 +157,7 @@ export default async function AdminTeamPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
-          <span className="text-caption text-stone">Код:</span>
+          <span className="text-caption text-sepia">Код:</span>
           <code className="rounded-[8px] bg-ink-wash px-2 py-1 font-mono tabular-nums">
             {team.join_code}
           </code>
@@ -187,7 +187,7 @@ export default async function AdminTeamPage({
           <h2 className="text-subheading">Баллы</h2>
           <p className="text-heading-sm tabular-nums">
             {score?.total_points ?? 0}{' '}
-            <span className="text-caption text-stone">
+            <span className="text-caption text-sepia">
               {pointsWord(score?.total_points ?? 0)}
             </span>
           </p>
@@ -227,7 +227,7 @@ export default async function AdminTeamPage({
 
         {transactions.length > 0 && (
           <div className="border-t border-hairline pt-4">
-            <h3 className="mb-3 text-caption font-medium uppercase tracking-[0.08em] text-stone">
+            <h3 className="mb-3 text-caption font-medium uppercase tracking-[0.08em] text-sepia">
               Журнал начислений
             </h3>
             <ul className="flex flex-col gap-2">
@@ -240,10 +240,10 @@ export default async function AdminTeamPage({
                     <p>
                       {TRANSACTION_LABEL[tx.transaction_type] ?? tx.transaction_type}
                       {tx.reversed_by_transaction_id && (
-                        <span className="ml-2 text-caption text-stone">— отменено</span>
+                        <span className="ml-2 text-caption text-sepia">— отменено</span>
                       )}
                     </p>
-                    {tx.reason && <p className="text-caption text-stone">{tx.reason}</p>}
+                    {tx.reason && <p className="text-caption text-sepia">{tx.reason}</p>}
                   </div>
                   <span className="shrink-0 tabular-nums">
                     {tx.points > 0 ? `+${tx.points}` : tx.points}
@@ -259,7 +259,7 @@ export default async function AdminTeamPage({
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-baseline justify-between">
           <h2 className="text-subheading">Состав</h2>
-          <p className="text-caption text-stone">
+          <p className="text-caption text-sepia">
             {members.length} из {event?.team_size ?? 4}
           </p>
         </div>
@@ -285,21 +285,21 @@ export default async function AdminTeamPage({
       <section className="flex flex-col gap-3">
         <h2 className="text-subheading">Отправки ({submissions.length})</h2>
         {submissions.length === 0 ? (
-          <p className="text-body text-stone">Команда пока ничего не отправляла.</p>
+          <p className="text-body text-sepia">Команда пока ничего не отправляла.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {submissions.map((row) => (
               <li key={row.id}>
                 <Link
                   href={`/admin/submissions/${row.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[16px] border border-hairline bg-paper-white px-4 py-3 hover:border-hairline-strong"
+                  className="flex items-center justify-between gap-4 rounded-[16px] border border-hairline bg-paper px-4 py-3 hover:border-hairline-strong"
                 >
                   <span className="min-w-0 truncate text-body">
                     {row.tasks ? `${row.tasks.number}. ${row.tasks.title}` : 'Задание удалено'}
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     {row.awarded_points > 0 && (
-                      <span className="text-caption tabular-nums text-stone">
+                      <span className="text-caption tabular-nums text-sepia">
                         +{row.awarded_points}
                       </span>
                     )}

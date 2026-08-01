@@ -25,7 +25,7 @@ export function RemoveMemberButton({
 
   if (state.error) {
     return (
-      <span className="text-caption text-ink-black" role="alert">
+      <span className="text-caption text-ink" role="alert">
         {errorMessage(state.error)}
       </span>
     );

@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = await getAdmin();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-linen-canvas">
+    <div className="flex min-h-dvh flex-col bg-canvas">
       {admin && <AdminNav email={admin.email} />}
       <main id="main" className="flex-1">
         {children}

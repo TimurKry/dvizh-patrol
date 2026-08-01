@@ -72,7 +72,7 @@ export default async function AdminDashboardPage() {
         <div>
           <Eyebrow>{EVENT_STATUS_TEXT[event.status] ?? event.status}</Eyebrow>
           <h1 className="mt-2 text-heading">{event.title}</h1>
-          <p className="mt-1 text-body text-stone">
+          <p className="mt-1 text-body text-sepia">
             {event.city}, {formatEventDateLong(event)} в {formatEventTime(event)}
           </p>
         </div>
@@ -143,9 +143,9 @@ export default async function AdminDashboardPage() {
             },
           ].map((item) => (
             <Card key={item.term} className="flex flex-col gap-1">
-              <dt className="text-caption text-stone">{item.term}</dt>
+              <dt className="text-caption text-sepia">{item.term}</dt>
               <dd className="text-heading-sm tabular-nums tracking-[-0.48px]">{item.value}</dd>
-              <p className="text-caption text-pebble">{item.note}</p>
+              <p className="text-caption text-sand">{item.note}</p>
             </Card>
           ))}
         </dl>
@@ -170,7 +170,7 @@ export default async function AdminDashboardPage() {
             ['Похожие', stats?.possible_duplicates ?? 0],
           ].map(([label, value]) => (
             <Card key={String(label)} className="flex flex-col gap-1">
-              <span className="text-caption text-stone">{label}</span>
+              <span className="text-caption text-sepia">{label}</span>
               <span className="text-subheading tabular-nums">{value}</span>
             </Card>
           ))}
@@ -201,13 +201,13 @@ export default async function AdminDashboardPage() {
               <li key={row.id}>
                 <Link
                   href={`/admin/submissions/${row.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[16px] border border-hairline bg-paper-white px-4 py-3 hover:border-hairline-strong"
+                  className="flex items-center justify-between gap-4 rounded-[16px] border border-hairline bg-paper px-4 py-3 hover:border-hairline-strong"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-body">
                       {row.tasks ? `${row.tasks.number}. ${row.tasks.title}` : 'Задание удалено'}
                     </p>
-                    <p className="text-caption text-stone">{row.teams?.name ?? '—'}</p>
+                    <p className="text-caption text-sepia">{row.teams?.name ?? '—'}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {row.duplicate_submission_id && <Tag>похожа</Tag>}

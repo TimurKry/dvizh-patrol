@@ -70,12 +70,12 @@ export default async function AdminEventPage() {
           <h2 className="text-subheading">
             Статус: {EVENT_STATUS_TEXT[event.status] ?? event.status}
           </h2>
-          <p className="text-caption text-stone">
+          <p className="text-caption text-sepia">
             команд {stats.active} / {event.max_teams}, участников {stats.members}
           </p>
         </div>
 
-        <p className="text-body text-stone">{STATUS_DESCRIPTION[event.status]}</p>
+        <p className="text-body text-sepia">{STATUS_DESCRIPTION[event.status]}</p>
 
         <div className="flex flex-wrap gap-2">
           {TRANSITIONS[event.status].map((transition) => (
@@ -98,7 +98,7 @@ export default async function AdminEventPage() {
             </ActionButton>
           ))}
           {TRANSITIONS[event.status].length === 0 && (
-            <p className="text-caption text-stone">Из архива переходов нет.</p>
+            <p className="text-caption text-sepia">Из архива переходов нет.</p>
           )}
         </div>
       </Card>

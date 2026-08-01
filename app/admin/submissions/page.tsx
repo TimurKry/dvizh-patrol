@@ -141,8 +141,8 @@ export default async function AdminSubmissionsPage({
                 className={cn(
                   'inline-flex shrink-0 items-center rounded-[9999px] border px-4 py-2 text-caption font-medium',
                   tab === item.key
-                    ? 'border-ink-black bg-ink-black text-paper-white'
-                    : 'border-hairline bg-paper-white text-stone hover:border-hairline-strong',
+                    ? 'border-ink bg-ink text-paper'
+                    : 'border-hairline bg-paper text-sepia hover:border-hairline-strong',
                 )}
               >
                 {item.label}
@@ -152,7 +152,7 @@ export default async function AdminSubmissionsPage({
         </ul>
       </nav>
 
-      <p className="text-caption text-stone">
+      <p className="text-caption text-sepia">
         Найдено: {total}
         {pages > 1 && ` · страница ${page} из ${pages}`}
       </p>
@@ -174,7 +174,7 @@ export default async function AdminSubmissionsPage({
               <li key={row.id}>
                 <Link
                   href={`/admin/submissions/${row.id}`}
-                  className="flex h-full flex-col gap-3 rounded-[16px] border border-hairline bg-paper-white p-3 hover:border-hairline-strong"
+                  className="flex h-full flex-col gap-3 rounded-[16px] border border-hairline bg-paper p-3 hover:border-hairline-strong"
                 >
                   <div className="overflow-hidden rounded-[12px] bg-ink-wash">
                     {preview ? (
@@ -186,7 +186,7 @@ export default async function AdminSubmissionsPage({
                         className="aspect-4/3 w-full object-cover"
                       />
                     ) : (
-                      <div className="flex aspect-4/3 items-center justify-center text-caption text-pebble">
+                      <div className="flex aspect-4/3 items-center justify-center text-caption text-sand">
                         нет превью
                       </div>
                     )}
@@ -196,7 +196,7 @@ export default async function AdminSubmissionsPage({
                     <p className="truncate text-body">
                       {row.tasks ? `${row.tasks.number}. ${row.tasks.title}` : 'Задание удалено'}
                     </p>
-                    <p className="truncate text-caption text-stone">{row.teams?.name ?? '—'}</p>
+                    <p className="truncate text-caption text-sepia">{row.teams?.name ?? '—'}</p>
                   </div>
 
                   <div className="mt-auto flex flex-wrap items-center gap-2">

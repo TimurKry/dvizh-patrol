@@ -28,9 +28,9 @@ export function TaskCard({ item }: { item: TaskWithState }) {
     <Link
       href={`/tasks/${task.id}`}
       className={cn(
-        'group flex flex-col gap-3 rounded-[16px] border bg-paper-white p-4',
+        'group flex flex-col gap-3 rounded-[16px] border bg-paper p-4',
         'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
-        state === 'accepted' ? 'border-ink-black' : 'border-hairline hover:border-hairline-strong',
+        state === 'accepted' ? 'border-ink' : 'border-hairline hover:border-hairline-strong',
       )}
     >
       <div className="relative overflow-hidden rounded-[12px] bg-ink-wash">
@@ -46,7 +46,7 @@ export function TaskCard({ item }: { item: TaskWithState }) {
           />
         ) : (
           <div className="flex aspect-4/3 w-full items-center justify-center">
-            <span className="text-display tracking-[-2.32px] text-pebble" aria-hidden="true">
+            <span className="text-display tracking-[-2.32px] text-sand" aria-hidden="true">
               {task.number}
             </span>
           </div>
@@ -55,17 +55,17 @@ export function TaskCard({ item }: { item: TaskWithState }) {
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-caption text-pebble">Задание {task.number}</p>
+          <p className="text-caption text-sand">Задание {task.number}</p>
           <h3 className="mt-1 text-subheading font-normal">{task.title}</h3>
         </div>
         <span className="shrink-0 text-subheading tabular-nums">
           {task.points}
-          <span className="ml-1 text-caption text-stone">{pointsWord(task.points)}</span>
+          <span className="ml-1 text-caption text-sepia">{pointsWord(task.points)}</span>
         </span>
       </div>
 
       {task.short_description && (
-        <p className="clamp-2 text-body text-stone">{task.short_description}</p>
+        <p className="clamp-2 text-body text-sepia">{task.short_description}</p>
       )}
 
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
@@ -73,12 +73,12 @@ export function TaskCard({ item }: { item: TaskWithState }) {
           className={cn(
             'inline-flex items-center gap-1.5 rounded-[12px] border px-2.5 py-1 text-caption font-medium',
             state === 'accepted'
-              ? 'border-ink-black bg-ink-black text-paper-white'
+              ? 'border-ink bg-ink text-paper'
               : state === 'in_review'
-                ? 'border-hairline-strong border-dashed text-stone'
+                ? 'border-hairline-strong border-dashed text-sepia'
                 : state === 'available'
-                  ? 'border-ink-black text-ink-black'
-                  : 'border-hairline text-pebble',
+                  ? 'border-ink text-ink'
+                  : 'border-hairline text-sand',
           )}
         >
           <span aria-hidden="true">{label.icon}</span>
@@ -129,14 +129,14 @@ export function SubmissionRow({
   return (
     <Link
       href={href}
-      className="flex items-center gap-4 rounded-[16px] border border-hairline bg-paper-white p-3 hover:border-hairline-strong"
+      className="flex items-center gap-4 rounded-[16px] border border-hairline bg-paper p-3 hover:border-hairline-strong"
     >
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[12px] bg-ink-wash">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-caption text-pebble">
+          <div className="flex h-full w-full items-center justify-center text-caption text-sand">
             —
           </div>
         )}
@@ -144,16 +144,16 @@ export function SubmissionRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-body">
-          {taskNumber !== null && <span className="text-pebble">{taskNumber}. </span>}
+          {taskNumber !== null && <span className="text-sand">{taskNumber}. </span>}
           {title}
         </p>
-        <p className="mt-1 text-caption text-stone">{time}</p>
+        <p className="mt-1 text-caption text-sepia">{time}</p>
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1">
         <StatusBadge status={status} />
         {points > 0 && (
-          <span className="text-caption tabular-nums text-stone">
+          <span className="text-caption tabular-nums text-sepia">
             +{points} {pointsWord(points)}
           </span>
         )}

@@ -14,10 +14,10 @@ import { cn } from '@/lib/cn';
  */
 
 const CONTROL =
-  'w-full bg-paper-white text-ink-black rounded-[16px] border px-4 py-3 ' +
-  'text-body placeholder:text-pebble min-h-[48px] ' +
-  'transition-colors focus:outline-none focus-visible:border-ink-black ' +
-  'disabled:bg-ink-wash disabled:text-pebble disabled:cursor-not-allowed';
+  'w-full bg-paper text-ink rounded-[16px] border px-4 py-3 ' +
+  'text-body placeholder:text-sand min-h-[48px] ' +
+  'transition-colors focus:outline-none focus-visible:border-ink ' +
+  'disabled:bg-ink-wash disabled:text-sand disabled:cursor-not-allowed';
 
 export function Field({
   label,
@@ -36,10 +36,10 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={htmlFor} className="text-caption font-medium text-ink-black">
+      <label htmlFor={htmlFor} className="text-caption font-medium text-ink">
         {label}
         {required && (
-          <span className="text-stone" aria-hidden="true">
+          <span className="text-sepia" aria-hidden="true">
             {' '}
             *
           </span>
@@ -47,12 +47,12 @@ export function Field({
       </label>
       {children}
       {error ? (
-        <p className="text-caption text-ink-black" role="alert">
+        <p className="text-caption text-ink" role="alert">
           <span aria-hidden="true">! </span>
           {error}
         </p>
       ) : hint ? (
-        <p className="text-caption text-stone">{hint}</p>
+        <p className="text-caption text-sepia">{hint}</p>
       ) : null}
     </div>
   );
@@ -65,7 +65,7 @@ export function TextInput({
 }: ComponentProps<'input'> & { invalid?: boolean }) {
   return (
     <input
-      className={cn(CONTROL, invalid ? 'border-ink-black' : 'border-hairline', className)}
+      className={cn(CONTROL, invalid ? 'border-ink' : 'border-hairline', className)}
       aria-invalid={invalid || undefined}
       {...rest}
     />
@@ -82,7 +82,7 @@ export function TextArea({
       className={cn(
         CONTROL,
         'min-h-[120px] resize-y py-3',
-        invalid ? 'border-ink-black' : 'border-hairline',
+        invalid ? 'border-ink' : 'border-hairline',
         className,
       )}
       aria-invalid={invalid || undefined}
@@ -102,12 +102,12 @@ export function Select({
       className={cn(
         CONTROL,
         'appearance-none bg-[length:12px] bg-[right_16px_center] bg-no-repeat pr-10',
-        invalid ? 'border-ink-black' : 'border-hairline',
+        invalid ? 'border-ink' : 'border-hairline',
         className,
       )}
       style={{
         backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230d0d0d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")",
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232b1a14' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\")",
       }}
       aria-invalid={invalid || undefined}
       {...rest}
@@ -141,9 +141,9 @@ export function Checkbox({
           type="checkbox"
           className={cn(
             'peer h-full w-full cursor-pointer appearance-none',
-            'rounded-[6px] border border-hairline-strong bg-paper-white',
-            'checked:border-ink-black checked:bg-ink-black',
-            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-black',
+            'rounded-[6px] border border-hairline-strong bg-paper',
+            'checked:border-ink checked:bg-ink',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
             'disabled:cursor-not-allowed disabled:opacity-50',
           )}
           {...rest}
@@ -158,7 +158,7 @@ export function Checkbox({
         >
           <path
             d="M1 6l4 4 8-9"
-            stroke="#ffffff"
+            stroke="#faefe5"
             strokeWidth="2"
             fill="none"
             strokeLinecap="round"
@@ -168,7 +168,7 @@ export function Checkbox({
       </span>
       <label htmlFor={inputId} className="cursor-pointer text-body leading-snug">
         {label}
-        {description && <span className="mt-1 block text-caption text-stone">{description}</span>}
+        {description && <span className="mt-1 block text-caption text-sepia">{description}</span>}
       </label>
     </div>
   );

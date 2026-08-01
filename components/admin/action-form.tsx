@@ -57,7 +57,7 @@ export function ActionButton({
       {state.message && (
         <span
           role="status"
-          className={state.ok ? 'text-caption text-stone' : 'text-caption text-ink-black'}
+          className={state.ok ? 'text-caption text-sepia' : 'text-caption text-ink'}
         >
           {state.ok ? '' : '! '}
           {state.message}

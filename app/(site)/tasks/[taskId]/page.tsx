@@ -61,13 +61,13 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
       <div className="mx-auto max-w-2xl">
         <Link
           href="/tasks"
-          className="inline-flex items-center gap-2 text-caption text-stone hover:text-ink-black"
+          className="inline-flex items-center gap-2 text-caption text-sepia hover:text-ink"
         >
           <span aria-hidden="true">←</span> Все задания
         </Link>
 
         <header className="mt-5 flex flex-col gap-3">
-          <p className="text-caption text-pebble">Задание {task.number}</p>
+          <p className="text-caption text-sand">Задание {task.number}</p>
           <h1 className="text-heading md:text-heading-lg">{task.title}</h1>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -97,7 +97,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                   className="w-full rounded-[12px] border border-hairline"
                 />
                 {reference.caption && (
-                  <figcaption className="text-caption text-stone">{reference.caption}</figcaption>
+                  <figcaption className="text-caption text-sepia">{reference.caption}</figcaption>
                 )}
               </figure>
             ))}
@@ -110,13 +110,13 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
 
           {task.criteria.length > 0 && (
             <Card className="flex flex-col gap-3 p-4">
-              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
                 Что должно быть в кадре
               </h2>
               <ul className="flex flex-col gap-2">
                 {task.criteria.map((criterion, index) => (
-                  <li key={index} className="flex gap-3 text-body text-stone">
-                    <span aria-hidden="true" className="text-pebble">
+                  <li key={index} className="flex gap-3 text-body text-sepia">
+                    <span aria-hidden="true" className="text-sand">
                       {index + 1}.
                     </span>
                     <span>{criterion}</span>
@@ -137,7 +137,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                 <Tag>ещё не отправляли</Tag>
               )}
             </div>
-            <p className="text-caption text-stone">
+            <p className="text-caption text-sepia">
               {state === 'accepted'
                 ? 'задание засчитано'
                 : `осталось ${attemptsLeft} ${attemptsWord(attemptsLeft)} из ${task.max_attempts}`}
@@ -148,7 +148,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             <Notice icon={SUBMISSION_STATUS_TEXT[latestSubmission.status].icon}>
               <p>{SUBMISSION_STATUS_TEXT[latestSubmission.status].hint}</p>
               {latestSubmission.review_reason && (
-                <p className="mt-1 text-caption text-stone">
+                <p className="mt-1 text-caption text-sepia">
                   {REVIEW_REASON_TEXT[latestSubmission.review_reason] ??
                     latestSubmission.review_reason}
                 </p>

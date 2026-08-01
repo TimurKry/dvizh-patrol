@@ -28,7 +28,7 @@ export function AdminNav({ email }: { email: string }) {
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="border-b border-hairline bg-paper-white">
+    <header className="border-b border-hairline bg-paper">
       <div className="page-well flex flex-col gap-3 py-3">
         <div className="flex items-center justify-between gap-4">
           <Link href="/admin" className="flex items-center gap-2">
@@ -37,8 +37,8 @@ export function AdminNav({ email }: { email: string }) {
           </Link>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-caption text-stone sm:inline">{email}</span>
-            <Link href="/" className="text-caption text-stone hover:text-ink-black">
+            <span className="hidden text-caption text-sepia sm:inline">{email}</span>
+            <Link href="/" className="text-caption text-sepia hover:text-ink">
               Сайт
             </Link>
             <button
@@ -64,8 +64,8 @@ export function AdminNav({ email }: { email: string }) {
                   className={cn(
                     'inline-flex shrink-0 items-center rounded-[12px] px-3 py-2 text-caption transition-colors',
                     isActive(link.href, link.exact)
-                      ? 'bg-ink-black text-paper-white font-medium'
-                      : 'text-stone hover:bg-ink-wash hover:text-ink-black',
+                      ? 'bg-ink text-paper font-medium'
+                      : 'text-sepia hover:bg-ink-wash hover:text-ink',
                   )}
                 >
                   {link.label}

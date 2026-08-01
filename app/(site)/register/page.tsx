@@ -26,7 +26,7 @@ export default async function RegisterPage() {
     return (
       <div className="page-well py-20">
         <h1 className="text-heading">Мероприятие не найдено</h1>
-        <p className="mt-4 text-body text-stone">Регистрация пока недоступна.</p>
+        <p className="mt-4 text-body text-sepia">Регистрация пока недоступна.</p>
       </div>
     );
   }
@@ -38,7 +38,7 @@ export default async function RegisterPage() {
       <div className="mx-auto max-w-xl">
         <Eyebrow>Регистрация</Eyebrow>
         <h1 className="mt-3 text-heading md:text-heading-lg">Создать команду</h1>
-        <p className="mt-4 text-body text-stone">
+        <p className="mt-4 text-body text-sepia">
           Капитан регистрирует команду и получает код приглашения. Email и пароль не нужны.
         </p>
 
@@ -46,7 +46,7 @@ export default async function RegisterPage() {
           {stats.canRegister ? (
             <>
               <Card className="mb-6 flex items-center justify-between gap-4 px-4 py-3">
-                <span className="text-caption text-stone">Свободные места</span>
+                <span className="text-caption text-sepia">Свободные места</span>
                 <span className="text-body font-medium">
                   {stats.free} из {event.max_teams} {teamsWord(event.max_teams)}
                 </span>
@@ -64,7 +64,7 @@ export default async function RegisterPage() {
                     : `Сейчас статус мероприятия — «${EVENT_STATUS_TEXT[event.status] ?? event.status}». Новые команды не регистрируются.`}
               </Notice>
 
-              <p className="text-body text-stone">
+              <p className="text-body text-sepia">
                 Если вас уже добавили в команду, войдите по коду от капитана.
               </p>
 

@@ -40,7 +40,7 @@ export default async function EditTaskPage({
   return (
     <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
       <div>
-        <Link href="/admin/tasks" className="text-caption text-stone hover:text-ink-black">
+        <Link href="/admin/tasks" className="text-caption text-sepia hover:text-ink">
           ← Все задания
         </Link>
         <Eyebrow className="mt-4">Задание {task.number}</Eyebrow>
@@ -52,7 +52,7 @@ export default async function EditTaskPage({
       {/* ═══ Массовые действия ══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
         <h2 className="text-subheading">Групповые действия</h2>
-        <p className="text-body text-stone">
+        <p className="text-body text-sepia">
           Отправок по заданию: {count ?? 0}, из них ждут решения: {waiting ?? 0}.
         </p>
 
@@ -78,7 +78,7 @@ export default async function EditTaskPage({
         </div>
 
         {(count ?? 0) > 0 && (
-          <p className="text-caption text-stone">
+          <p className="text-caption text-sepia">
             Задание с отправками удалить нельзя — это разорвало бы историю начислений.
             Используйте выключение.
           </p>

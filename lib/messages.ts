@@ -94,7 +94,9 @@ export const SUBMISSION_STATUS_TEXT: Record<SubmissionStatus, StatusPresentation
   checking: {
     label: 'Проверяется',
     hint: 'Идёт автоматическая проверка.',
-    icon: '◐',
+    // ◐ отсутствует в наборе плакатного шрифта и выпадал
+    // в замену. Двойная стрелка есть везде.
+    icon: '»',
   },
   accepted: {
     label: 'Принято',

@@ -26,10 +26,10 @@ const STYLE_BY_STATUS: Record<SubmissionStatus, BorderStyle> = {
 };
 
 const STYLES: Record<BorderStyle, string> = {
-  solid: 'border-ink-black text-ink-black bg-paper-white',
-  dashed: 'border-hairline-strong border-dashed text-stone bg-paper-white',
-  filled: 'border-ink-black bg-ink-black text-paper-white',
-  muted: 'border-hairline text-pebble bg-paper-white',
+  solid: 'border-ink text-ink bg-paper',
+  dashed: 'border-hairline-strong border-dashed text-sepia bg-paper',
+  filled: 'border-brick bg-brick text-paper',
+  muted: 'border-hairline text-sand bg-paper',
 };
 
 export function StatusBadge({
@@ -75,8 +75,8 @@ export function Tag({
       className={cn(
         'inline-flex items-center rounded-[12px] border px-2.5 py-1 text-caption whitespace-nowrap',
         emphasis
-          ? 'border-ink-black bg-ink-black text-paper-white font-medium'
-          : 'border-hairline text-stone',
+          ? 'border-brick bg-brick text-paper font-medium'
+          : 'border-hairline text-sepia',
         className,
       )}
     >

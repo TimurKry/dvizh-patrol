@@ -264,7 +264,7 @@ export function PhotoUpload({
             className="w-full rounded-[12px] border border-hairline object-cover"
           />
           {prepared && (
-            <figcaption className="text-caption text-stone">
+            <figcaption className="text-caption text-sepia">
               После сжатия: {formatBytes(prepared.bytes)}
               {prepared.ratio > 1.1 && ` — меньше исходного в ${prepared.ratio.toFixed(1)} раза`}
             </figcaption>
@@ -273,7 +273,7 @@ export function PhotoUpload({
       )}
 
       {busy && (
-        <p className="text-body text-stone" role="status" aria-live="polite">
+        <p className="text-body text-sepia" role="status" aria-live="polite">
           {stage || 'Обрабатываем…'}
         </p>
       )}
@@ -322,7 +322,7 @@ export function PhotoUpload({
       )}
 
       {requireLocation && (
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           <span aria-hidden="true">◎ </span>
           Задание привязано к месту: при отправке браузер спросит разрешение на геопозицию.
         </p>

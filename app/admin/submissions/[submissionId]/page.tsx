@@ -116,7 +116,7 @@ export default async function AdminSubmissionPage({
   return (
     <div className="page-well flex max-w-5xl flex-col gap-6 py-8">
       <div>
-        <Link href="/admin/submissions" className="text-caption text-stone hover:text-ink-black">
+        <Link href="/admin/submissions" className="text-caption text-sepia hover:text-ink">
           ← Очередь проверки
         </Link>
         <Eyebrow className="mt-4">{team?.name ?? 'Команда удалена'}</Eyebrow>
@@ -143,7 +143,7 @@ export default async function AdminSubmissionPage({
         {/* ═══ Фотографии ═══════════════════════════════════ */}
         <div className="flex flex-col gap-4">
           <figure className="flex flex-col gap-2">
-            <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+            <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
               Фотография команды
             </figcaption>
             {imageUrl ? (
@@ -154,7 +154,7 @@ export default async function AdminSubmissionPage({
                 className="w-full rounded-[16px] border border-hairline"
               />
             ) : (
-              <div className="flex aspect-4/3 items-center justify-center rounded-[16px] border border-dashed border-hairline-strong text-body text-stone">
+              <div className="flex aspect-4/3 items-center justify-center rounded-[16px] border border-dashed border-hairline-strong text-body text-sepia">
                 Файл недоступен или удалён по сроку хранения
               </div>
             )}
@@ -162,7 +162,7 @@ export default async function AdminSubmissionPage({
 
           {referenceUrl && (
             <figure className="flex flex-col gap-2">
-              <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+              <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
                 Эталон задания
               </figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -179,7 +179,7 @@ export default async function AdminSubmissionPage({
               <div className="flex items-center gap-2">
                 <Tag emphasis>похожая фотография</Tag>
                 {submission.duplicate_similarity !== null && (
-                  <span className="text-caption text-stone">
+                  <span className="text-caption text-sepia">
                     сходство {(Number(submission.duplicate_similarity) * 100).toFixed(0)}%
                   </span>
                 )}
@@ -194,10 +194,10 @@ export default async function AdminSubmissionPage({
                 />
               )}
 
-              <p className="text-caption text-stone">
+              <p className="text-caption text-sepia">
                 Команда «{duplicate.teamName}», задание «{duplicate.taskTitle}»
               </p>
-              <p className="text-caption text-stone">
+              <p className="text-caption text-sepia">
                 Совпадение не отклоняет отправку автоматически — решение за вами.
               </p>
             </Card>
@@ -209,16 +209,16 @@ export default async function AdminSubmissionPage({
           {task && (
             <Card className="flex flex-col gap-3 p-4">
               <h2 className="text-subheading">Условие</h2>
-              <p className="whitespace-pre-line text-body text-stone">{task.description}</p>
+              <p className="whitespace-pre-line text-body text-sepia">{task.description}</p>
 
               {task.criteria.length > 0 && (
                 <>
-                  <h3 className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+                  <h3 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
                     Критерии
                   </h3>
                   <ol className="flex flex-col gap-1">
                     {task.criteria.map((criterion, index) => (
-                      <li key={index} className="text-body text-stone">
+                      <li key={index} className="text-body text-sepia">
                         {index + 1}. {criterion}
                       </li>
                     ))}
@@ -227,7 +227,7 @@ export default async function AdminSubmissionPage({
               )}
 
               {task.minimum_people > 0 && (
-                <p className="text-caption text-stone">
+                <p className="text-caption text-sepia">
                   Минимум людей в кадре: {task.minimum_people}
                 </p>
               )}
@@ -246,7 +246,7 @@ export default async function AdminSubmissionPage({
                 )}
               </div>
 
-              <p className="text-body text-stone">{submission.ai_result.reason}</p>
+              <p className="text-body text-sepia">{submission.ai_result.reason}</p>
 
               {submission.ai_result.checks?.length > 0 && (
                 <ul className="flex flex-col gap-2 border-t border-hairline pt-3">
@@ -260,10 +260,10 @@ export default async function AdminSubmissionPage({
                           {check.criterion}
                         </span>
                         {check.comment && (
-                          <span className="block text-stone">{check.comment}</span>
+                          <span className="block text-sepia">{check.comment}</span>
                         )}
                       </span>
-                      <span className="ml-auto shrink-0 tabular-nums text-stone">
+                      <span className="ml-auto shrink-0 tabular-nums text-sepia">
                         {check.confidence.toFixed(2)}
                       </span>
                     </li>
@@ -272,7 +272,7 @@ export default async function AdminSubmissionPage({
               )}
 
               {submission.ai_result.model && (
-                <p className="text-caption text-pebble">
+                <p className="text-caption text-sand">
                   {submission.ai_result.model}
                   {submission.ai_result.durationMs
                     ? ` · ${(submission.ai_result.durationMs / 1000).toFixed(1)} с`
@@ -291,14 +291,14 @@ export default async function AdminSubmissionPage({
 
           {submission.latitude !== null && submission.longitude !== null && (
             <Card className="flex flex-col gap-1 p-4">
-              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-stone">
+              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
                 Геопозиция
               </h2>
               <p className="text-body tabular-nums">
                 {submission.latitude.toFixed(5)}, {submission.longitude.toFixed(5)}
               </p>
               {submission.location_accuracy !== null && (
-                <p className="text-caption text-stone">
+                <p className="text-caption text-sepia">
                   погрешность ±{Math.round(submission.location_accuracy)} м
                 </p>
               )}

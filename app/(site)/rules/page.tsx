@@ -31,7 +31,7 @@ export default async function RulesPage() {
         />
 
         {event && (
-          <div className="rounded-[16px] border border-hairline bg-paper-white p-4">
+          <div className="rounded-[16px] border border-hairline bg-paper p-4">
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
                 ['Дата', formatEventDateLong(event)],
@@ -43,7 +43,7 @@ export default async function RulesPage() {
                 ],
               ].map(([term, value]) => (
                 <div key={term} className="flex flex-col gap-1">
-                  <dt className="text-caption text-stone">{term}</dt>
+                  <dt className="text-caption text-sepia">{term}</dt>
                   <dd className="text-body">{value}</dd>
                 </div>
               ))}

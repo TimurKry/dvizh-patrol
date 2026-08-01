@@ -76,13 +76,13 @@ export default async function AdminSettingsPage() {
             ['Версия политики', config.POLICY_VERSION],
           ].map(([term, value]) => (
             <div key={term} className="flex flex-col">
-              <dt className="text-caption text-stone">{term}</dt>
+              <dt className="text-caption text-sepia">{term}</dt>
               <dd className="text-body">{value}</dd>
             </div>
           ))}
         </dl>
 
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           Эти значения задаются переменными окружения и меняются при развёртывании, а не из
           интерфейса. Настройки самого мероприятия — в разделе «Мероприятие».
         </p>
@@ -98,7 +98,7 @@ export default async function AdminSettingsPage() {
           <Tag emphasis={(expiring ?? 0) > 0}>просрочено: {expiring ?? 0}</Tag>
         </div>
 
-        <p className="text-body text-stone">
+        <p className="text-body text-sepia">
           Удаление стирает файлы из хранилища, но оставляет записи об отправках: журнал
           начислений и итоговый рейтинг не должны разъезжаться из-за уборки файлов.
         </p>
@@ -122,7 +122,7 @@ export default async function AdminSettingsPage() {
       {/* ═══ Резервный сценарий ═════════════════════════════ */}
       <Card className="flex flex-col gap-3 p-5">
         <h2 className="text-subheading">Если что-то пошло не так</h2>
-        <ul className="flex flex-col gap-2 text-body text-stone">
+        <ul className="flex flex-col gap-2 text-body text-sepia">
           <li>
             <strong>Отказала автоматическая проверка.</strong> Выключите её в настройках
             мероприятия — все фотографии пойдут к вам. Квест не останавливается.
@@ -144,7 +144,7 @@ export default async function AdminSettingsPage() {
             обратной транзакцией — история сохраняется.
           </li>
         </ul>
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           Подробный план — в <code>docs/INCIDENT_PLAN.md</code>.
         </p>
       </Card>

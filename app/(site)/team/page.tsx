@@ -95,11 +95,11 @@ export default async function TeamPage({
         {/* ═══ До старта ════════════════════════════════════ */}
         {!started && (
           <Card className="flex flex-col items-center gap-4 py-8 text-center">
-            <p className="text-caption text-stone">
+            <p className="text-caption text-sepia">
               Старт {formatEventDateLong(session.event)} в {formatEventTime(session.event)}
             </p>
             <Countdown target={session.event.starts_at} status={session.event.status} />
-            <p className="max-w-prose text-body text-stone">
+            <p className="max-w-prose text-body text-sepia">
               Задания откроются автоматически. До старта можно собрать команду и прочитать
               правила.
             </p>
@@ -118,19 +118,19 @@ export default async function TeamPage({
         {/* ═══ Счёт и место ═════════════════════════════════ */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="flex flex-col gap-1">
-            <p className="text-caption text-stone">Баллы</p>
+            <p className="text-caption text-sepia">Баллы</p>
             <p className="text-heading tracking-[-1.32px] tabular-nums">
               {standing?.totalPoints ?? 0}
             </p>
-            <p className="text-caption text-pebble">{pointsWord(standing?.totalPoints ?? 0)}</p>
+            <p className="text-caption text-sand">{pointsWord(standing?.totalPoints ?? 0)}</p>
           </Card>
 
           <Card className="flex flex-col gap-1">
-            <p className="text-caption text-stone">Место</p>
+            <p className="text-caption text-sepia">Место</p>
             <p className="text-heading tracking-[-1.32px] tabular-nums">
               {leaderboardVisible && standing ? standing.position : '—'}
             </p>
-            <p className="text-caption text-pebble">
+            <p className="text-caption text-sand">
               {leaderboardVisible && standing ? `из ${standing.totalTeams}` : 'рейтинг скрыт'}
             </p>
           </Card>
@@ -141,7 +141,7 @@ export default async function TeamPage({
           <Card className="flex flex-col gap-4">
             <div className="flex items-baseline justify-between">
               <h2 className="text-subheading">Прогресс</h2>
-              <p className="text-body text-stone">
+              <p className="text-body text-sepia">
                 {progress.accepted} из {progress.tasks_total} {tasksWord(progress.tasks_total)}
               </p>
             </div>
@@ -157,7 +157,7 @@ export default async function TeamPage({
               aria-label="Принятых заданий"
             >
               <div
-                className="h-full bg-ink-black"
+                className="h-full bg-ink"
                 style={{
                   width: `${progress.tasks_total > 0 ? (progress.accepted / progress.tasks_total) * 100 : 0}%`,
                 }}
@@ -172,7 +172,7 @@ export default async function TeamPage({
                 ['Отклонено', progress.rejected],
               ].map(([label, value]) => (
                 <div key={String(label)} className="flex flex-col">
-                  <dt className="text-caption text-stone">{label}</dt>
+                  <dt className="text-caption text-sepia">{label}</dt>
                   <dd className="text-subheading tabular-nums">{value}</dd>
                 </div>
               ))}
@@ -188,7 +188,7 @@ export default async function TeamPage({
         <Card className="flex flex-col gap-4">
           <div className="flex items-baseline justify-between">
             <h2 className="text-subheading">Состав</h2>
-            <p className="text-caption text-stone">
+            <p className="text-caption text-sepia">
               {members.length} из {session.event.team_size} {membersWord(session.event.team_size)}
             </p>
           </div>
@@ -202,7 +202,7 @@ export default async function TeamPage({
                 <span className="text-body">
                   {member.name}
                   {member.id === session.memberId && (
-                    <span className="ml-2 text-caption text-stone">— это вы</span>
+                    <span className="ml-2 text-caption text-sepia">— это вы</span>
                   )}
                 </span>
                 {member.is_captain && <Tag>капитан</Tag>}
@@ -229,7 +229,7 @@ export default async function TeamPage({
                 >
                   <div className="min-w-0">
                     <p>{TRANSACTION_LABEL[tx.transaction_type] ?? tx.transaction_type}</p>
-                    {tx.reason && <p className="text-caption text-stone">{tx.reason}</p>}
+                    {tx.reason && <p className="text-caption text-sepia">{tx.reason}</p>}
                   </div>
                   <span className="shrink-0 tabular-nums">
                     {tx.points > 0 ? `+${tx.points}` : tx.points}

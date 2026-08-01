@@ -20,7 +20,7 @@ export function Card({
   return (
     <Tag
       className={cn(
-        'bg-paper-white border border-hairline rounded-[16px]',
+        'bg-paper border border-hairline rounded-[16px]',
         padded && 'p-4',
         className,
       )}
@@ -35,7 +35,7 @@ export function Eyebrow({ children, className }: { children: ReactNode; classNam
   return (
     <p
       className={cn(
-        'text-caption font-medium uppercase tracking-[0.08em] text-stone',
+        'text-caption font-medium uppercase tracking-[0.08em] text-sepia',
         className,
       )}
     >
@@ -62,5 +62,5 @@ export function Divider({ className }: { className?: string }) {
 
 /** Подпись-метаданные под заголовком или в карточке. */
 export function Meta({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cn('text-caption text-stone', className)}>{children}</p>;
+  return <p className={cn('text-caption text-sepia', className)}>{children}</p>;
 }

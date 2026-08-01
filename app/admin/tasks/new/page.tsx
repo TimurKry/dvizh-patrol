@@ -37,7 +37,7 @@ export default async function NewTaskPage() {
   return (
     <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
       <div>
-        <Link href="/admin/tasks" className="text-caption text-stone hover:text-ink-black">
+        <Link href="/admin/tasks" className="text-caption text-sepia hover:text-ink">
           ← Все задания
         </Link>
         <Eyebrow className="mt-4">Создание</Eyebrow>

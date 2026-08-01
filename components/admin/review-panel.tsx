@@ -89,8 +89,8 @@ export function ReviewPanel({
               className={
                 'min-h-[44px] rounded-[12px] border px-3 py-2 text-caption font-medium transition-colors ' +
                 (decision === option.value
-                  ? 'border-ink-black bg-ink-black text-paper-white'
-                  : 'border-hairline bg-paper-white text-stone hover:border-hairline-strong') +
+                  ? 'border-ink bg-ink text-paper'
+                  : 'border-hairline bg-paper text-sepia hover:border-hairline-strong') +
                 (option.disabled ? ' cursor-not-allowed opacity-50' : '')
               }
             >
@@ -158,11 +158,11 @@ export function ReviewPanel({
       </form>
 
       {nextSubmissionId ? (
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           После решения откроется следующая фотография из очереди.
         </p>
       ) : (
-        <p className="text-caption text-stone">Это последняя фотография в очереди.</p>
+        <p className="text-caption text-sepia">Это последняя фотография в очереди.</p>
       )}
     </Card>
   );

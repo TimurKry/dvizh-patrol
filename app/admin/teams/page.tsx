@@ -73,7 +73,7 @@ export default async function AdminTeamsPage() {
             ['Участников', `${stats.members} / ${event.max_teams * event.team_size}`],
           ].map(([term, value]) => (
             <div key={term} className="flex flex-col">
-              <dt className="text-stone">{term}</dt>
+              <dt className="text-sepia">{term}</dt>
               <dd className="text-body tabular-nums">{value}</dd>
             </div>
           ))}
@@ -88,7 +88,7 @@ export default async function AdminTeamsPage() {
           <table className="w-full min-w-[720px] border-collapse text-body">
             <caption className="sr-only">Список зарегистрированных команд</caption>
             <thead>
-              <tr className="border-b border-hairline text-left text-caption text-stone">
+              <tr className="border-b border-hairline text-left text-caption text-sepia">
                 <th scope="col" className="py-2 pr-4 font-medium">
                   Команда
                 </th>
@@ -129,7 +129,7 @@ export default async function AdminTeamsPage() {
                     <td className="py-3 pr-4 font-mono text-caption tabular-nums">
                       {team.join_code}
                     </td>
-                    <td className="py-3 pr-4 text-stone">{team.captain_name}</td>
+                    <td className="py-3 pr-4 text-sepia">{team.captain_name}</td>
                     <td className="py-3 pr-4 tabular-nums">
                       {count} / {event.team_size}
                     </td>
@@ -138,12 +138,12 @@ export default async function AdminTeamsPage() {
                         {TEAM_STATUS_TEXT[team.status]}
                       </Tag>
                     </td>
-                    <td className="py-3 pr-4 text-caption text-stone">
+                    <td className="py-3 pr-4 text-caption text-sepia">
                       {team.payment_confirmed ? 'подтверждена' : '—'}
                     </td>
                     <td className="py-3 text-right tabular-nums">
                       {score?.total_points ?? 0}
-                      <span className="ml-1 text-caption text-stone">
+                      <span className="ml-1 text-caption text-sepia">
                         {pointsWord(score?.total_points ?? 0)}
                       </span>
                     </td>
@@ -158,7 +158,7 @@ export default async function AdminTeamsPage() {
       {/* ═══ Создание вручную ═══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
         <h2 className="text-subheading">Создать команду вручную</h2>
-        <p className="text-body text-stone">
+        <p className="text-body text-sepia">
           Пригодится, если команда зарегистрировалась офлайн. Лимит {event.max_teams}{' '}
           соблюдается, окно регистрации — нет.
         </p>
@@ -186,7 +186,7 @@ export default async function AdminTeamsPage() {
           )}
         </ActionForm>
 
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           Всего в команде может быть до {event.team_size} {membersWord(event.team_size)}.
         </p>
       </Card>

@@ -71,7 +71,7 @@ export default async function AdminAuditPage({
       <header>
         <Eyebrow>Прозрачность</Eyebrow>
         <h1 className="mt-2 text-heading">Журнал действий</h1>
-        <p className="mt-2 max-w-prose text-body text-stone">
+        <p className="mt-2 max-w-prose text-body text-sepia">
           Все изменения, влияющие на результат: смена статуса, правки заданий, начисления,
           решения по фотографиям. Записи не удаляются — по ним можно восстановить, почему
           результат получился именно таким.
@@ -85,7 +85,7 @@ export default async function AdminAuditPage({
           <table className="w-full min-w-[760px] border-collapse text-body">
             <caption className="sr-only">Журнал административных действий</caption>
             <thead>
-              <tr className="border-b border-hairline text-left text-caption text-stone">
+              <tr className="border-b border-hairline text-left text-caption text-sepia">
                 <th scope="col" className="py-2 pr-4 font-medium">
                   Время
                 </th>
@@ -103,7 +103,7 @@ export default async function AdminAuditPage({
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-hairline last:border-0 align-top">
-                  <td className="py-3 pr-4 text-caption tabular-nums text-stone">
+                  <td className="py-3 pr-4 text-caption tabular-nums text-sepia">
                     {new Intl.DateTimeFormat('ru-RU', {
                       day: '2-digit',
                       month: '2-digit',
@@ -113,9 +113,9 @@ export default async function AdminAuditPage({
                       timeZone: timezone,
                     }).format(new Date(row.created_at))}
                   </td>
-                  <td className="py-3 pr-4 text-caption text-stone">{row.admin_email ?? '—'}</td>
+                  <td className="py-3 pr-4 text-caption text-sepia">{row.admin_email ?? '—'}</td>
                   <td className="py-3 pr-4">{ACTION_LABEL[row.action] ?? row.action}</td>
-                  <td className="py-3 text-caption text-stone">
+                  <td className="py-3 text-caption text-sepia">
                     {row.entity_type}
                     {row.entity_id && (
                       <span className="ml-1 font-mono">{row.entity_id.slice(0, 8)}</span>
@@ -137,7 +137,7 @@ export default async function AdminAuditPage({
           ) : (
             <span />
           )}
-          <span className="text-stone">
+          <span className="text-sepia">
             {page} из {pages}
           </span>
           {page < pages ? (

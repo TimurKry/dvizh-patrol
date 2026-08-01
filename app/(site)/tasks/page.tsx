@@ -95,7 +95,7 @@ export default async function TasksPage({
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-heading md:text-heading-lg">Задания</h1>
         {!tasksHidden && (
-          <p className="text-body text-stone">
+          <p className="text-body text-sepia">
             принято {accepted} из {items.length} {tasksWord(items.length)}
           </p>
         )}

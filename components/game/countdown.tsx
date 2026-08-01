@@ -44,7 +44,7 @@ export function Countdown({ target, status }: { target: string; status: EventSta
 
   if (remaining <= 0) {
     return (
-      <p className="text-body text-stone" role="status">
+      <p className="text-body text-sepia" role="status">
         {status === 'live' ? 'Квест идёт прямо сейчас.' : 'Время старта наступило.'}
       </p>
     );
@@ -54,7 +54,7 @@ export function Countdown({ target, status }: { target: string; status: EventSta
 
   return (
     <div
-      className="inline-flex items-end gap-4 rounded-[16px] border border-hairline bg-paper-white px-5 py-3"
+      className="inline-flex items-end gap-4 rounded-[16px] border border-hairline bg-paper px-5 py-3"
       role="timer"
       aria-label={`До старта ${days} дней ${hours} часов ${minutes} минут`}
     >
@@ -66,7 +66,7 @@ export function Countdown({ target, status }: { target: string; status: EventSta
       ].map((unit) => (
         <div key={unit.label} className="flex flex-col items-center">
           <span className="text-heading-sm tabular-nums tracking-[-0.48px]">{pad(unit.value)}</span>
-          <span className="text-caption text-pebble">{unit.label}</span>
+          <span className="text-caption text-sand">{unit.label}</span>
         </div>
       ))}
     </div>

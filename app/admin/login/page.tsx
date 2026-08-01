@@ -18,7 +18,7 @@ export default async function AdminLoginPage() {
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <DotCluster size={24} />
           <h1 className="text-heading">Вход для организатора</h1>
-          <p className="text-body text-stone">
+          <p className="text-body text-sepia">
             Участникам вход сюда не нужен — они заходят по коду команды.
           </p>
         </div>

@@ -34,7 +34,7 @@ export function DotCluster({ size = 18, className }: { size?: number; className?
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-2 text-ink-black', className)}>
+    <span className={cn('inline-flex items-center gap-2 text-ink', className)}>
       <DotCluster />
       <span className="text-body font-medium tracking-[-0.02em]">Движ-Патруль</span>
     </span>

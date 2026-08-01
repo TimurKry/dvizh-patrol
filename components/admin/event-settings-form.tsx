@@ -187,7 +187,7 @@ export function EventSettingsForm({
         </Field>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper-white p-4">
+      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
         <Checkbox
           name="registrationOpen"
           defaultChecked={event.registration_open}

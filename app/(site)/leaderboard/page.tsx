@@ -20,7 +20,7 @@ function Row({ entry }: { entry: LeaderboardEntry }) {
     <li
       className={cn(
         'flex items-center gap-4 rounded-[16px] border px-4 py-3',
-        entry.isOwn ? 'border-ink-black bg-paper-white' : 'border-hairline bg-paper-white',
+        entry.isOwn ? 'border-ink bg-paper' : 'border-hairline bg-paper',
       )}
     >
       <span
@@ -33,16 +33,16 @@ function Row({ entry }: { entry: LeaderboardEntry }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-body font-medium">
           {entry.teamName}
-          {entry.isOwn && <span className="ml-2 text-caption text-stone">— ваша команда</span>}
+          {entry.isOwn && <span className="ml-2 text-caption text-sepia">— ваша команда</span>}
         </p>
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           {entry.acceptedCount} {tasksWord(entry.acceptedCount)} принято
         </p>
       </div>
 
       <span className="shrink-0 text-subheading tabular-nums">
         {entry.totalPoints}
-        <span className="ml-1 text-caption text-stone">{pointsWord(entry.totalPoints)}</span>
+        <span className="ml-1 text-caption text-sepia">{pointsWord(entry.totalPoints)}</span>
       </span>
     </li>
   );
@@ -55,7 +55,7 @@ export default async function LeaderboardPage() {
     return (
       <div className="page-well py-20">
         <h1 className="text-heading">Рейтинг</h1>
-        <p className="mt-4 text-body text-stone">Мероприятие ещё не заведено.</p>
+        <p className="mt-4 text-body text-sepia">Мероприятие ещё не заведено.</p>
       </div>
     );
   }
@@ -96,9 +96,9 @@ export default async function LeaderboardPage() {
 
               {view.entry ? (
                 <Card className="flex flex-col items-center gap-2 py-10 text-center">
-                  <p className="text-caption text-stone">Ваше место</p>
+                  <p className="text-caption text-sepia">Ваше место</p>
                   <p className="text-display tracking-[-2.32px]">{view.entry.position}</p>
-                  <p className="text-body text-stone">
+                  <p className="text-body text-sepia">
                     из {view.totalTeams} {teamsWord(view.totalTeams)}
                   </p>
                   <p className="mt-2 text-subheading">
@@ -149,7 +149,7 @@ export default async function LeaderboardPage() {
         </div>
 
         {view.mode !== 'hidden' && view.mode !== 'not_started' && (
-          <p className="mt-6 text-caption text-stone">
+          <p className="mt-6 text-caption text-sepia">
             Сортировка: сумма баллов, затем число принятых заданий, затем время последнего
             принятого задания.
           </p>

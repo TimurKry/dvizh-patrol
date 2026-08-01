@@ -1,22 +1,33 @@
 import type { Metadata, Viewport } from 'next';
-import { Literata } from 'next/font/google';
+import { Literata, Oswald } from 'next/font/google';
 import { ServiceWorkerRegistration } from '@/components/pwa/service-worker';
 import './globals.css';
 
 /**
- * Шрифт.
+ * Шрифты.
  *
- * DESIGN (1).md называет cosmosOracle, а запасным вариантом —
- * Fraunces. Fraunces не содержит кириллицы, а весь интерфейс
- * русскоязычный, поэтому взята Literata: вариативная, с полным
- * кириллическим набором и осью веса, покрывающей фирменные 350.
- * Подробности и обоснование — в docs/DESIGN_SYSTEM.md.
+ * Постер построен на двух вещах: узком плакатном гротеске в
+ * капители («LEIPZIG», «ДВИЖ ПАТРУЛЬ», «ДАТА / СТАРТ / УЧАСТИЕ»)
+ * и тёплой кремовой бумаге. Первое воспроизводит Oswald —
+ * ближайший свободный узкий гротеск с полной кириллицей.
+ *
+ * Читаемый текст остаётся серифным: Literata, вариативная,
+ * с кириллицей и осью веса, покрывающей фирменные 350.
+ * Обоснование обеих замен — в docs/DESIGN_SYSTEM.md.
  */
+const oswald = Oswald({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-oswald',
+  display: 'swap',
+  fallback: ['PT Sans Narrow', 'Arial Narrow', 'sans-serif'],
+});
+
 const literata = Literata({
   subsets: ['latin', 'cyrillic'],
   weight: ['300', '400', '500'],
   style: ['normal', 'italic'],
-  variable: '--font-fraunces',
+  variable: '--font-literata',
   display: 'swap',
   fallback: ['Georgia', 'Times New Roman', 'serif'],
 });
@@ -66,7 +77,7 @@ export const viewport: Viewport = {
   // Масштабирование не запрещаем: это требование доступности.
   maximumScale: 5,
   viewportFit: 'cover',
-  themeColor: '#f7f5f3',
+  themeColor: '#f0dbc9',
 };
 
 export default function RootLayout({
@@ -75,11 +86,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={literata.variable}>
-      <body className="min-h-dvh bg-linen-canvas text-ink-black antialiased">
+    <html lang="ru" className={`${literata.variable} ${oswald.variable}`}>
+      <body className="min-h-dvh bg-canvas text-ink antialiased">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-[12px] focus:border focus:border-ink-black focus:bg-paper-white focus:px-4 focus:py-2"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-[12px] focus:border focus:border-ink focus:bg-paper focus:px-4 focus:py-2"
         >
           Перейти к содержимому
         </a>

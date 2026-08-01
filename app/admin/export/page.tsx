@@ -52,7 +52,7 @@ export default async function AdminExportPage() {
       <header>
         <Eyebrow>Результаты</Eyebrow>
         <h1 className="mt-2 text-heading">Экспорт</h1>
-        <p className="mt-2 text-body text-stone">
+        <p className="mt-2 text-body text-sepia">
           Файлы CSV в кодировке UTF-8 с BOM — открываются в Excel и Google Таблицах без
           настройки.
         </p>
@@ -63,12 +63,12 @@ export default async function AdminExportPage() {
           <Card key={item.kind} className="flex flex-col gap-3 p-4">
             <div>
               <h2 className="text-subheading">{item.title}</h2>
-              <p className="mt-1 text-caption text-stone">{item.note}</p>
+              <p className="mt-1 text-caption text-sepia">{item.note}</p>
             </div>
             <a
               href={`/api/admin/export/${item.kind}`}
               download
-              className="mt-auto inline-flex min-h-[44px] items-center justify-center rounded-[16px] border border-hairline bg-paper-white px-4 text-caption font-medium hover:border-hairline-strong"
+              className="mt-auto inline-flex min-h-[44px] items-center justify-center rounded-[16px] border border-hairline bg-paper px-4 text-caption font-medium hover:border-hairline-strong"
             >
               Скачать CSV
             </a>
@@ -84,7 +84,7 @@ export default async function AdminExportPage() {
 
       <Card className="flex flex-col gap-3 p-5">
         <h2 className="text-subheading">Выгрузка фотографий</h2>
-        <p className="text-body text-stone">
+        <p className="text-body text-sepia">
           Все снимки лежат в приватном бакете <code>submission-images</code> по пути{' '}
           <code>events/{'{'}eventId{'}'}/teams/{'{'}teamId{'}'}/tasks/{'{'}taskId{'}'}/…</code>.
           Скачать их целиком удобнее через Supabase CLI:
@@ -94,7 +94,7 @@ export default async function AdminExportPage() {
   --recursive ss:///submission-images/events/${event.id} \\
   ./фотографии-квеста`}</code>
         </pre>
-        <p className="text-caption text-stone">
+        <p className="text-caption text-sepia">
           Архив на 500 фотографий весит около 400 МБ. Собирать его в браузере через
           serverless-функцию не стоит — упрётся в лимит времени.
         </p>

@@ -85,7 +85,7 @@ export function RegisterForm({ teamSize }: { teamSize: number }) {
         />
       </Field>
 
-      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper-white p-4">
+      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
         <Checkbox
           name="acceptRules"
           required
@@ -105,7 +105,7 @@ export function RegisterForm({ teamSize }: { teamSize: number }) {
           description="Без этого согласия участие невозможно."
         />
         {fields.acceptRules && (
-          <p className="text-caption text-ink-black" role="alert">
+          <p className="text-caption text-ink" role="alert">
             <span aria-hidden="true">! </span>
             {fields.acceptRules}
           </p>
@@ -121,7 +121,7 @@ export function RegisterForm({ teamSize }: { teamSize: number }) {
 
       <SubmitButton />
 
-      <p className="text-caption text-stone">
+      <p className="text-caption text-sepia">
         После создания команды вы получите код из шести символов. Передайте его остальным —
         всего в команде может быть до {teamSize} человек, включая вас.
       </p>

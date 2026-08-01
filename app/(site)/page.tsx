@@ -1,6 +1,12 @@
 import Image from 'next/image';
 import { ButtonLink } from '@/components/ui/button';
-import { Card, Eyebrow, SectionTitle } from '@/components/ui/surface';
+import {
+  CARD_INTERACTIVE,
+  CARD_SURFACE,
+  Card,
+  Eyebrow,
+  SectionTitle,
+} from '@/components/ui/surface';
 import { Tag } from '@/components/ui/status-badge';
 import { Notice } from '@/components/ui/feedback';
 import {
@@ -15,7 +21,9 @@ import {
 import { EVENT_STATUS_TEXT, tasksWord, teamsWord } from '@/lib/messages';
 import { Countdown } from '@/components/game/countdown';
 import { PosterHero } from '@/components/game/poster-hero';
+import { Ticker } from '@/components/game/ticker';
 import { Reveal } from '@/components/ui/reveal';
+import { CountUp } from '@/components/ui/count-up';
 
 /**
  * Главная страница.
@@ -111,19 +119,35 @@ export default async function HomePage() {
         </Reveal>
       </section>
 
+      {/* ═══ Афишная лента ═══════════════════════════════════ */}
+      <Ticker
+        className="mt-10"
+        items={[
+          event.city,
+          formatEventDate(event),
+          formatEventTime(event),
+          `${taskCount || '30+'} ${taskCount ? tasksWord(taskCount) : 'заданий'}`,
+          formatPrice(event),
+          'Свободный маршрут',
+          'После квеста — BBQ',
+        ]}
+      />
+
       {/* ═══ Постер ══════════════════════════════════════════ */}
-      <section className="page-well">
-        <div className="overflow-hidden rounded-[16px] border border-hairline bg-paper">
-          <Image
-            src="/assets/dvizh-patrol-poster.jpg"
-            alt={`Постер мероприятия «Движ-Патруль», ${event.city}, ${formatEventDate(event)}`}
-            width={1122}
-            height={1402}
-            priority
-            sizes="(min-width: 1024px) 900px, 100vw"
-            className="mx-auto h-auto w-full max-w-[900px]"
-          />
-        </div>
+      <section className="page-well mt-12">
+        <Reveal>
+          <div className="overflow-hidden rounded-[16px] border border-hairline bg-paper">
+            <Image
+              src="/assets/dvizh-patrol-poster.jpg"
+              alt={`Постер мероприятия «Движ-Патруль», ${event.city}, ${formatEventDate(event)}`}
+              width={1122}
+              height={1402}
+              priority
+              sizes="(min-width: 1024px) 900px, 100vw"
+              className="mx-auto h-auto w-full max-w-[900px]"
+            />
+          </div>
+        </Reveal>
       </section>
 
       {/* ═══ Факты ═══════════════════════════════════════════ */}
@@ -131,20 +155,43 @@ export default async function HomePage() {
         <div className="brick-rule mb-6" />
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { term: 'Дата', value: formatEventDate(event), note: formatEventDateLong(event) },
-            { term: 'Старт', value: formatEventTime(event), note: `${event.city}, ${event.timezone}` },
-            { term: 'Участие', value: formatPrice(event), note: 'с человека' },
+            {
+              term: 'Дата',
+              value: formatEventDate(event),
+              note: formatEventDateLong(event),
+              count: null,
+            },
+            {
+              term: 'Старт',
+              value: formatEventTime(event),
+              note: `${event.city}, ${event.timezone}`,
+              count: null,
+            },
+            { term: 'Участие', value: formatPrice(event), note: 'с человека', count: null },
             {
               term: 'Задания',
               value: taskCount ? String(taskCount) : '30+',
               note: taskCount ? tasksWord(taskCount) : 'готовятся',
+              // Единственная цифра здесь, которая читается как
+              // счётчик, — её и оживляем. Остальные — дата, время
+              // и цена: набегающие они выглядели бы как сбой.
+              count: taskCount || null,
             },
-          ].map((fact) => (
-            <Card key={fact.term} className="flex flex-col gap-1">
+          ].map((fact, index) => (
+            /* Обёртка появления и есть карточка: внутри <dl>
+               допустим один уровень div вокруг пары dt/dd,
+               второй сделал бы разметку невалидной. */
+            <Reveal
+              key={fact.term}
+              delay={index * 70}
+              className={`${CARD_SURFACE} ${CARD_INTERACTIVE} flex flex-col gap-1 p-4`}
+            >
               <dt className="poster-label text-caption text-sand">{fact.term}</dt>
-              <dd className="poster-figure text-heading-sm text-brick">{fact.value}</dd>
+              <dd className="poster-figure text-heading-sm text-brick">
+                {fact.count ? <CountUp value={fact.count} /> : fact.value}
+              </dd>
               <p className="text-caption text-sand">{fact.note}</p>
-            </Card>
+            </Reveal>
           ))}
         </dl>
 
@@ -163,8 +210,10 @@ export default async function HomePage() {
 
       {/* ═══ Как это работает ════════════════════════════════ */}
       <section className="page-well mt-20">
-        <Eyebrow>Механика</Eyebrow>
-        <SectionTitle className="mt-3">Четыре шага, и вы в игре</SectionTitle>
+        <Reveal>
+          <Eyebrow>Механика</Eyebrow>
+          <SectionTitle className="mt-3">Четыре шага, и вы в игре</SectionTitle>
+        </Reveal>
 
         <ol className="mt-8 grid gap-6 md:grid-cols-4">
           {[
@@ -188,20 +237,25 @@ export default async function HomePage() {
               title: 'Следите за рейтингом',
               text: 'Баллы начисляются автоматически. Таблица обновляется по ходу квеста.',
             },
-          ].map((step) => (
-            <li key={step.n} className="flex flex-col gap-2">
+          ].map((step, index) => (
+            <Reveal as="li" key={step.n} delay={index * 90} className="flex flex-col gap-2">
+              {/* Номер шага и линейка под ним — цитата нижней
+                  строки постера, только по вертикали. */}
               <span className="poster-figure text-heading-sm text-brick">{step.n}</span>
+              <span aria-hidden="true" className="h-px w-10 bg-brick-line" />
               <h3 className="text-subheading font-normal">{step.title}</h3>
               <p className="text-body text-sepia">{step.text}</p>
-            </li>
+            </Reveal>
           ))}
         </ol>
       </section>
 
       {/* ═══ Примеры заданий ═════════════════════════════════ */}
       <section className="page-well mt-20">
-        <Eyebrow>Что придётся делать</Eyebrow>
-        <SectionTitle className="mt-3">Примеры заданий</SectionTitle>
+        <Reveal>
+          <Eyebrow>Что придётся делать</Eyebrow>
+          <SectionTitle className="mt-3">Примеры заданий</SectionTitle>
+        </Reveal>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
@@ -236,8 +290,13 @@ export default async function HomePage() {
               text: 'Познакомиться с local-персонажем и сфотографироваться с его согласия.',
             },
           ].map((example, index) => (
-            <article key={`${example.title}-${index}`} className="flex flex-col gap-3">
-              <div className="overflow-hidden rounded-[12px] border border-hairline">
+            <Reveal
+              as="article"
+              key={`${example.title}-${index}`}
+              delay={(index % 3) * 90}
+              className="group flex flex-col gap-3"
+            >
+              <div className="zoom-host rounded-[12px] border border-hairline">
                 <Image
                   src={example.src}
                   alt=""
@@ -246,16 +305,18 @@ export default async function HomePage() {
                   className="aspect-4/3 w-full object-cover"
                 />
               </div>
-              <h3 className="text-subheading font-normal">{example.title}</h3>
+              <h3 className="text-subheading font-normal transition-colors group-hover:text-brick">
+                {example.title}
+              </h3>
               <p className="text-body text-sepia">{example.text}</p>
-            </article>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* ═══ Правила и BBQ ═══════════════════════════════════ */}
       <section className="page-well mt-20 grid gap-6 lg:grid-cols-2">
-        <Card className="flex flex-col gap-4 p-6">
+        <Card interactive className="flex flex-col gap-4 p-6">
           <Eyebrow>Коротко</Eyebrow>
           <h2 className="text-heading-sm">Правила</h2>
           <ul className="flex flex-col gap-3 text-body text-sepia">
@@ -279,7 +340,7 @@ export default async function HomePage() {
           </ButtonLink>
         </Card>
 
-        <Card className="flex flex-col gap-4 p-6">
+        <Card interactive className="flex flex-col gap-4 p-6">
           <Eyebrow>После финиша</Eyebrow>
           <h2 className="text-heading-sm">BBQ</h2>
           <p className="text-body text-sepia">

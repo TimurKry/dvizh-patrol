@@ -92,9 +92,9 @@ export function NavShell({
               <Link
                 href={action.href}
                 className={cn(
-                  'hidden items-center rounded-[9999px] border border-ink bg-ink',
+                  'lift hidden items-center rounded-[9999px] border border-ink bg-ink',
                   'px-4 py-2 text-caption font-medium text-paper sm:inline-flex',
-                  '',
+                  'hover:border-brick hover:bg-brick',
                 )}
               >
                 {action.label}
@@ -137,7 +137,7 @@ export function NavShell({
         {open && (
           <div
             id="nav-mobile-menu"
-            className="mt-2 rounded-[16px] border border-hairline bg-paper p-2 md:hidden"
+            className="anim-rise mt-2 rounded-[16px] border border-hairline bg-paper p-2 md:hidden"
           >
             <ul className="flex flex-col">
               {links.map((link) => (

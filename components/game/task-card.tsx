@@ -14,7 +14,7 @@ import { cn } from '@/lib/cn';
 
 const STATE_LABEL: Record<TaskWithState['state'], { text: string; icon: string }> = {
   available: { text: 'Доступно', icon: '○' },
-  in_review: { text: 'На проверке', icon: '◐' },
+  in_review: { text: 'На проверке', icon: '»' },
   accepted: { text: 'Принято', icon: '✓' },
   rejected: { text: 'Отклонено', icon: '×' },
   attempts_exhausted: { text: 'Попытки кончились', icon: '−' },
@@ -28,12 +28,12 @@ export function TaskCard({ item }: { item: TaskWithState }) {
     <Link
       href={`/tasks/${task.id}`}
       className={cn(
-        'group flex flex-col gap-3 rounded-[16px] border bg-paper p-4',
-        'transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
-        state === 'accepted' ? 'border-ink' : 'border-hairline hover:border-hairline-strong',
+        'lift group flex flex-col gap-3 rounded-[16px] border bg-paper p-4',
+        'focus-visible:outline-2 focus-visible:outline-offset-2',
+        state === 'accepted' ? 'border-ink' : 'border-hairline hover:border-brick-line',
       )}
     >
-      <div className="relative overflow-hidden rounded-[12px] bg-ink-wash">
+      <div className="zoom-host relative rounded-[12px] bg-ink-wash">
         {referenceImageUrl ? (
           /* Эталон приходит по подписанной ссылке с ограниченным
              сроком, оптимизатор next/image её кэшировать не должен. */
@@ -56,7 +56,9 @@ export function TaskCard({ item }: { item: TaskWithState }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-caption text-sand">Задание {task.number}</p>
-          <h3 className="mt-1 text-subheading font-normal">{task.title}</h3>
+          <h3 className="mt-1 text-subheading font-normal transition-colors group-hover:text-brick">
+            {task.title}
+          </h3>
         </div>
         <span className="shrink-0 text-subheading tabular-nums">
           {task.points}
@@ -81,7 +83,12 @@ export function TaskCard({ item }: { item: TaskWithState }) {
                   : 'border-hairline text-sand',
           )}
         >
-          <span aria-hidden="true">{label.icon}</span>
+          {/* «На проверке» — единственное живое состояние: точка
+              пульсирует, чтобы было видно, что процесс идёт, и
+              команда не жала бы «отправить» ещё раз. */}
+          <span aria-hidden="true" className={cn(state === 'in_review' && 'anim-tick')}>
+            {label.icon}
+          </span>
           {label.text}
         </span>
 
@@ -129,7 +136,7 @@ export function SubmissionRow({
   return (
     <Link
       href={href}
-      className="flex items-center gap-4 rounded-[16px] border border-hairline bg-paper p-3 hover:border-hairline-strong"
+      className="lift flex items-center gap-4 rounded-[16px] border border-hairline bg-paper p-3 hover:border-brick-line"
     >
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[12px] bg-ink-wash">
         {previewUrl ? (

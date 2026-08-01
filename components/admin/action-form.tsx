@@ -3,6 +3,7 @@
 import { useActionState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Notice } from '@/components/ui/feedback';
+import { FieldErrorsProvider } from '@/components/ui/field-errors';
 import type { AdminActionState } from '@/actions/admin';
 
 const INITIAL: AdminActionState = { ok: false };
@@ -70,6 +71,11 @@ export function ActionButton({
 /**
  * Форма с произвольными полями и общим блоком результата.
  * Используется там, где кроме кнопки нужны ещё поля ввода.
+ *
+ * `children` — обычная разметка, а не функция: страницы админки
+ * серверные, и функцию через границу RSC не передать. Ошибки
+ * отдельных полей разъезжаются по `Field` через контекст —
+ * см. components/ui/field-errors.
  */
 export function ActionForm({
   action,
@@ -79,7 +85,7 @@ export function ActionForm({
   variant = 'primary',
 }: {
   action: Action;
-  children: (fields: Record<string, string>) => ReactNode;
+  children: ReactNode;
   submitLabel: string;
   className?: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -97,7 +103,7 @@ export function ActionForm({
         </Notice>
       )}
 
-      {children(state.fields ?? {})}
+      <FieldErrorsProvider errors={state.fields ?? {}}>{children}</FieldErrorsProvider>
 
       <Button type="submit" variant={variant} disabled={pending}>
         {pending ? 'Сохраняем…' : submitLabel}

@@ -168,22 +168,18 @@ export default async function AdminTeamsPage() {
           submitLabel="Создать команду"
           className="flex flex-col gap-4"
         >
-          {(fields) => (
-            <>
-              <input type="hidden" name="eventId" value={event.id} />
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Название" htmlFor="new-name" required error={fields.name}>
-                  <TextInput id="new-name" name="name" required maxLength={60} />
-                </Field>
-                <Field label="Капитан" htmlFor="new-captain" required error={fields.captainName}>
-                  <TextInput id="new-captain" name="captainName" required maxLength={60} />
-                </Field>
-                <Field label="Контакт" htmlFor="new-contact" error={fields.contact}>
-                  <TextInput id="new-contact" name="contact" maxLength={200} />
-                </Field>
-              </div>
-            </>
-          )}
+          <input type="hidden" name="eventId" value={event.id} />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Название" htmlFor="new-name" name="name" required>
+              <TextInput id="new-name" name="name" required maxLength={60} />
+            </Field>
+            <Field label="Капитан" htmlFor="new-captain" name="captainName" required>
+              <TextInput id="new-captain" name="captainName" required maxLength={60} />
+            </Field>
+            <Field label="Контакт" htmlFor="new-contact" name="contact">
+              <TextInput id="new-contact" name="contact" maxLength={200} />
+            </Field>
+          </div>
         </ActionForm>
 
         <p className="text-caption text-sepia">

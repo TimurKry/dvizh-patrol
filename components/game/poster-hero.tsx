@@ -33,8 +33,8 @@ export interface PosterHeroProps {
 
 /** Плитки коллажа. Наклон задаётся переменной для анимации покачивания. */
 const COLLAGE = [
-  { src: '/assets/tile-roofs.webp', className: 'left-[1%] top-[13%] w-16 lg:w-24', tilt: '-6deg', delay: '0s' },
-  { src: '/assets/tile-tower.webp', className: 'right-[2%] top-[9%] w-14 lg:w-20', tilt: '4deg', delay: '1.4s' },
+  { src: '/assets/tile-roofs.webp', className: 'left-[1%] top-[24%] w-16 lg:w-24', tilt: '-6deg', delay: '0s' },
+  { src: '/assets/tile-tower.webp', className: 'right-[2%] top-[20%] w-14 lg:w-20', tilt: '4deg', delay: '1.4s' },
   { src: '/assets/tile-facade.webp', className: 'left-[3%] top-[42%] w-14 lg:w-20', tilt: '3deg', delay: '2.6s' },
   { src: '/assets/tile-square.webp', className: 'right-[1%] top-[38%] w-16 lg:w-24', tilt: '-4deg', delay: '3.8s' },
 ];
@@ -56,7 +56,7 @@ export function PosterHero({
 
   return (
     <section className="page-well pt-4">
-      <div className="relative overflow-hidden rounded-[16px] border border-brick-line bg-canvas-deep">
+      <div className="paper-grain relative overflow-hidden rounded-[16px] border border-brick-line bg-canvas-deep">
         {/* ═══ Фотография города ═══════════════════════════════
             На постере дом вырастает снизу, а не заливает лист
             целиком — здесь так же: полоса прижата к нижнему краю
@@ -101,6 +101,13 @@ export function PosterHero({
 
         {/* ═══ Содержимое ══════════════════════════════════════ */}
         <div className="relative px-5 pt-5 pb-6 md:px-10 md:pt-7 md:pb-9">
+          {/* Верхняя линейка постера с ромбом посередине. */}
+          <div className="anim-fade relative mb-5 flex items-center" aria-hidden="true">
+            <span className="h-px flex-1 bg-brick-line" />
+            <span className="px-3 text-[10px] leading-none text-brick">◆</span>
+            <span className="h-px flex-1 bg-brick-line" />
+          </div>
+
           {/* Служебная строка постера */}
           <div className="anim-fade flex items-start justify-between gap-4">
             <span className="poster-label text-caption text-brick">Движ · Патруль</span>

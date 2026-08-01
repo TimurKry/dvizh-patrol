@@ -47,11 +47,39 @@ const SIZES: Record<Size, string> = {
   lg: 'text-subheading px-8 py-5 rounded-[16px] min-h-[52px] tracking-[0.06em]',
 };
 
+/**
+ * Кнопка чуть приподнимается под курсором и проседает при
+ * нажатии. Двигается только transform, поэтому соседние элементы
+ * стоят на месте, а браузер не пересчитывает раскладку.
+ * `disabled:transform-none` — выключенная кнопка не должна
+ * реагировать вовсе, иначе она выглядит нажимаемой.
+ */
 const BASE =
-  'inline-flex items-center justify-center gap-2 select-none uppercase ' +
-  'font-poster font-medium transition-colors duration-150 ' +
+  'relative inline-flex items-center justify-center gap-2 select-none uppercase overflow-hidden ' +
+  'font-poster font-medium ' +
+  'transition-[color,background-color,border-color,transform] duration-200 ease-out ' +
+  'hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.985] ' +
   'disabled:cursor-not-allowed disabled:opacity-60 ' +
+  'disabled:hover:translate-y-0 disabled:active:scale-100 ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brick';
+
+/**
+ * Блик по кирпичной заливке. Живёт отдельным слоем, чтобы не
+ * трогать текст кнопки; `group-hover` запускает его один раз за
+ * наведение, а не по кругу.
+ */
+function Sheen() {
+  return (
+    <span
+      aria-hidden="true"
+      className={
+        'pointer-events-none absolute inset-y-0 -left-full w-1/3 ' +
+        'bg-[linear-gradient(90deg,transparent,rgb(250_239_229/0.28),transparent)] ' +
+        'group-hover:animate-[dp-sheen_0.9s_ease-out] motion-reduce:hidden'
+      }
+    />
+  );
+}
 
 interface CommonProps {
   variant?: Variant;
@@ -71,10 +99,11 @@ export function Button({
 }: CommonProps & Omit<ComponentProps<'button'>, 'className' | 'children'>) {
   return (
     <button
-      className={cn(BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className)}
+      className={cn('group', BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className)}
       {...rest}
     >
-      {children}
+      {variant === 'primary' && <Sheen />}
+      <span className="relative">{children}</span>
     </button>
   );
 }
@@ -89,10 +118,11 @@ export function ButtonLink({
 }: CommonProps & Omit<ComponentProps<typeof Link>, 'className' | 'children'>) {
   return (
     <Link
-      className={cn(BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className)}
+      className={cn('group', BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className)}
       {...rest}
     >
-      {children}
+      {variant === 'primary' && <Sheen />}
+      <span className="relative">{children}</span>
     </Link>
   );
 }

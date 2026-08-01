@@ -6,6 +6,8 @@ import { DotCluster, Wordmark } from '@/components/ui/logo';
 import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { Card, Divider, Eyebrow, SectionTitle } from '@/components/ui/surface';
 import { PosterHero } from '@/components/game/poster-hero';
+import { Ticker } from '@/components/game/ticker';
+import { CountUp } from '@/components/ui/count-up';
 import { SUBMISSION_STATUSES } from '@/types/database';
 import { SUBMISSION_STATUS_TEXT } from '@/lib/messages';
 
@@ -100,6 +102,41 @@ export default function DesignSystemPage() {
             </>
           }
         />
+      </Block>
+
+      {/* ═══ Движение ═══════════════════════════════════════ */}
+      <Block title="Движение">
+        <p className="max-w-prose text-body text-sepia">
+          Анимируются только <code className="font-mono text-caption">transform</code> и{' '}
+          <code className="font-mono text-caption">opacity</code>: браузер считает их на
+          композиторе и не пересчитывает раскладку. При включённом «меньше движения» всё
+          замирает в конечном состоянии.
+        </p>
+
+        <Ticker
+          items={['Leipzig', '15.08', '15:00', '30 заданий', '15 €', 'Свободный маршрут']}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card interactive className="flex flex-col gap-1">
+            <span className="poster-label text-caption text-sand">Подъём</span>
+            <p className="text-body text-sepia">Наведите — карточка приподнимется.</p>
+          </Card>
+          <Card interactive className="flex flex-col gap-1">
+            <span className="poster-label text-caption text-sand">Счётчик</span>
+            <p className="poster-figure text-heading text-brick">
+              <CountUp value={50} />
+            </p>
+          </Card>
+          <Card className="zoom-host p-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/tile-roofs.webp"
+              alt=""
+              className="aspect-4/3 w-full rounded-[16px] object-cover"
+            />
+          </Card>
+        </div>
       </Block>
 
       {/* ═══ Цвет ═══════════════════════════════════════════ */}

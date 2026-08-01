@@ -2,6 +2,7 @@
 
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { useFieldError } from '@/components/ui/field-errors';
 
 /**
  * Поля ввода.
@@ -23,17 +24,24 @@ export function Field({
   label,
   hint,
   error,
+  name,
   required,
   children,
   htmlFor,
 }: {
   label: string;
   hint?: ReactNode;
+  /** Явная ошибка. Если не задана — берётся из контекста по `name`. */
   error?: string;
+  /** Имя поля в FormData: по нему ищется ошибка серверного действия. */
+  name?: string;
   required?: boolean;
   children: ReactNode;
   htmlFor?: string;
 }) {
+  const contextError = useFieldError(name);
+  const shownError = error ?? contextError;
+
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={htmlFor} className="text-caption font-medium text-ink">
@@ -46,10 +54,10 @@ export function Field({
         )}
       </label>
       {children}
-      {error ? (
+      {shownError ? (
         <p className="text-caption text-ink" role="alert">
           <span aria-hidden="true">! </span>
-          {error}
+          {shownError}
         </p>
       ) : hint ? (
         <p className="text-caption text-sepia">{hint}</p>

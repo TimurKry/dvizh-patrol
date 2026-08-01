@@ -2,6 +2,15 @@ import type { ElementType, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 /**
+ * Классы поверхности отдельно от компонента: изредка карточку
+ * нужно нарисовать на чужом элементе — например, когда обёртка
+ * уже создана `Reveal`, а лишний div сломал бы разметку
+ * списка определений.
+ */
+export const CARD_SURFACE = 'bg-paper border border-hairline rounded-[16px]';
+export const CARD_INTERACTIVE = 'lift hover:border-brick-line';
+
+/**
  * Поверхность первого уровня: Paper White на Linen Canvas.
  * Глубина в системе передаётся контрастом поверхностей и
  * волосяной рамкой — не тенью.
@@ -11,17 +20,25 @@ export function Card({
   className,
   as: Tag = 'div',
   padded = true,
+  interactive = false,
 }: {
   children: ReactNode;
   className?: string;
   as?: ElementType;
   padded?: boolean;
+  /**
+   * Карточка приподнимается под курсором и теплеет рамкой.
+   * Включается явно: у неподвижной справки реакция на наведение
+   * означала бы, что по ней можно кликнуть.
+   */
+  interactive?: boolean;
 }) {
   return (
     <Tag
       className={cn(
-        'bg-paper border border-hairline rounded-[16px]',
+        CARD_SURFACE,
         padded && 'p-4',
+        interactive && CARD_INTERACTIVE,
         className,
       )}
     >

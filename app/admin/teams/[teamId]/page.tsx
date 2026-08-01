@@ -169,15 +169,11 @@ export default async function AdminTeamPage({
           variant="secondary"
           className="flex flex-col gap-3 border-t border-hairline pt-4"
         >
-          {(fields) => (
-            <>
-              <input type="hidden" name="teamId" value={team.id} />
-              <input type="hidden" name="action" value="rename" />
-              <Field label="Новое название" htmlFor="team-name" error={fields.name}>
-                <TextInput id="team-name" name="name" defaultValue={team.name} maxLength={60} />
-              </Field>
-            </>
-          )}
+          <input type="hidden" name="teamId" value={team.id} />
+          <input type="hidden" name="action" value="rename" />
+          <Field label="Новое название" htmlFor="team-name" name="name">
+            <TextInput id="team-name" name="name" defaultValue={team.name} maxLength={60} />
+          </Field>
         </ActionForm>
       </Card>
 
@@ -198,31 +194,27 @@ export default async function AdminTeamPage({
           submitLabel="Начислить"
           className="flex flex-col gap-4"
         >
-          {(fields) => (
-            <>
-              <input type="hidden" name="teamId" value={team.id} />
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Тип" htmlFor="tx-type" error={fields.transactionType}>
-                  <Select id="tx-type" name="transactionType" defaultValue="bonus">
-                    <option value="bonus">Бонус</option>
-                    <option value="penalty">Штраф</option>
-                    <option value="manual_adjustment">Корректировка</option>
-                  </Select>
-                </Field>
-                <Field
-                  label="Баллы"
-                  htmlFor="tx-points"
-                  error={fields.points}
-                  hint="Для штрафа знак поставится сам."
-                >
-                  <TextInput id="tx-points" name="points" type="number" defaultValue="10" />
-                </Field>
-                <Field label="Причина" htmlFor="tx-reason" required error={fields.reason}>
-                  <TextInput id="tx-reason" name="reason" required maxLength={300} />
-                </Field>
-              </div>
-            </>
-          )}
+          <input type="hidden" name="teamId" value={team.id} />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Тип" htmlFor="tx-type" name="transactionType">
+              <Select id="tx-type" name="transactionType" defaultValue="bonus">
+                <option value="bonus">Бонус</option>
+                <option value="penalty">Штраф</option>
+                <option value="manual_adjustment">Корректировка</option>
+              </Select>
+            </Field>
+            <Field
+              label="Баллы"
+              htmlFor="tx-points"
+              name="points"
+              hint="Для штрафа знак поставится сам."
+            >
+              <TextInput id="tx-points" name="points" type="number" defaultValue="10" />
+            </Field>
+            <Field label="Причина" htmlFor="tx-reason" name="reason" required>
+              <TextInput id="tx-reason" name="reason" required maxLength={300} />
+            </Field>
+          </div>
         </ActionForm>
 
         {transactions.length > 0 && (

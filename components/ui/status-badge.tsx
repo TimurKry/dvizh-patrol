@@ -54,7 +54,19 @@ export function StatusBadge({
       )}
       aria-label={`Статус: ${presentation.label}. ${presentation.hint}`}
     >
-      {showIcon && <span aria-hidden="true">{presentation.icon}</span>}
+      {/* Статусы «в работе» пульсируют: по неподвижному значку
+          не понять, идёт ли проверка вообще. */}
+      {showIcon && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            (status === 'checking' || status === 'uploading' || status === 'pending') &&
+              'anim-tick',
+          )}
+        >
+          {presentation.icon}
+        </span>
+      )}
       {presentation.label}
     </span>
   );

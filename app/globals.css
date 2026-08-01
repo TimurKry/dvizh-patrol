@@ -425,6 +425,29 @@
     }
   }
 
+  /* Бегущая строка выходных данных, как афишная лента. */
+  @keyframes dp-marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      /* Лента продублирована, поэтому уезжаем ровно на половину:
+         в этот момент вторая копия стоит там же, где стояла
+         первая, и стык не виден. */
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  /* Блик по кирпичной кнопке при наведении. */
+  @keyframes dp-sheen {
+    from {
+      transform: translate3d(-120%, 0, 0) skewX(-18deg);
+    }
+    to {
+      transform: translate3d(320%, 0, 0) skewX(-18deg);
+    }
+  }
+
   /* Пульс секунд в обратном отсчёте. */
   @keyframes dp-tick {
     0%,
@@ -465,6 +488,75 @@
     animation: dp-tick 1s steps(2, end) infinite;
   }
 
+  .anim-marquee {
+    animation: dp-marquee 38s linear infinite;
+  }
+
+  /* Зернистость бумаги. Постер напечатан, а не отрисован в
+     вакууме: лёгкий шум убирает «цифровую» стерильность
+     сплошной заливки. SVG-фильтр вместо картинки — ничего не
+     грузится по сети. */
+  .paper-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.28;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  /* Подъём при наведении. Только transform — раскладка не едет. */
+  .lift {
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
+      border-color 0.25s ease;
+  }
+
+  .lift:hover {
+    transform: translate3d(0, -3px, 0);
+  }
+
+  .lift:active {
+    transform: translate3d(0, -1px, 0);
+  }
+
+  /* Подчёркивание, выезжающее из-под ссылки. */
+  .underline-slide {
+    position: relative;
+  }
+
+  .underline-slide::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  .underline-slide:hover::after,
+  .underline-slide[data-active='true']::after {
+    transform: scaleX(1);
+  }
+
+  /* Наезд на фотографию внутри карточки-примера. */
+  .zoom-host {
+    overflow: hidden;
+  }
+
+  .zoom-host img {
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  .zoom-host:hover img {
+    transform: scale(1.06);
+  }
+
   /* Задержки для ступенчатого выхода. */
   .delay-1 { animation-delay: 0.08s; }
   .delay-2 { animation-delay: 0.16s; }
@@ -503,13 +595,27 @@
 
   .anim-kenburns,
   .anim-float,
-  .anim-tick {
+  .anim-tick,
+  .anim-marquee {
     animation: none !important;
   }
 
   .reveal {
     opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
+  }
+
+  .lift,
+  .lift:hover,
+  .lift:active,
+  .zoom-host img,
+  .zoom-host:hover img {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .underline-slide::after {
     transition: none !important;
   }
 }

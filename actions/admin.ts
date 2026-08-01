@@ -1,0 +1,963 @@
+'use server';
+
+import { randomBytes } from 'node:crypto';
+import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { audit, requireAdmin } from '@/lib/auth/admin';
+import { runValidationWorker } from '@/lib/ai/worker';
+import { env } from '@/lib/env';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { supabaseServer } from '@/lib/supabase/server';
+import { callRpc, supabaseAdmin } from '@/lib/supabase/admin';
+import { revokeAllTeamSessions } from '@/lib/session/team-session';
+import {
+  adminLoginSchema,
+  eventSettingsSchema,
+  fieldErrors,
+  reviewDecisionSchema,
+  scoreAdjustmentSchema,
+  taskSchema,
+} from '@/lib/validation/schemas';
+import type { EventStatus, LeaderboardMode } from '@/types/database';
+
+/**
+ * Действия администратора.
+ *
+ * Каждое начинается с requireAdmin и заканчивается записью в
+ * журнал. Проверка прав в компоненте не считается: серверное
+ * действие вызывается по своему адресу и обязано защищаться само.
+ */
+
+export interface AdminActionState {
+  ok: boolean;
+  error?: string;
+  message?: string;
+  fields?: Record<string, string>;
+}
+
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generateJoinCodes(count = 5): string[] {
+  return Array.from({ length: count }, () => {
+    const bytes = randomBytes(6);
+    let code = '';
+    for (let i = 0; i < 6; i += 1) code += CODE_ALPHABET[bytes[i]! % CODE_ALPHABET.length];
+    return code;
+  });
+}
+
+// ═══ Вход ══════════════════════════════════════════════════════
+
+export async function adminLoginAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const parsed = adminLoginSchema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+  }
+
+  const limit = await checkRateLimit('adminLogin');
+  if (!limit.allowed) {
+    return { ok: false, error: 'rate_limited', message: 'Слишком много попыток. Подождите.' };
+  }
+
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (error || !data.user) {
+    // Не подсказываем, что именно неверно.
+    return { ok: false, message: 'Неверный email или пароль.' };
+  }
+
+  // Аккаунт есть, но прав нет — сессию сразу закрываем.
+  const { data: adminRow } = await supabaseAdmin()
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+
+  if (!adminRow) {
+    await supabase.auth.signOut();
+    return { ok: false, message: 'У этого аккаунта нет прав администратора.' };
+  }
+
+  await audit({
+    admin: { userId: data.user.id, email: parsed.data.email, name: null },
+    action: 'admin_login',
+    entityType: 'admin',
+    entityId: data.user.id,
+  });
+
+  redirect('/admin');
+}
+
+export async function adminLogoutAction(): Promise<void> {
+  const supabase = await supabaseServer();
+  await supabase.auth.signOut();
+  redirect('/admin/login');
+}
+
+// ═══ Мероприятие ═══════════════════════════════════════════════
+
+export async function updateEventAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+
+  const parsed = eventSettingsSchema.safeParse({
+    title: formData.get('title'),
+    subtitle: formData.get('subtitle') ?? '',
+    city: formData.get('city'),
+    timezone: formData.get('timezone'),
+    startsAt: formData.get('startsAt'),
+    priceCents: Math.round(Number(formData.get('price') ?? 0) * 100),
+    maxTeams: Number(formData.get('maxTeams') ?? 10),
+    teamSize: Number(formData.get('teamSize') ?? 4),
+    registrationOpen: formData.get('registrationOpen') === 'on',
+    leaderboardMode: formData.get('leaderboardMode'),
+    aiValidationEnabled: formData.get('aiValidationEnabled') === 'on',
+    aiAcceptThreshold: Number(formData.get('aiAcceptThreshold') ?? 0.88),
+    photoRetentionDays: formData.get('photoRetentionDays')
+      ? Number(formData.get('photoRetentionDays'))
+      : null,
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+  }
+
+  const db = supabaseAdmin();
+  const { data: before } = await db.from('events').select('*').eq('id', eventId).maybeSingle();
+
+  if (!before) return { ok: false, message: 'Мероприятие не найдено.' };
+
+  // Лимит нельзя опустить ниже числа уже зарегистрированных команд:
+  // иначе кто-то оказался бы «сверх лимита» задним числом.
+  const { count } = await db
+    .from('teams')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .neq('status', 'cancelled');
+
+  if ((count ?? 0) > parsed.data.maxTeams) {
+    return {
+      ok: false,
+      message: `Уже зарегистрировано ${count} команд — лимит нельзя опустить до ${parsed.data.maxTeams}.`,
+    };
+  }
+
+  const { error } = await db
+    .from('events')
+    .update({
+      title: parsed.data.title,
+      subtitle: parsed.data.subtitle || null,
+      city: parsed.data.city,
+      timezone: parsed.data.timezone,
+      starts_at: new Date(parsed.data.startsAt).toISOString(),
+      price_cents: parsed.data.priceCents,
+      max_teams: parsed.data.maxTeams,
+      team_size: parsed.data.teamSize,
+      registration_open: parsed.data.registrationOpen,
+      leaderboard_mode: parsed.data.leaderboardMode,
+      ai_validation_enabled: parsed.data.aiValidationEnabled,
+      ai_accept_threshold: parsed.data.aiAcceptThreshold,
+      photo_retention_days: parsed.data.photoRetentionDays,
+    })
+    .eq('id', eventId);
+
+  if (error) return { ok: false, message: 'Не удалось сохранить настройки.' };
+
+  const { data: after } = await db.from('events').select('*').eq('id', eventId).maybeSingle();
+
+  await audit({
+    admin,
+    action: 'event_updated',
+    entityType: 'event',
+    entityId: eventId,
+    before,
+    after,
+  });
+
+  revalidatePath('/admin/event');
+  revalidatePath('/');
+  return { ok: true, message: 'Настройки сохранены.' };
+}
+
+const ALLOWED_TRANSITIONS: Record<EventStatus, EventStatus[]> = {
+  draft: ['registration'],
+  registration: ['draft', 'live'],
+  live: ['paused', 'finished'],
+  paused: ['live', 'finished'],
+  finished: ['archived', 'live'],
+  archived: [],
+};
+
+export async function changeEventStatusAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+  const next = String(formData.get('status') ?? '') as EventStatus;
+
+  const db = supabaseAdmin();
+  const { data: before } = await db.from('events').select('*').eq('id', eventId).maybeSingle();
+  if (!before) return { ok: false, message: 'Мероприятие не найдено.' };
+
+  const current = before.status as EventStatus;
+  if (!ALLOWED_TRANSITIONS[current]?.includes(next)) {
+    return {
+      ok: false,
+      message: `Переход «${current}» → «${next}» не разрешён.`,
+    };
+  }
+
+  const patch: Record<string, unknown> = { status: next };
+  // Запуск квеста закрывает регистрацию: добирать команды на
+  // ходу — почти всегда ошибка организатора.
+  if (next === 'live' && current === 'registration') patch.registration_open = false;
+
+  const { error } = await db.from('events').update(patch).eq('id', eventId);
+  if (error) return { ok: false, message: 'Не удалось сменить статус.' };
+
+  await audit({
+    admin,
+    action: `event_status_${next}`,
+    entityType: 'event',
+    entityId: eventId,
+    before: { status: current },
+    after: { status: next },
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/event');
+  revalidatePath('/');
+  return { ok: true, message: `Статус изменён на «${next}».` };
+}
+
+// ═══ Рейтинг ═══════════════════════════════════════════════════
+
+export async function setLeaderboardModeAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+  const mode = String(formData.get('mode') ?? '') as LeaderboardMode;
+
+  const result =
+    mode === 'frozen'
+      ? await callRpc<{ rows: number }>('freeze_leaderboard', { p_event_id: eventId })
+      : await callRpc<{ mode: string }>('unfreeze_leaderboard', {
+          p_event_id: eventId,
+          p_mode: mode,
+        });
+
+  if (!result.ok) return { ok: false, message: 'Не удалось изменить режим рейтинга.' };
+
+  await audit({
+    admin,
+    action: 'leaderboard_mode_changed',
+    entityType: 'event',
+    entityId: eventId,
+    after: { mode },
+  });
+
+  revalidatePath('/admin/leaderboard');
+  revalidatePath('/leaderboard');
+  return { ok: true, message: 'Режим рейтинга обновлён.' };
+}
+
+// ═══ Команды ═══════════════════════════════════════════════════
+
+export async function updateTeamAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const teamId = String(formData.get('teamId') ?? '');
+  const action = String(formData.get('action') ?? '');
+
+  const db = supabaseAdmin();
+  const { data: before } = await db.from('teams').select('*').eq('id', teamId).maybeSingle();
+  if (!before) return { ok: false, message: 'Команда не найдена.' };
+
+  let patch: Record<string, unknown> = {};
+  let message = '';
+
+  switch (action) {
+    case 'confirm_payment':
+      patch = { payment_confirmed: true, status: 'confirmed' };
+      message = 'Оплата подтверждена.';
+      break;
+    case 'revoke_payment':
+      patch = { payment_confirmed: false, status: 'pending' };
+      message = 'Подтверждение оплаты снято.';
+      break;
+    case 'cancel':
+      patch = { status: 'cancelled' };
+      message = 'Регистрация отменена, место освободилось.';
+      break;
+    case 'restore':
+      patch = { status: 'pending' };
+      message = 'Команда возвращена.';
+      break;
+    case 'rename': {
+      const name = String(formData.get('name') ?? '').trim();
+      if (name.length < 2) return { ok: false, message: 'Слишком короткое название.' };
+      patch = { name };
+      message = 'Название изменено.';
+      break;
+    }
+    case 'regenerate_code': {
+      const codes = generateJoinCodes(1);
+      patch = { join_code: codes[0] };
+      message = `Новый код: ${codes[0]}`;
+      break;
+    }
+    case 'reset_sessions':
+      await revokeAllTeamSessions(teamId);
+      await audit({
+        admin,
+        action: 'team_sessions_reset',
+        entityType: 'team',
+        entityId: teamId,
+      });
+      revalidatePath(`/admin/teams/${teamId}`);
+      return { ok: true, message: 'Все сессии команды отозваны.' };
+    default:
+      return { ok: false, message: 'Неизвестное действие.' };
+  }
+
+  // Возврат команды не должен пробивать лимит мероприятия.
+  if (action === 'restore') {
+    const { data: event } = await db
+      .from('events')
+      .select('max_teams')
+      .eq('id', before.event_id)
+      .maybeSingle();
+    const { count } = await db
+      .from('teams')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', before.event_id)
+      .neq('status', 'cancelled');
+
+    if (event && (count ?? 0) >= event.max_teams) {
+      return { ok: false, message: 'Все места заняты — сначала освободите одно.' };
+    }
+  }
+
+  const { error } = await db.from('teams').update(patch).eq('id', teamId);
+  if (error) {
+    return {
+      ok: false,
+      message:
+        error.code === '23505'
+          ? 'Такое название команды уже занято.'
+          : 'Не удалось сохранить изменения.',
+    };
+  }
+
+  await audit({
+    admin,
+    action: `team_${action}`,
+    entityType: 'team',
+    entityId: teamId,
+    before,
+    after: patch,
+  });
+
+  revalidatePath('/admin/teams');
+  revalidatePath(`/admin/teams/${teamId}`);
+  return { ok: true, message };
+}
+
+export async function createTeamAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+
+  const eventId = String(formData.get('eventId') ?? '');
+  const name = String(formData.get('name') ?? '').trim();
+  const captain = String(formData.get('captainName') ?? '').trim();
+  const contact = String(formData.get('contact') ?? '').trim();
+
+  if (name.length < 2 || captain.length < 2) {
+    return { ok: false, message: 'Укажите название команды и имя капитана.' };
+  }
+
+  // Сессия здесь никому не нужна, но функция её создаёт — кладём
+  // случайный хэш, который никому не соответствует.
+  const throwawayHash = randomBytes(32).toString('hex');
+
+  const result = await callRpc<{ teamId: string; joinCode: string }>('register_team', {
+    p_event_id: eventId,
+    p_team_name: name,
+    p_captain_name: captain,
+    p_contact: contact || null,
+    p_candidate_codes: generateJoinCodes(),
+    p_session_token_hash: throwawayHash,
+    p_session_ttl_hours: env().TEAM_SESSION_TTL_HOURS,
+    p_policy_version: env().POLICY_VERSION,
+    p_social_consent: false,
+    p_user_agent: 'admin',
+    // Организатор заводит команду вручную и вне окна регистрации,
+    // но лимит max_teams всё равно соблюдается.
+    p_bypass_limits: true,
+  });
+
+  if (!result.ok) {
+    const messages: Record<string, string> = {
+      event_full: 'Все места заняты.',
+      team_name_taken: 'Команда с таким названием уже есть.',
+    };
+    return { ok: false, message: messages[result.error] ?? 'Не удалось создать команду.' };
+  }
+
+  await audit({
+    admin,
+    action: 'team_created_by_admin',
+    entityType: 'team',
+    entityId: result.data.teamId,
+    after: { name, captain },
+  });
+
+  revalidatePath('/admin/teams');
+  return { ok: true, message: `Команда создана. Код: ${result.data.joinCode}` };
+}
+
+export async function adjustScoreAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+
+  const parsed = scoreAdjustmentSchema.safeParse({
+    teamId: formData.get('teamId'),
+    points: Number(formData.get('points') ?? 0),
+    transactionType: formData.get('transactionType'),
+    reason: formData.get('reason'),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+  }
+
+  // Штраф — это всегда минус, бонус — всегда плюс. Знак
+  // выводим из типа, чтобы нельзя было «оштрафовать на +50».
+  let points = parsed.data.points;
+  if (parsed.data.transactionType === 'penalty') points = -Math.abs(points);
+  if (parsed.data.transactionType === 'bonus') points = Math.abs(points);
+
+  const result = await callRpc<{ transactionId: string }>('adjust_team_score', {
+    p_team_id: parsed.data.teamId,
+    p_points: points,
+    p_type: parsed.data.transactionType,
+    p_reason: parsed.data.reason,
+    p_admin_id: admin.userId,
+  });
+
+  if (!result.ok) return { ok: false, message: 'Не удалось изменить баллы.' };
+
+  await audit({
+    admin,
+    action: 'score_adjusted',
+    entityType: 'team',
+    entityId: parsed.data.teamId,
+    after: { points, type: parsed.data.transactionType, reason: parsed.data.reason },
+  });
+
+  revalidatePath('/admin/teams');
+  revalidatePath(`/admin/teams/${parsed.data.teamId}`);
+  revalidatePath('/admin/leaderboard');
+  return { ok: true, message: `Начислено ${points > 0 ? '+' : ''}${points}.` };
+}
+
+// ═══ Проверка отправок ═════════════════════════════════════════
+
+export async function reviewSubmissionAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+
+  const parsed = reviewDecisionSchema.safeParse({
+    submissionId: formData.get('submissionId'),
+    decision: formData.get('decision'),
+    points: formData.get('points') ? Number(formData.get('points')) : undefined,
+    comment: formData.get('comment') ?? '',
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+  }
+
+  const db = supabaseAdmin();
+  const { data: before } = await db
+    .from('submissions')
+    .select('*')
+    .eq('id', parsed.data.submissionId)
+    .maybeSingle();
+
+  if (!before) return { ok: false, message: 'Отправка не найдена.' };
+
+  const comment = parsed.data.comment || null;
+  let message = '';
+
+  switch (parsed.data.decision) {
+    case 'accept': {
+      // Если отправку уже принимали и отменяли, accept_submission
+      // создаст новую действующую транзакцию — дубля не будет.
+      const result = await callRpc<{ points: number; alreadyAccepted: boolean }>(
+        'accept_submission',
+        {
+          p_submission_id: parsed.data.submissionId,
+          p_points: parsed.data.points ?? null,
+          p_admin_id: admin.userId,
+          p_reason: 'manual_review',
+          p_comment: comment,
+        },
+      );
+      if (!result.ok) {
+        return {
+          ok: false,
+          message:
+            result.error === 'task_already_accepted'
+              ? 'По этому заданию у команды уже принята другая фотография.'
+              : 'Не удалось принять отправку.',
+        };
+      }
+      message = result.data.alreadyAccepted
+        ? 'Отправка уже была принята.'
+        : `Принято, начислено ${result.data.points}.`;
+      break;
+    }
+
+    case 'reject': {
+      // Отклонение принятой отправки должно снять баллы, поэтому
+      // идём через revoke, а не простым UPDATE статуса.
+      const result = await callRpc<{ reversed: boolean }>('revoke_submission', {
+        p_submission_id: parsed.data.submissionId,
+        p_admin_id: admin.userId,
+        p_reason: comment ?? 'Отклонено организатором',
+        p_new_status: 'rejected',
+      });
+      if (!result.ok) return { ok: false, message: 'Не удалось отклонить отправку.' };
+      message = result.data.reversed
+        ? 'Отклонено, ранее начисленные баллы сняты обратной транзакцией.'
+        : 'Отклонено.';
+      break;
+    }
+
+    case 'request_retake': {
+      const result = await callRpc<{ reversed: boolean }>('revoke_submission', {
+        p_submission_id: parsed.data.submissionId,
+        p_admin_id: admin.userId,
+        p_reason: comment ?? 'Организатор просит переснять',
+        p_new_status: 'rejected',
+      });
+      if (!result.ok) return { ok: false, message: 'Не удалось отправить на пересъёмку.' };
+      message = 'Команде предложено переснять — попытка осталась использованной.';
+      break;
+    }
+
+    case 'retry_ai': {
+      const limit = await checkRateLimit('retryValidation', admin.userId);
+      if (!limit.allowed) return { ok: false, message: 'Слишком часто. Подождите минуту.' };
+
+      await db
+        .from('submissions')
+        .update({ status: 'pending', review_reason: null })
+        .eq('id', parsed.data.submissionId);
+
+      await db
+        .from('validation_jobs')
+        .upsert(
+          {
+            submission_id: parsed.data.submissionId,
+            status: 'queued',
+            available_at: new Date().toISOString(),
+            locked_at: null,
+            locked_by: null,
+          },
+          { onConflict: 'submission_id' },
+        );
+
+      void runValidationWorker({ limit: 1 }).catch(() => undefined);
+      message = 'Отправка возвращена на автоматическую проверку.';
+      break;
+    }
+  }
+
+  if (comment && parsed.data.decision !== 'retry_ai') {
+    await db
+      .from('submissions')
+      .update({ admin_comment: comment })
+      .eq('id', parsed.data.submissionId);
+  }
+
+  await audit({
+    admin,
+    action: `submission_${parsed.data.decision}`,
+    entityType: 'submission',
+    entityId: parsed.data.submissionId,
+    before: { status: before.status, awarded_points: before.awarded_points },
+    after: { decision: parsed.data.decision, points: parsed.data.points, comment },
+  });
+
+  revalidatePath('/admin/submissions');
+  revalidatePath('/admin');
+  revalidatePath('/admin/leaderboard');
+  return { ok: true, message };
+}
+
+// ═══ Очередь ═══════════════════════════════════════════════════
+
+export async function requeueStaleAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+
+  const result = await callRpc<{ requeuedJobs: number; releasedSubmissions: number }>(
+    'requeue_stale_validations',
+    { p_event_id: eventId, p_stale_minutes: env().AI_STALE_CHECK_MINUTES },
+  );
+
+  if (!result.ok) return { ok: false, message: 'Не удалось перезапустить проверки.' };
+
+  const report = await runValidationWorker({ limit: env().AI_MAX_CONCURRENCY });
+
+  await audit({
+    admin,
+    action: 'validations_requeued',
+    entityType: 'event',
+    entityId: eventId,
+    after: { ...result.data, ...report },
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/submissions');
+  return {
+    ok: true,
+    message:
+      `Возвращено в очередь: ${result.data.requeuedJobs}, ` +
+      `освобождено отправок: ${result.data.releasedSubmissions}, ` +
+      `обработано сейчас: ${report.claimed}.`,
+  };
+}
+
+/** Массовое действие для аварийного сценария: всё — человеку. */
+export async function bulkManualReviewAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+
+  const db = supabaseAdmin();
+  const { data, error } = await db
+    .from('submissions')
+    .update({ status: 'manual_review', review_reason: 'ai_unavailable' })
+    .eq('event_id', eventId)
+    .in('status', ['pending', 'checking'])
+    .select('id');
+
+  if (error) return { ok: false, message: 'Не удалось перевести отправки.' };
+
+  await db
+    .from('validation_jobs')
+    .update({ status: 'cancelled', locked_at: null, locked_by: null })
+    .in('status', ['queued', 'processing']);
+
+  await audit({
+    admin,
+    action: 'bulk_manual_review',
+    entityType: 'event',
+    entityId: eventId,
+    after: { moved: data?.length ?? 0 },
+  });
+
+  revalidatePath('/admin/submissions');
+  return { ok: true, message: `Переведено в ручную проверку: ${data?.length ?? 0}.` };
+}
+
+/** Принять все ожидающие отправки по одному заданию. */
+export async function acceptAllForTaskAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const taskId = String(formData.get('taskId') ?? '');
+
+  const db = supabaseAdmin();
+  const { data: pending } = await db
+    .from('submissions')
+    .select('id')
+    .eq('task_id', taskId)
+    .in('status', ['pending', 'checking', 'manual_review']);
+
+  const rows = (pending as Array<{ id: string }> | null) ?? [];
+  let accepted = 0;
+
+  for (const row of rows) {
+    const result = await callRpc<{ alreadyAccepted: boolean }>('accept_submission', {
+      p_submission_id: row.id,
+      p_points: null,
+      p_admin_id: admin.userId,
+      p_reason: 'bulk_accept',
+      p_comment: null,
+    });
+    if (result.ok) accepted += 1;
+  }
+
+  await audit({
+    admin,
+    action: 'bulk_accept_task',
+    entityType: 'task',
+    entityId: taskId,
+    after: { accepted, considered: rows.length },
+  });
+
+  revalidatePath('/admin/submissions');
+  revalidatePath('/admin/leaderboard');
+  return { ok: true, message: `Принято ${accepted} из ${rows.length}.` };
+}
+
+// ═══ Задания ═══════════════════════════════════════════════════
+
+export async function saveTaskAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+
+  const taskId = String(formData.get('taskId') ?? '');
+  const eventId = String(formData.get('eventId') ?? '');
+
+  const criteria = String(formData.get('criteria') ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const requireLocation = formData.get('requireLocation') === 'on';
+
+  const parsed = taskSchema.safeParse({
+    number: Number(formData.get('number') ?? 0),
+    title: formData.get('title'),
+    shortDescription: formData.get('shortDescription') ?? '',
+    description: formData.get('description'),
+    points: Number(formData.get('points') ?? 0),
+    category: formData.get('category'),
+    difficulty: formData.get('difficulty'),
+    validationMode: formData.get('validationMode'),
+    criteria,
+    minimumPeople: Number(formData.get('minimumPeople') ?? 0),
+    maxAttempts: Number(formData.get('maxAttempts') ?? 1),
+    requireLocation,
+    latitude: formData.get('latitude') ? Number(formData.get('latitude')) : null,
+    longitude: formData.get('longitude') ? Number(formData.get('longitude')) : null,
+    radiusMeters: formData.get('radiusMeters') ? Number(formData.get('radiusMeters')) : null,
+    active: formData.get('active') === 'on',
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+  }
+
+  const payload = {
+    event_id: eventId,
+    number: parsed.data.number,
+    title: parsed.data.title,
+    short_description: parsed.data.shortDescription || null,
+    description: parsed.data.description,
+    points: parsed.data.points,
+    category: parsed.data.category,
+    difficulty: parsed.data.difficulty,
+    validation_mode: parsed.data.validationMode,
+    criteria: parsed.data.criteria,
+    minimum_people: parsed.data.minimumPeople,
+    max_attempts: parsed.data.maxAttempts,
+    require_location: parsed.data.requireLocation,
+    latitude: parsed.data.requireLocation ? parsed.data.latitude : null,
+    longitude: parsed.data.requireLocation ? parsed.data.longitude : null,
+    radius_meters: parsed.data.requireLocation ? parsed.data.radiusMeters : null,
+    active: parsed.data.active,
+    sort_order: parsed.data.number,
+  };
+
+  const db = supabaseAdmin();
+
+  if (taskId) {
+    const { data: before } = await db.from('tasks').select('*').eq('id', taskId).maybeSingle();
+    const { error } = await db.from('tasks').update(payload).eq('id', taskId);
+    if (error) {
+      return {
+        ok: false,
+        message:
+          error.code === '23505'
+            ? 'Задание с таким номером уже существует.'
+            : 'Не удалось сохранить задание.',
+      };
+    }
+    await audit({
+      admin,
+      action: 'task_updated',
+      entityType: 'task',
+      entityId: taskId,
+      before,
+      after: payload,
+    });
+    revalidatePath('/admin/tasks');
+    revalidatePath(`/admin/tasks/${taskId}`);
+    return { ok: true, message: 'Задание сохранено.' };
+  }
+
+  const { data, error } = await db.from('tasks').insert(payload).select('id').maybeSingle();
+  if (error) {
+    return {
+      ok: false,
+      message:
+        error.code === '23505'
+          ? 'Задание с таким номером уже существует.'
+          : 'Не удалось создать задание.',
+    };
+  }
+
+  await audit({
+    admin,
+    action: 'task_created',
+    entityType: 'task',
+    entityId: data?.id ?? null,
+    after: payload,
+  });
+
+  revalidatePath('/admin/tasks');
+  redirect('/admin/tasks');
+}
+
+export async function toggleTaskAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const taskId = String(formData.get('taskId') ?? '');
+  const active = formData.get('active') === 'true';
+
+  const { error } = await supabaseAdmin().from('tasks').update({ active }).eq('id', taskId);
+  if (error) return { ok: false, message: 'Не удалось изменить задание.' };
+
+  await audit({
+    admin,
+    action: active ? 'task_enabled' : 'task_disabled',
+    entityType: 'task',
+    entityId: taskId,
+    after: { active },
+  });
+
+  revalidatePath('/admin/tasks');
+  return { ok: true, message: active ? 'Задание включено.' : 'Задание выключено.' };
+}
+
+export async function deleteTaskAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const taskId = String(formData.get('taskId') ?? '');
+
+  const db = supabaseAdmin();
+
+  // Задание с отправками не удаляем: это разорвало бы историю
+  // начислений. Такое задание нужно выключать.
+  const { count } = await db
+    .from('submissions')
+    .select('id', { count: 'exact', head: true })
+    .eq('task_id', taskId);
+
+  if ((count ?? 0) > 0) {
+    return {
+      ok: false,
+      message: `По заданию уже есть отправки (${count}). Его можно только выключить.`,
+    };
+  }
+
+  const { data: before } = await db.from('tasks').select('*').eq('id', taskId).maybeSingle();
+  const { error } = await db.from('tasks').delete().eq('id', taskId);
+  if (error) return { ok: false, message: 'Не удалось удалить задание.' };
+
+  await audit({ admin, action: 'task_deleted', entityType: 'task', entityId: taskId, before });
+
+  revalidatePath('/admin/tasks');
+  return { ok: true, message: 'Задание удалено.' };
+}
+
+// ═══ Хранение фотографий ═══════════════════════════════════════
+
+export async function purgePhotosAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+
+  const db = supabaseAdmin();
+  const { data: event } = await db
+    .from('events')
+    .select('photo_retention_days')
+    .eq('id', eventId)
+    .maybeSingle();
+
+  const days = event?.photo_retention_days ?? env().PHOTO_RETENTION_DAYS;
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+
+  const { data: old } = await db
+    .from('submissions')
+    .select('id, image_path, preview_path')
+    .eq('event_id', eventId)
+    .lt('submitted_at', cutoff)
+    .not('image_path', 'is', null);
+
+  const rows = (old as Array<{ id: string; image_path: string; preview_path: string | null }> | null) ?? [];
+
+  if (rows.length === 0) {
+    return { ok: true, message: 'Фотографий старше срока хранения нет.' };
+  }
+
+  const { removeObjects, BUCKETS } = await import('@/lib/storage');
+  await removeObjects(BUCKETS.submissions, rows.map((r) => r.image_path));
+  await removeObjects(
+    BUCKETS.previews,
+    rows.map((r) => r.preview_path).filter((p): p is string => Boolean(p)),
+  );
+
+  // Записи остаются: журнал начислений и результаты не должны
+  // разъезжаться из-за удаления файлов.
+  await db
+    .from('submissions')
+    .update({ image_path: null, preview_path: null })
+    .in('id', rows.map((r) => r.id));
+
+  await audit({
+    admin,
+    action: 'photos_purged',
+    entityType: 'event',
+    entityId: eventId,
+    after: { removed: rows.length, olderThan: cutoff },
+  });
+
+  revalidatePath('/admin/settings');
+  return { ok: true, message: `Удалено файлов: ${rows.length}.` };
+}

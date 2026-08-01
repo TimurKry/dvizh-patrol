@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import sharp from 'sharp';
+import { runValidationWorker } from '@/lib/ai/worker';
 import { isAiConfigured } from '@/lib/env';
 import { checkLocation } from '@/lib/geo';
 import { computePerceptualHash, findDuplicate } from '@/lib/image/phash';
@@ -227,6 +228,19 @@ export async function POST(request: Request) {
       .from('submissions')
       .update({ preview_path: storedPreviewPath })
       .eq('id', submission.id);
+  }
+
+  // Проверку запускаем сразу после ответа участнику: ждать
+  // минутный тик расписания незачем, а сам ответ задерживать
+  // нельзя — человек должен идти дальше.
+  if (result.data.status === 'pending') {
+    after(async () => {
+      try {
+        await runValidationWorker({ limit: 1 });
+      } catch {
+        // Не получилось — очередь заберёт следующий проход.
+      }
+    });
   }
 
   return NextResponse.json({

@@ -219,6 +219,47 @@ describe('отчёт об ошибках', () => {
   });
 });
 
+describe('верхняя граница мероприятия', () => {
+  /**
+   * ТЗ обещает 30–50 заданий. Тридцать проверены образцом в
+   * data/, а полсотни — только здесь: на верхней границе легче
+   * всего споткнуться о лимит, которого никто не закладывал.
+   */
+  const fifty = Array.from({ length: 50 }, (_, index) => ({
+    ...validTask,
+    number: index + 1,
+    title: `Задание номер ${index + 1}`,
+  }));
+
+  it('принимает пятьдесят заданий одним файлом', () => {
+    const result = parseTaskImport(JSON.stringify(fifty), 'json');
+
+    expect(result.ok).toBe(true);
+    expect(result.items).toHaveLength(50);
+    expect(result.items.at(-1)?.number).toBe(50);
+  });
+
+  it('порядок сортировки берётся из номера, а не из места в файле', () => {
+    // Организатор дописывает задания в конец файла как придётся;
+    // на экране они всё равно должны идти по номерам.
+    const reversed = [...fifty].reverse();
+    const result = parseTaskImport(JSON.stringify(reversed), 'json');
+
+    expect(result.ok).toBe(true);
+    for (const item of result.items) {
+      expect(toTaskRow(item, 'event-1').sort_order).toBe(item.number);
+    }
+  });
+
+  it('отменяет весь файл из-за одной плохой строки в конце', () => {
+    const withBadTail = [...fifty.slice(0, 49), { ...validTask, number: 50, points: -1 }];
+    const result = parseTaskImport(JSON.stringify(withBadTail), 'json');
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.some((issue) => issue.taskNumber === 50)).toBe(true);
+  });
+});
+
 describe('подготовка строки для базы', () => {
   it('переводит поля в snake_case', () => {
     const result = parseTaskImport(JSON.stringify([validTask]), 'json');

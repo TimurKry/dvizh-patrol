@@ -5,6 +5,7 @@ import { EmptyState, ErrorNotice, Notice, Skeleton } from '@/components/ui/feedb
 import { DotCluster, Wordmark } from '@/components/ui/logo';
 import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { Card, Divider, Eyebrow, SectionTitle } from '@/components/ui/surface';
+import { PosterHero } from '@/components/game/poster-hero';
 import { SUBMISSION_STATUSES } from '@/types/database';
 import { SUBMISSION_STATUS_TEXT } from '@/lib/messages';
 
@@ -74,6 +75,32 @@ export default function DesignSystemPage() {
           на ней проверяется внешний вид и целостность компонентов.
         </p>
       </header>
+
+      {/* ═══ Герой ══════════════════════════════════════════
+          Тот же компонент, что и на главной, но с образцовыми
+          данными: главную без базы не отрисовать, а проверять
+          вид как-то надо. */}
+      <Block title="Герой">
+        <PosterHero
+          city="Leipzig"
+          title="Движ-Патруль"
+          subtitle="Городской фото-квест"
+          dayMonth="15.08"
+          date="15.08"
+          time="15:00"
+          price="15 €"
+          timezoneNote="Europe/Berlin"
+          tasksNote="30 заданий"
+          actions={
+            <>
+              <Button size="lg">Создать команду</Button>
+              <Button variant="secondary" size="lg">
+                Войти по коду
+              </Button>
+            </>
+          }
+        />
+      </Block>
 
       {/* ═══ Цвет ═══════════════════════════════════════════ */}
       <Block title="Палитра">

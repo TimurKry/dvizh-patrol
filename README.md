@@ -197,11 +197,12 @@ canvas при сжатии отбрасывает EXIF целиком, вклю�
 Три, все сознательные и описаны в документации:
 
 **Палитра.** `DESIGN (1).md` описывает строгий монохром и прямо
-запрещает красный постера в интерфейсе. Заказчик после сдачи
-первой версии попросил обратного — чтобы сайт был похож на
-постер. Цвета сняты с постера пипеткой и посчитаны по долям
-площади. Плоскость, единый радиус и отсутствие теней от исходной
-системы сохранены; красный остаётся акцентом на один-два
+запрещает красный постера в интерфейсе. Этот запрет —
+формулировка самого документа, а не пожелание заказчика:
+заказчик хотел ровно обратного, чтобы сайт был максимально похож
+на постер. Поэтому цвета сняты с постера пипеткой и посчитаны по
+долям площади. Плоскость, единый радиус и отсутствие теней от
+исходной системы сохранены; красный остаётся акцентом на один-два
 элемента экрана, а не заливкой всего подряд.
 
 **Шрифт.** ТЗ называет Fraunces как запасной вариант. В нём нет
@@ -229,24 +230,30 @@ canvas при сжатии отбрасывает EXIF целиком, вклю�
 node -e "
 const sharp = require('sharp');
 const src = 'public/assets/dvizh-patrol-poster.jpg';
+// Только фотографические участки постера: типографика в плитки
+// попадать не должна, иначе на главной задвоятся «15.08» и
+// «ДВИЖ-ПАТРУЛЬ». Фотография на постере занимает y ≈ 1020…1300.
 const tiles = [
-  { name: 'tile-tower',   left: 470, top: 480,  width: 260, height: 260 },
-  { name: 'tile-letters', left: 210, top: 170,  width: 300, height: 300 },
-  { name: 'tile-facade',  left: 90,  top: 1120, width: 300, height: 240 },
-  { name: 'tile-title',   left: 250, top: 850,  width: 340, height: 240 },
-  { name: 'tile-square',  left: 830, top: 1130, width: 280, height: 250 },
+  { name: 'tile-tower',  left: 508, top: 600,  width: 118, height: 126 },
+  { name: 'tile-roofs',  left: 250, top: 1045, width: 300, height: 240 },
+  { name: 'tile-facade', left: 60,  top: 1110, width: 300, height: 180 },
+  { name: 'tile-arcade', left: 930, top: 1085, width: 190, height: 195 },
+  { name: 'tile-square', left: 780, top: 1050, width: 280, height: 235 },
 ];
 (async () => {
-  const m = await sharp(src).metadata();
   for (const t of tiles) {
     await sharp(src)
-      .extract({ left: Math.min(t.left, m.width - t.width),
-                 top: Math.min(t.top, m.height - t.height),
-                 width: t.width, height: t.height })
+      .extract(t)
       .resize(320, 320, { fit: 'cover' })
       .webp({ quality: 82 })
       .toFile('public/assets/' + t.name + '.webp');
   }
+  // Полоса города для героя главной — та же фотография во всю ширину.
+  await sharp(src)
+    .extract({ left: 0, top: 1020, width: 1122, height: 295 })
+    .resize(1600)
+    .webp({ quality: 88 })
+    .toFile('public/assets/hero-city.webp');
 })();
 "
 ```

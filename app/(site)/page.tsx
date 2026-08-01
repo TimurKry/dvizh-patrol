@@ -14,6 +14,8 @@ import {
 } from '@/lib/data/event';
 import { EVENT_STATUS_TEXT, tasksWord, teamsWord } from '@/lib/messages';
 import { Countdown } from '@/components/game/countdown';
+import { PosterHero } from '@/components/game/poster-hero';
+import { Reveal } from '@/components/ui/reveal';
 
 /**
  * Главная страница.
@@ -26,12 +28,6 @@ import { Countdown } from '@/components/game/countdown';
 // Данные меняются по ходу регистрации, кэшировать страницу нельзя.
 export const dynamic = 'force-dynamic';
 
-const COLLAGE = [
-  { src: '/assets/tile-letters.webp', className: 'left-[2%] top-[6%] w-20 md:w-28 -rotate-6' },
-  { src: '/assets/tile-tower.webp', className: 'right-[4%] top-[12%] w-16 md:w-24 rotate-3' },
-  { src: '/assets/tile-facade.webp', className: 'left-[6%] bottom-[16%] w-16 md:w-24 rotate-2' },
-  { src: '/assets/tile-square.webp', className: 'right-[2%] bottom-[10%] w-20 md:w-28 -rotate-3' },
-];
 
 export default async function HomePage() {
   const event = await getCurrentEvent();
@@ -59,74 +55,60 @@ export default async function HomePage() {
   return (
     <>
       {/* ═══ Герой ═══════════════════════════════════════════ */}
-      <section className="relative overflow-hidden pt-8 pb-16 md:pt-16 md:pb-24">
-        {/* Плитки-полароиды по периметру. Декоративны, поэтому
-            скрыты от программ чтения с экрана. */}
-        <div className="pointer-events-none absolute inset-0 hidden sm:block" aria-hidden="true">
-          {COLLAGE.map((tile) => (
-            <Image
-              key={tile.src}
-              src={tile.src}
-              alt=""
-              width={320}
-              height={320}
-              className={`absolute rounded-[12px] ${tile.className}`}
-            />
-          ))}
-        </div>
-
-        <div className="page-well relative">
-          <div className="mx-auto max-w-2xl text-center">
-            <Eyebrow>{event.city}</Eyebrow>
-
-            <h1 className="mt-4 text-[54px] leading-[0.88] md:text-display-xl">
-              Движ-Патруль
-            </h1>
-
-            <p className="poster-label mt-4 text-caption text-brick md:text-body">
-              {event.subtitle ?? 'Городской фото-квест'}
-            </p>
-
-            <p className="mx-auto mt-6 max-w-prose text-body text-sepia">
-              Команда до {event.team_size} человек, {taskCount || '30+'}{' '}
-              {taskCount ? tasksWord(taskCount) : 'заданий'} по центру Лейпцига и один вечер,
-              который потом ещё долго пересказывают. Маршрута нет — вы сами решаете, куда идти.
-            </p>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              {stats.canRegister ? (
-                <ButtonLink href="/register" size="lg">
-                  Создать команду
-                </ButtonLink>
-              ) : (
-                <ButtonLink href="/rules" size="lg">
-                  Как это устроено
-                </ButtonLink>
-              )}
-              <ButtonLink href="/join" variant="secondary" size="lg">
-                Войти по коду
+      <PosterHero
+        city={event.city}
+        title={event.title}
+        subtitle={event.subtitle ?? 'Городской фото-квест'}
+        dayMonth={formatEventDate(event).slice(0, 5)}
+        date={formatEventDate(event).slice(0, 5)}
+        time={formatEventTime(event)}
+        price={formatPrice(event)}
+        timezoneNote={event.timezone}
+        tasksNote={`${taskCount || '30+'} ${taskCount ? tasksWord(taskCount) : 'заданий'}`}
+        actions={
+          <>
+            {stats.canRegister ? (
+              <ButtonLink href="/register" size="lg">
+                Создать команду
               </ButtonLink>
-            </div>
-
-            {!stats.canRegister && (
-              <div className="mt-6">
-                <Notice icon="•" className="text-left">
-                  {event.status === 'registration' && stats.isFull
-                    ? 'Регистрация команд завершена — все доступные места заняты.'
-                    : event.status === 'draft' || event.status === 'registration'
-                      ? 'Регистрация пока закрыта. Следите за анонсом.'
-                      : `Статус мероприятия: ${EVENT_STATUS_TEXT[event.status] ?? event.status}. Новые команды не регистрируются.`}
-                </Notice>
-              </div>
+            ) : (
+              <ButtonLink href="/rules" size="lg">
+                Как это устроено
+              </ButtonLink>
             )}
-
-            {showCountdown && (
-              <div className="mt-8">
-                <Countdown target={event.starts_at} status={event.status} />
-              </div>
-            )}
+            <ButtonLink href="/join" variant="secondary" size="lg">
+              Войти по коду
+            </ButtonLink>
+          </>
+        }
+      >
+        {showCountdown && (
+          <div className="flex justify-center">
+            <Countdown target={event.starts_at} status={event.status} />
           </div>
-        </div>
+        )}
+      </PosterHero>
+
+      {!stats.canRegister && (
+        <section className="page-well mt-6">
+          <Notice icon="•">
+            {event.status === 'registration' && stats.isFull
+              ? 'Регистрация команд завершена — все доступные места заняты.'
+              : event.status === 'draft' || event.status === 'registration'
+                ? 'Регистрация пока закрыта. Следите за анонсом.'
+                : `Статус мероприятия: ${EVENT_STATUS_TEXT[event.status] ?? event.status}. Новые команды не регистрируются.`}
+          </Notice>
+        </section>
+      )}
+
+      <section className="page-well mt-10">
+        <Reveal>
+          <p className="mx-auto max-w-prose text-center text-body text-sepia">
+            Команда до {event.team_size} человек, {taskCount || '30+'}{' '}
+            {taskCount ? tasksWord(taskCount) : 'заданий'} по центру Лейпцига и один вечер,
+            который потом ещё долго пересказывают. Маршрута нет — вы сами решаете, куда идти.
+          </p>
+        </Reveal>
       </section>
 
       {/* ═══ Постер ══════════════════════════════════════════ */}
@@ -229,7 +211,7 @@ export default async function HomePage() {
               text: 'Найти городскую скульптуру и точно воспроизвести позу.',
             },
             {
-              src: '/assets/tile-letters.webp',
+              src: '/assets/tile-roofs.webp',
               title: 'Оживить знак',
               text: 'Отыскать дорожный знак и разыграть то, что на нём нарисовано.',
             },
@@ -244,7 +226,7 @@ export default async function HomePage() {
               text: 'Начать с канцелярской скрепки и выменять что-то стоящее у прохожих.',
             },
             {
-              src: '/assets/tile-title.webp',
+              src: '/assets/tile-arcade.webp',
               title: 'Командный кадр',
               text: 'Собрать всю команду в одну композицию в неочевидном месте.',
             },

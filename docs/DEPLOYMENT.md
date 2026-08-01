@@ -168,6 +168,9 @@ node scripts/create-admin.mjs you@example.com "надёжный-пароль"
 
 ## 8. Vercel
 
+Про домен, стоимость тарифов и то, кто и что может увидеть до
+старта, — отдельно в [GOING_LIVE.md](./GOING_LIVE.md).
+
 ```bash
 npx vercel link
 npx vercel --prod

@@ -73,6 +73,34 @@ export default async function TasksPage({
   const session = await requireTeamSession();
   const params = await searchParams;
 
+  // Задания открываются только когда квест запущен.
+  //
+  // Проверка стоит ДО загрузки, а не после. Отрисовать закрытый
+  // список мало: пока формулировки лежат в области видимости
+  // компонента, любая будущая правка выше заглушки утащит их в
+  // разметку. Не загружено — нечего и утекать.
+  const tasksHidden = !['live', 'paused', 'finished'].includes(session.event.status);
+
+  if (tasksHidden) {
+    return (
+      <div className="page-well with-bottom-nav py-8 md:py-12">
+        <Eyebrow>Команда «{session.team.name}»</Eyebrow>
+        <h1 className="mt-3 text-heading md:text-heading-lg">Задания</h1>
+        <div className="mt-8">
+          <EmptyState
+            title="Задания ещё закрыты"
+            description={
+              session.event.status === 'registration'
+                ? 'Список откроется в момент старта квеста. Пока можно собрать команду и прочитать правила.'
+                : 'Мероприятие сейчас недоступно.'
+            }
+          />
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
   const eventLive = session.event.status === 'live';
   const items = await getTasksForTeam(session.event.id, session.teamId, { eventLive });
 
@@ -86,76 +114,56 @@ export default async function TasksPage({
   const waiting = items.some((i) => i.state === 'in_review');
   const categories = [...new Set(items.map((i) => i.task.category))] as TaskCategory[];
 
-  // Задания открываются только когда квест запущен.
-  const tasksHidden = !['live', 'paused', 'finished'].includes(session.event.status);
-
   return (
     <div className="page-well with-bottom-nav py-8 md:py-12">
       <Eyebrow>Команда «{session.team.name}»</Eyebrow>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-heading md:text-heading-lg">Задания</h1>
-        {!tasksHidden && (
-          <p className="text-body text-sepia">
-            принято {accepted} из {items.length} {tasksWord(items.length)}
-          </p>
-        )}
+        <p className="text-body text-sepia">
+          принято {accepted} из {items.length} {tasksWord(items.length)}
+        </p>
       </div>
 
-      {tasksHidden ? (
-        <div className="mt-8">
-          <EmptyState
-            title="Задания ещё закрыты"
-            description={
-              session.event.status === 'registration'
-                ? 'Список откроется в момент старта квеста. Пока можно собрать команду и прочитать правила.'
-                : 'Мероприятие сейчас недоступно.'
-            }
-          />
+      {session.event.status === 'paused' && (
+        <div className="mt-6">
+          <Notice tone="strong" icon="‖">
+            Квест приостановлен организатором. Задания видны, но отправка временно
+            недоступна.
+          </Notice>
         </div>
-      ) : (
-        <>
-          {session.event.status === 'paused' && (
-            <div className="mt-6">
-              <Notice tone="strong" icon="‖">
-                Квест приостановлен организатором. Задания видны, но отправка временно
-                недоступна.
-              </Notice>
-            </div>
-          )}
-
-          {session.event.status === 'finished' && (
-            <div className="mt-6">
-              <Notice tone="strong" icon="•">
-                Квест завершён. Новые отправки закрыты, результаты досматривает организатор.
-              </Notice>
-            </div>
-          )}
-
-          <div className="mt-6">
-            <TaskFilters
-              filter={filter}
-              sort={sort}
-              category={category}
-              categories={categories}
-            />
-          </div>
-
-          <div className="mt-6">
-            {visible.length === 0 ? (
-              <EmptyState
-                title="Ничего не найдено"
-                description="Под выбранный фильтр не подошло ни одно задание."
-              />
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visible.map((item) => (
-                  <TaskCard key={item.task.id} item={item} />
-                ))}
-              </div>
-            )}
-          </div>
-        </>
       )}
+
+      {session.event.status === 'finished' && (
+        <div className="mt-6">
+          <Notice tone="strong" icon="•">
+            Квест завершён. Новые отправки закрыты, результаты досматривает организатор.
+          </Notice>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <TaskFilters
+          filter={filter}
+          sort={sort}
+          category={category}
+          categories={categories}
+        />
+      </div>
+
+      <div className="mt-6">
+        {visible.length === 0 ? (
+          <EmptyState
+            title="Ничего не найдено"
+            description="Под выбранный фильтр не подошло ни одно задание."
+          />
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((item) => (
+              <TaskCard key={item.task.id} item={item} />
+            ))}
+          </div>
+        )}
+      </div>
 
       <LiveRefresh active={waiting} />
       <BottomNav />

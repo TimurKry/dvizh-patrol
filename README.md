@@ -159,6 +159,7 @@ data/           образцы файлов импорта
 | [SCORING.md](docs/SCORING.md) | Журнал баллов, рейтинг |
 | [TASK_IMPORT_FORMAT.md](docs/TASK_IMPORT_FORMAT.md) | Формат JSON и CSV |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Установка с нуля |
+| [GOING_LIVE.md](docs/GOING_LIVE.md) | Домен, бесплатный хостинг, секретность заданий |
 | [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) | Руководство организатора |
 | [PARTICIPANT_GUIDE.md](docs/PARTICIPANT_GUIDE.md) | Памятка участника |
 | [PRIVACY.md](docs/PRIVACY.md) | Приватность технически |

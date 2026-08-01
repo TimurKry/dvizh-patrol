@@ -29,12 +29,11 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
   const session = await requireTeamSession();
   const { taskId } = await params;
 
-  const eventLive = session.event.status === 'live';
-  const item = await getTaskForTeam(session.event.id, session.teamId, taskId, { eventLive });
-
-  if (!item) notFound();
-
   // На этапе регистрации задания закрыты для всех.
+  //
+  // Проверка идёт до загрузки: угадать идентификатор задания
+  // нельзя, но и полагаться на это не нужно — пока квест не
+  // запущен, формулировка просто не читается из базы.
   if (!['live', 'paused', 'finished'].includes(session.event.status)) {
     return (
       <div className="page-well with-bottom-nav py-8">
@@ -51,6 +50,11 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
       </div>
     );
   }
+
+  const eventLive = session.event.status === 'live';
+  const item = await getTaskForTeam(session.event.id, session.teamId, taskId, { eventLive });
+
+  if (!item) notFound();
 
   const { task, state, attemptsLeft, latestSubmission, canSubmit } = item;
   const references = await getTaskReferences(task.id);

@@ -75,7 +75,15 @@ SELECT count(*) FROM pg_policies
 | `auth.jwt()`, `auth.uid()` | на месте |
 | `storage.foldername(text)` | на месте, политика бакетов работает |
 | Политики на `storage.objects` | создаются, хотя владелец таблицы другой |
+| `DROP POLICY IF EXISTS` на `storage.objects` | работает |
 | `INSERT ... ON CONFLICT DO UPDATE` в `storage.buckets` | работает |
+| `COMMENT ON TABLE storage.objects` | **запрещено**, `42501: must be owner of table objects` |
+
+> **Комментировать чужие таблицы нельзя.** Создавать политики на
+> `storage.objects` от имени `postgres` можно, а поставить таблице
+> комментарий — нет: это требует владения, а владелец
+> `supabase_storage_admin`. Из миграции `0005` такой комментарий
+> убран, схема путей описана обычным SQL-комментарием.
 
 > **Удалить бакет через SQL нельзя.** Триггер
 > `storage.protect_delete()` блокирует прямое удаление из таблиц

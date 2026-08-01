@@ -76,5 +76,12 @@ CREATE POLICY submission_images_team_read ON storage.objects
     AND (storage.foldername(name))[4] = public.current_team_id()::text
   );
 
-COMMENT ON TABLE storage.objects IS
-  'Пути отправок: events/{eventId}/teams/{teamId}/tasks/{taskId}/{submissionId}.webp';
+-- ═══ Схема путей ═════════════════════════════════════════════
+--
+-- events/{eventId}/teams/{teamId}/tasks/{taskId}/{submissionId}.webp
+--
+-- Здесь намеренно нет COMMENT ON TABLE storage.objects: эта
+-- команда требует владения таблицей, а её владелец —
+-- supabase_storage_admin, тогда как миграции выполняются от
+-- postgres. Политики и бакеты создавать при этом можно,
+-- комментарий к чужой таблице — нет.

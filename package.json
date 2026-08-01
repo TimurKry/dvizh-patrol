@@ -1,0 +1,60 @@
+{
+  "name": "dvizh-patrol",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Движ-Патруль — городской фото-квест. Production MVP.",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,css,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,css,md,json}\"",
+    "test": "vitest run --project unit",
+    "test:watch": "vitest --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:all": "vitest run",
+    "test:e2e": "playwright test",
+    "db:start": "./scripts/local-db.sh start",
+    "db:stop": "./scripts/local-db.sh stop",
+    "db:reset": "./scripts/local-db.sh reset",
+    "db:psql": "./scripts/local-db.sh psql",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.64.0",
+    "server-only": "^0.0.1",
+    "sharp": "^0.35.3",
+    "zod": "^4.1.11"
+  },
+  "overrides": {
+    "sharp": "^0.35.3",
+    "postcss": "^8.5.18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "pg": "^8.16.3",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  }
+}

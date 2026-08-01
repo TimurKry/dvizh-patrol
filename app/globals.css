@@ -1,0 +1,267 @@
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────────────────────
+   Дизайн-система Cosmos, адаптированная под «Движ-Патруль».
+   Источник истины — docs/DESIGN_SYSTEM.md и исходный DESIGN (1).md.
+
+   Правила, которые здесь закреплены и не должны нарушаться:
+   · фон страницы — Linen Canvas, никогда не чистый белый;
+   · чёрный только #0d0d0d, никогда #000000;
+   · один радиус — 16px, и 12px для изображений;
+   · никаких теней, градиентов и акцентных цветов в интерфейсе;
+   · вес шрифта не выше 500.
+   ───────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ─── Цвет ─────────────────────────────────────────────── */
+  --color-linen-canvas: #f7f5f3;
+  --color-ink-black: #0d0d0d;
+  --color-paper-white: #ffffff;
+  --color-stone: #6e6a69;
+  --color-pebble: #9a9796;
+
+  /* Границы — это Ink Black с низкой непрозрачностью,
+     а не отдельный серый. */
+  --color-hairline: rgb(13 13 13 / 0.12);
+  --color-hairline-strong: rgb(13 13 13 / 0.22);
+  --color-ink-wash: rgb(13 13 13 / 0.04);
+
+  /* ─── Шрифт ────────────────────────────────────────────── */
+  --font-oracle:
+    var(--font-fraunces), 'Fraunces', 'GT Super', Georgia, 'Times New Roman', serif;
+  --font-ui:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+
+  /* ─── Типографическая шкала ────────────────────────────── */
+  --text-caption: 14px;
+  --text-caption--line-height: 1.5;
+  --text-caption--letter-spacing: 0;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.18px;
+
+  --text-subheading: 18px;
+  --text-subheading--line-height: 1.29;
+  --text-subheading--letter-spacing: -0.2px;
+
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.2;
+  --text-heading-sm--letter-spacing: -0.48px;
+
+  --text-heading: 33px;
+  --text-heading--line-height: 1.1;
+  --text-heading--letter-spacing: -1.32px;
+
+  --text-heading-lg: 38px;
+  --text-heading-lg--line-height: 1.08;
+  --text-heading-lg--letter-spacing: -1.52px;
+
+  --text-display: 58px;
+  --text-display--line-height: 1.06;
+  --text-display--letter-spacing: -2.32px;
+
+  --text-display-xl: 74px;
+  --text-display-xl--line-height: 0.8;
+  --text-display-xl--letter-spacing: -3.7px;
+
+  /* ─── Вес ──────────────────────────────────────────────── */
+  --font-weight-display: 350;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  /* ─── Интервалы ────────────────────────────────────────── */
+  --spacing: 4px;
+
+  /* ─── Радиусы ──────────────────────────────────────────── */
+  --radius-tile: 12px;
+  --radius-surface: 16px;
+  --radius-pill: 9999px;
+
+  /* ─── Раскладка ────────────────────────────────────────── */
+  --page-max-width: 1280px;
+  --section-gap: 80px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   База
+   ───────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Высота нижней навигации участника. Используется как
+       нижний отступ контента, чтобы панель ничего не закрывала. */
+    --bottom-nav-height: 64px;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* iOS Safari занижает системный шрифт в стандалон-режиме. */
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-linen-canvas);
+    color: var(--color-ink-black);
+    font-family: var(--font-oracle);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    letter-spacing: var(--text-body--letter-spacing);
+    font-weight: var(--font-weight-regular);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Горизонтальной прокрутки не должно быть ни на одном экране. */
+    overflow-x: hidden;
+  }
+
+  /* Крупные заголовки набираются шёпотом — вес 350, плотный
+     трекинг. Жирность здесь читается как маркетинговый баннер. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: var(--font-weight-display);
+    text-wrap: balance;
+  }
+
+  /* Фокус обязан быть виден: квест проходят на улице, часто
+     одной рукой и с включёнными вспомогательными технологиями. */
+  :focus-visible {
+    outline: 2px solid var(--color-ink-black);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--color-ink-black);
+    color: var(--color-paper-white);
+  }
+
+  /* Поля ввода на iOS не должны вызывать зум: 16px — минимум. */
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+    font-size: 16px;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Утилиты
+   ───────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* Контентный колодец: 1280px и воздух по краям на мобильном. */
+  .page-well {
+    width: 100%;
+    max-width: var(--page-max-width);
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .page-well {
+      padding-inline: 32px;
+    }
+  }
+
+  /* Плоская поверхность первого уровня: Paper White + волосяная
+     граница. Теней нет нигде в системе. */
+  .surface {
+    background-color: var(--color-paper-white);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-surface);
+  }
+
+  .hairline {
+    border-color: var(--color-hairline);
+  }
+
+  /* Минимальная зона нажатия на мобильном — 44×44. */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .safe-bottom {
+    padding-bottom: calc(var(--safe-bottom) + 16px);
+  }
+
+  /* Отступ снизу под фиксированную навигацию участника. */
+  .with-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 24px);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Скелетон загрузки. Пульсация мягкая, чтобы не соперничать
+     с фотографиями. */
+  .skeleton {
+    background-color: var(--color-ink-wash);
+    border-radius: var(--radius-tile);
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+
+  /* Обрезка описаний в карточках. */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Широкие блоки (таблицы админки) прокручиваются внутри себя,
+     а не тянут страницу вбок. */
+  .scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

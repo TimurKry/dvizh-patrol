@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { Countdown } from '@/components/game/countdown';
+import { LiveRefresh } from '@/components/game/live-refresh';
 import { JoinCodeCard } from '@/components/game/join-code-card';
 import { LogoutButton } from '@/components/game/logout-button';
 import { ButtonLink } from '@/components/ui/button';
@@ -247,6 +248,8 @@ export default async function TeamPage({
         </div>
       </div>
 
+      {/* Пока есть отправки в работе, экран обновляется сам. */}
+      <LiveRefresh active={(progress?.in_review ?? 0) > 0} />
       <BottomNav />
     </div>
   );

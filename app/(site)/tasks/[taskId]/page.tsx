@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { PhotoUpload } from '@/components/game/photo-upload';
+import { LiveRefresh } from '@/components/game/live-refresh';
 import { ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/surface';
 import { EmptyState, Notice } from '@/components/ui/feedback';
@@ -198,6 +199,12 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
         </div>
       </div>
 
+      <LiveRefresh
+        active={
+          latestSubmission !== null &&
+          ['pending', 'checking', 'manual_review'].includes(latestSubmission.status)
+        }
+      />
       <BottomNav />
     </div>
   );

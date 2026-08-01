@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BottomNav } from '@/components/nav/bottom-nav';
+import { LiveRefresh } from '@/components/game/live-refresh';
 import { SubmissionRow } from '@/components/game/task-card';
 import { ButtonLink } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/surface';
@@ -15,6 +16,10 @@ export const metadata: Metadata = { title: 'Отправки' };
 export default async function SubmissionsPage() {
   const session = await requireTeamSession();
   const submissions = await getTeamSubmissions(session.teamId);
+
+  const waiting = submissions.some(({ submission }) =>
+    ['pending', 'checking', 'manual_review'].includes(submission.status),
+  );
 
   return (
     <div className="page-well with-bottom-nav py-8 md:py-12">
@@ -59,6 +64,7 @@ export default async function SubmissionsPage() {
         </div>
       </div>
 
+      <LiveRefresh active={waiting} />
       <BottomNav />
     </div>
   );

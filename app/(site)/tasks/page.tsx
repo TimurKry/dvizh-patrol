@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { TaskCard } from '@/components/game/task-card';
 import { TaskFilters } from '@/components/game/task-filters';
+import { LiveRefresh } from '@/components/game/live-refresh';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { Eyebrow } from '@/components/ui/surface';
 import { getTasksForTeam, type TaskWithState } from '@/lib/data/tasks';
@@ -82,6 +83,7 @@ export default async function TasksPage({
   const visible = applySort(applyFilter(items, filter, category), sort);
 
   const accepted = items.filter((i) => i.state === 'accepted').length;
+  const waiting = items.some((i) => i.state === 'in_review');
   const categories = [...new Set(items.map((i) => i.task.category))] as TaskCategory[];
 
   // Задания открываются только когда квест запущен.
@@ -155,6 +157,7 @@ export default async function TasksPage({
         </>
       )}
 
+      <LiveRefresh active={waiting} />
       <BottomNav />
     </div>
   );

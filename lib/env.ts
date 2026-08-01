@@ -58,10 +58,6 @@ const schema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20, 'NEXT_PUBLIC_SUPABASE_ANON_KEY не задан'),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20, 'SUPABASE_SERVICE_ROLE_KEY не задан'),
 
-  /* Нужен только для Realtime у команд. Без него интерфейс
-     переходит на опрос — см. docs/ARCHITECTURE.md. */
-  SUPABASE_JWT_SECRET: optionalText,
-
   ADMIN_EMAIL: optionalText,
 
   SESSION_SECRET: z

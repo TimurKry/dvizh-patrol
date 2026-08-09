@@ -155,6 +155,7 @@ data/           образцы файлов импорта
 | [PRODUCT.md](docs/PRODUCT.md) | Задача, роли, границы |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Решения и почему именно так |
 | [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Токены, компоненты, отступления |
+| [DESIGN_BRIEF.md](docs/DESIGN_BRIEF.md) | Бриф на редизайн — вход для другой модели |
 | [DATABASE.md](docs/DATABASE.md) | Схема, функции, RLS |
 | [AUTH_AND_SESSIONS.md](docs/AUTH_AND_SESSIONS.md) | Сессии без аккаунта, права админа |
 | [AI_VALIDATION.md](docs/AI_VALIDATION.md) | Границы проверки, работа без неё |

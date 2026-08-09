@@ -206,11 +206,14 @@ export async function confirmSubmission(
     similarity?: number | null;
     aiAvailable?: boolean;
     hash?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    outsideArea?: boolean;
   } = {},
 ): Promise<{ ok: boolean; status?: string; reviewReason?: string | null }> {
   const { rows } = await pool.query<{
     r: { ok: boolean; status?: string; reviewReason?: string | null };
-  }>(`SELECT public.confirm_submission($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) AS r`, [
+  }>(`SELECT public.confirm_submission($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) AS r`, [
     submissionId,
     `events/x/teams/y/tasks/z/${submissionId}.webp`,
     120_000,
@@ -218,10 +221,11 @@ export async function confirmSubmission(
     options.hash ?? null,
     options.duplicateOf ?? null,
     options.similarity ?? null,
-    null,
-    null,
+    options.latitude ?? null,
+    options.longitude ?? null,
     null,
     options.aiAvailable ?? false,
+    options.outsideArea ?? false,
   ]);
   return rows[0]!.r;
 }

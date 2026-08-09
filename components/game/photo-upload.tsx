@@ -31,6 +31,11 @@ type Phase = 'idle' | 'preparing' | 'ready' | 'uploading' | 'done' | 'error';
 interface Props {
   taskId: string;
   requireLocation: boolean;
+  /**
+   * Строгое игровое поле: геопозиция нужна к каждой фотографии,
+   * даже если само задание к месту не привязано.
+   */
+  areaEnforced?: boolean;
   maxLongEdge: number;
   maxBytes: number;
   attemptsLeft: number;
@@ -45,6 +50,7 @@ const STAGE_TEXT: Record<string, string> = {
 export function PhotoUpload({
   taskId,
   requireLocation,
+  areaEnforced = false,
   maxLongEdge,
   maxBytes,
   attemptsLeft,
@@ -159,7 +165,13 @@ export function PhotoUpload({
 
     let location: { latitude: number; longitude: number; accuracy?: number } | null = null;
 
-    if (requireLocation) {
+    // Геопозиция нужна либо самому заданию, либо строгому
+    // игровому полю. Сервер проверит оба условия ещё раз —
+    // здесь мы лишь избавляем команду от отправки, которая
+    // заведомо не пройдёт.
+    const needsLocation = requireLocation || areaEnforced;
+
+    if (needsLocation) {
       setStage('Запрашиваем геопозицию…');
       const result = await requestLocation();
 
@@ -168,7 +180,9 @@ export function PhotoUpload({
         setStage('');
         setError(
           result.error === 'denied'
-            ? 'Для этого задания нужна геопозиция. Разрешите доступ в настройках браузера и попробуйте снова.'
+            ? requireLocation
+              ? 'Для этого задания нужна геопозиция. Разрешите доступ в настройках браузера и попробуйте снова.'
+              : 'На этом квесте фотографии принимаются только внутри игрового поля — разрешите доступ к геопозиции.'
             : 'Не удалось определить местоположение. Выйдите на открытое место и повторите.',
         );
         return;
@@ -321,10 +335,12 @@ export function PhotoUpload({
         </div>
       )}
 
-      {requireLocation && (
+      {(requireLocation || areaEnforced) && (
         <p className="text-caption text-sepia">
           <span aria-hidden="true">◎ </span>
-          Задание привязано к месту: при отправке браузер спросит разрешение на геопозицию.
+          {requireLocation
+            ? 'Задание привязано к месту: при отправке браузер спросит разрешение на геопозицию.'
+            : 'Фотографии принимаются только внутри игрового поля: при отправке браузер спросит разрешение на геопозицию.'}
         </p>
       )}
     </div>

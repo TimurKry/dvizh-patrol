@@ -29,6 +29,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.58.0",
+    "leaflet": "^1.9.4",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -39,11 +40,13 @@
   },
   "overrides": {
     "sharp": "^0.35.3",
-    "postcss": "^8.5.18"
+    "postcss": "^8.5.18",
+    "nanoid": "^3.3.17"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
     "@types/pg": "^8.15.5",
     "@types/react": "^19",

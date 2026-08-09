@@ -371,3 +371,68 @@ describe('ручные корректировки', () => {
     expect(rows[0]!.r.error).toBe('invalid_transaction_type');
   });
 });
+
+describe('игровое поле', () => {
+  /**
+   * Главное здесь — что снимок снаружи поля не засчитывается сам.
+   * Задание с автоприёмом обычно начисляет баллы без человека;
+   * если бы ветка поля стояла ниже проверки validation_mode,
+   * ограничение не значило бы ровно ничего.
+   */
+  it('снаружи поля задание с автоприёмом не начисляет баллы', async () => {
+    const autoTask = await createTask(eventId, {
+      number: 2,
+      points: 40,
+      validationMode: 'auto',
+    });
+    const slot = await createSlot(teamId, autoTask);
+
+    const result = await confirmSubmission(slot.submissionId!, { outsideArea: true });
+
+    expect(result.status).toBe('manual_review');
+    expect(result.reviewReason).toBe('outside_play_area');
+    expect(await teamScore(teamId)).toBe(0);
+  });
+
+  it('внутри поля автоприём работает как обычно', async () => {
+    const autoTask = await createTask(eventId, {
+      number: 3,
+      points: 40,
+      validationMode: 'auto',
+    });
+    const slot = await createSlot(teamId, autoTask);
+
+    const result = await confirmSubmission(slot.submissionId!, { outsideArea: false });
+
+    expect(result.status).toBe('accepted');
+    expect(await teamScore(teamId)).toBe(40);
+  });
+
+  it('снаружи поля фотография не отклоняется, а ждёт организатора', async () => {
+    const slot = await createSlot(teamId, taskId);
+    const result = await confirmSubmission(slot.submissionId!, {
+      outsideArea: true,
+      aiAvailable: true,
+    });
+
+    // Не «rejected»: машина зовёт человека, но не отказывает.
+    expect(result.status).toBe('manual_review');
+    expect(result.reviewReason).toBe('outside_play_area');
+  });
+
+  it('похожий снимок важнее выхода за поле', async () => {
+    // Обе причины ведут к ручной проверке, но дубликат опаснее
+    // для честности баллов — организатор должен увидеть именно его.
+    const first = await createSlot(teamId, taskId);
+    await confirmSubmission(first.submissionId!, { hash: 'a'.repeat(16) });
+
+    const second = await createSlot(teamId, taskId);
+    const result = await confirmSubmission(second.submissionId!, {
+      duplicateOf: first.submissionId,
+      similarity: 0.99,
+      outsideArea: true,
+    });
+
+    expect(result.reviewReason).toBe('possible_duplicate');
+  });
+});

@@ -75,3 +75,76 @@ export function checkLocation(params: {
 
   return { ok: true, distance: Math.round(distance) };
 }
+
+// ═══ Игровое поле ═══════════════════════════════════════════
+
+export interface PlayArea {
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+}
+
+/**
+ * Игровое поле мероприятия, если оно задано.
+ *
+ * Три колонки заполняются только вместе — это гарантирует
+ * ограничение в базе, — но типы приходят из сгенерированной
+ * схемы, где каждая nullable по отдельности. Проверяем здесь,
+ * чтобы дальше по коду поле было либо целым, либо отсутствующим.
+ */
+export function toPlayArea(event: {
+  area_latitude: number | null;
+  area_longitude: number | null;
+  area_radius_meters: number | null;
+}): PlayArea | null {
+  const { area_latitude, area_longitude, area_radius_meters } = event;
+  if (area_latitude == null || area_longitude == null || area_radius_meters == null) {
+    return null;
+  }
+  return {
+    latitude: area_latitude,
+    longitude: area_longitude,
+    radiusMeters: area_radius_meters,
+  };
+}
+
+export type AreaVerdict =
+  /** Поле не задано, координат нет или проверять нечего. */
+  | { status: 'unknown' }
+  | { status: 'inside'; distance: number }
+  | { status: 'outside'; distance: number; overshoot: number };
+
+/**
+ * Где находится точка относительно игрового поля.
+ *
+ * Функция ничего не решает — только измеряет. Что делать с
+ * ответом, зависит от режима мероприятия, и это решение принимает
+ * вызывающий код, а не геометрия.
+ *
+ * Погрешность прибавляется к радиусу той же логикой, что и в
+ * проверке задания: телефон в узкой улице ошибается на десятки
+ * метров, и команда не должна за это отвечать.
+ */
+export function checkPlayArea(params: {
+  area: PlayArea | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  accuracy?: number | null;
+}): AreaVerdict {
+  const { area, latitude, longitude } = params;
+  if (!area || latitude == null || longitude == null) return { status: 'unknown' };
+
+  const distance = distanceMeters({ latitude, longitude }, area);
+  const tolerance = Math.min(params.accuracy ?? 0, 150);
+  const limit = area.radiusMeters + tolerance;
+
+  if (distance > limit) {
+    return {
+      status: 'outside',
+      distance: Math.round(distance),
+      overshoot: Math.round(distance - limit),
+    };
+  }
+
+  return { status: 'inside', distance: Math.round(distance) };
+}

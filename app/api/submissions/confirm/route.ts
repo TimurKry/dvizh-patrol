@@ -2,7 +2,7 @@ import { NextResponse, after } from 'next/server';
 import sharp from 'sharp';
 import { runValidationWorker } from '@/lib/ai/worker';
 import { isAiConfigured } from '@/lib/env';
-import { checkLocation } from '@/lib/geo';
+import { checkLocation, checkPlayArea, toPlayArea } from '@/lib/geo';
 import { computePerceptualHash, findDuplicate } from '@/lib/image/phash';
 import { errorMessage } from '@/lib/messages';
 import { getTeamSession } from '@/lib/session/team-session';
@@ -122,6 +122,59 @@ export async function POST(request: Request) {
     );
   }
 
+  // ═══ Игровое поле ══════════════════════════════════════════
+  //
+  // Проверка отдельно от проверки задания: у задания свой радиус
+  // и своя логика, поле же общее для всего квеста.
+  //
+  // В мягком режиме снимок снаружи не отклоняется, а уходит
+  // человеку с пометкой. Это тот же принцип, что и с AI: машина
+  // может принять или позвать организатора, но не отказать. Часы
+  // в кармане ошибаются, а спорить с командой посреди города
+  // некому.
+  const area = toPlayArea(session.event);
+  const areaVerdict = checkPlayArea({
+    area,
+    latitude: parsed.data.latitude ?? null,
+    longitude: parsed.data.longitude ?? null,
+    accuracy: parsed.data.locationAccuracy ?? null,
+  });
+
+  if (area && session.event.area_enforced) {
+    if (areaVerdict.status === 'unknown') {
+      await db
+        .from('submissions')
+        .update({ status: 'cancelled', review_reason: 'area_location_required' })
+        .eq('id', submission.id);
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'area_location_required',
+          message: errorMessage('area_location_required'),
+        },
+        { status: 422 },
+      );
+    }
+
+    if (areaVerdict.status === 'outside') {
+      await db
+        .from('submissions')
+        .update({ status: 'cancelled', review_reason: 'outside_play_area' })
+        .eq('id', submission.id);
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'outside_play_area',
+          message: errorMessage('outside_play_area'),
+          distance: areaVerdict.distance,
+        },
+        { status: 422 },
+      );
+    }
+  }
+
   // Путь записан сервером на шаге start — клиент его не передаёт.
   const storagePath = submission.image_path;
   if (!storagePath) {
@@ -213,6 +266,8 @@ export async function POST(request: Request) {
       p_longitude: parsed.data.longitude ?? null,
       p_location_accuracy: parsed.data.locationAccuracy ?? null,
       p_ai_available: isAiConfigured(),
+      // Мягкий режим: снаружи поля — к организатору, не отказ.
+      p_outside_area: areaVerdict.status === 'outside',
     },
   );
 

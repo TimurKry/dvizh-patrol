@@ -111,7 +111,44 @@ export const eventSettingsSchema = z.object({
   aiValidationEnabled: z.boolean(),
   aiAcceptThreshold: z.number().min(0).max(1),
   photoRetentionDays: z.number().int().min(1).max(3650).nullable(),
-});
+
+  // ─── Игровое поле ───────────────────────────────────────────
+  // Три поля живут вместе: либо круг задан целиком, либо его нет.
+  // То же ограничение стоит в базе, но поймать ошибку в форме
+  // приятнее, чем получить отказ от Postgres.
+  areaLatitude: z.number().min(-90).max(90).nullable(),
+  areaLongitude: z.number().min(-180).max(180).nullable(),
+  areaRadiusMeters: z
+    .number()
+    .int()
+    .min(100, 'Радиус меньше 100 метров съест погрешность телефона')
+    .max(20000, 'Максимум 20 километров')
+    .nullable(),
+  areaEnforced: z.boolean(),
+})
+  .superRefine((value, ctx) => {
+    const filled = [value.areaLatitude, value.areaLongitude, value.areaRadiusMeters].filter(
+      (v) => v !== null,
+    ).length;
+
+    if (filled !== 0 && filled !== 3) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Игровое поле задаётся тремя значениями сразу: широта, долгота и радиус',
+        path: ['areaRadiusMeters'],
+      });
+    }
+
+    // Строгий режим без поля потребовал бы геопозицию, не имея
+    // что ею проверять, — то есть просто сломал бы отправку.
+    if (value.areaEnforced && filled !== 3) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Строгий режим требует заданного игрового поля',
+        path: ['areaEnforced'],
+      });
+    }
+  });
 
 // ═══ Задание ═══════════════════════════════════════════════════
 

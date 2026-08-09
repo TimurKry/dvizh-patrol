@@ -130,6 +130,10 @@ export async function updateEventAction(
     photoRetentionDays: formData.get('photoRetentionDays')
       ? Number(formData.get('photoRetentionDays'))
       : null,
+    areaLatitude: optionalNumber(formData.get('areaLatitude')),
+    areaLongitude: optionalNumber(formData.get('areaLongitude')),
+    areaRadiusMeters: optionalNumber(formData.get('areaRadiusMeters')),
+    areaEnforced: formData.get('areaEnforced') === 'on',
   });
 
   if (!parsed.success) {
@@ -172,6 +176,10 @@ export async function updateEventAction(
       ai_validation_enabled: parsed.data.aiValidationEnabled,
       ai_accept_threshold: parsed.data.aiAcceptThreshold,
       photo_retention_days: parsed.data.photoRetentionDays,
+      area_latitude: parsed.data.areaLatitude,
+      area_longitude: parsed.data.areaLongitude,
+      area_radius_meters: parsed.data.areaRadiusMeters,
+      area_enforced: parsed.data.areaEnforced,
     })
     .eq('id', eventId);
 
@@ -190,7 +198,23 @@ export async function updateEventAction(
 
   revalidatePath('/admin/event');
   revalidatePath('/');
+  revalidatePath('/map');
   return { ok: true, message: 'Настройки сохранены.' };
+}
+
+/**
+ * Пустое поле формы — это «не задано», а не ноль.
+ *
+ * `Number('')` возвращает 0, и координата 0,0 — настоящая точка
+ * в Атлантике. Без этой проверки очистка поля молча переносила бы
+ * квест в Гвинейский залив.
+ */
+function optionalNumber(value: FormDataEntryValue | null): number | null {
+  if (value === null) return null;
+  const text = String(value).trim();
+  if (text === '') return null;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
 const ALLOWED_TRANSITIONS: Record<EventStatus, EventStatus[]> = {

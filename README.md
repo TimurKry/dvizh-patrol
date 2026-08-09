@@ -17,6 +17,8 @@
 **Участник.** Создаёт команду или входит по шестизначному коду —
 без email и пароля. Видит задания, снимает, отправляет и **сразу
 идёт дальше**, не дожидаясь проверки. Следит за баллами и местом.
+На карте видит границы игрового поля и задания с привязкой к
+месту.
 
 **Организатор.** Заводит мероприятие, импортирует 30–50 заданий
 файлом, запускает и останавливает квест, разбирает **только
@@ -74,6 +76,7 @@ supabase/migrations/0003_views.sql
 supabase/migrations/0004_rls.sql
 supabase/migrations/0005_storage.sql
 supabase/migrations/0006_seed_event.sql
+supabase/migrations/0007_play_area.sql
 ```
 
 Через SQL Editor или `npx supabase db push`.
@@ -157,6 +160,7 @@ data/           образцы файлов импорта
 | [AI_VALIDATION.md](docs/AI_VALIDATION.md) | Границы проверки, работа без неё |
 | [JOB_QUEUE.md](docs/JOB_QUEUE.md) | Очередь в базе |
 | [SCORING.md](docs/SCORING.md) | Журнал баллов, рейтинг |
+| [MAP.md](docs/MAP.md) | Карта, игровое поле, тайлы |
 | [TASK_IMPORT_FORMAT.md](docs/TASK_IMPORT_FORMAT.md) | Формат JSON и CSV |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Установка с нуля |
 | [GOING_LIVE.md](docs/GOING_LIVE.md) | Домен, бесплатный хостинг, секретность заданий |

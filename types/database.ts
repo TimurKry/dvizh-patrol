@@ -114,6 +114,17 @@ export interface EventRow {
   photo_retention_days: number | null;
   poster_path: string | null;
   leaderboard_frozen_at: string | null;
+  /**
+   * Игровое поле: круг на карте. Три колонки заполняются только
+   * вместе — это держит ограничение в базе, — но по отдельности
+   * каждая nullable. Собирать их в объект следует через
+   * `toPlayArea` из lib/geo, а не проверять руками в каждом месте.
+   */
+  area_latitude: number | null;
+  area_longitude: number | null;
+  area_radius_meters: number | null;
+  /** Строгий режим: отправка вне поля не принимается. */
+  area_enforced: boolean;
   created_at: string;
   updated_at: string;
 }

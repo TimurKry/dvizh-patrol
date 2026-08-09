@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import dynamicImport from 'next/dynamic';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BottomNav } from '@/components/nav/bottom-nav';
@@ -20,10 +21,20 @@ import {
   membersWord,
   pointsWord,
 } from '@/lib/messages';
+import { toPlayArea } from '@/lib/geo';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Задание' };
+
+const QuestMap = dynamicImport(
+  () => import('@/components/game/quest-map').then((m) => m.QuestMap),
+  {
+    loading: () => (
+      <div className="h-[260px] w-full animate-pulse rounded-[16px] border border-hairline bg-canvas-deep" />
+    ),
+  },
+);
 
 export default async function TaskPage({ params }: { params: Promise<{ taskId: string }> }) {
   const session = await requireTeamSession();
@@ -108,6 +119,34 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
           </div>
         )}
 
+        {/* ═══ Где искать ═══════════════════════════════════
+            Карта только у заданий с заданной точкой. Там место и
+            так не загадка — оно проверяется радиусом, — а вот
+            дойти до него без карты в чужом городе трудно. */}
+        {task.latitude != null && task.longitude != null && (
+          <div className="mt-6 flex flex-col gap-2">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+              Где искать
+            </h2>
+            <QuestMap
+              className="h-[260px]"
+              showLocateButton={false}
+              area={toPlayArea(session.event)}
+              points={[
+                {
+                  id: task.id,
+                  latitude: task.latitude,
+                  longitude: task.longitude,
+                  label: String(task.number),
+                  title: task.title,
+                  radiusMeters: task.radius_meters,
+                  done: state === 'accepted',
+                },
+              ]}
+            />
+          </div>
+        )}
+
         {/* ═══ Описание ═════════════════════════════════════ */}
         <div className="mt-6 flex flex-col gap-4">
           <p className="whitespace-pre-line text-body">{task.description}</p>
@@ -178,6 +217,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             <PhotoUpload
               taskId={task.id}
               requireLocation={task.require_location}
+              areaEnforced={session.event.area_enforced}
               maxLongEdge={config.MAX_IMAGE_LONG_EDGE}
               maxBytes={config.MAX_UPLOAD_SIZE_MB * 1024 * 1024}
               attemptsLeft={attemptsLeft}

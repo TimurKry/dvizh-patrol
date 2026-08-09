@@ -187,6 +187,78 @@ export function EventSettingsForm({
         </Field>
       </div>
 
+      {/* ═══ Игровое поле ══════════════════════════════════
+          Круг на карте: центр и радиус. Пустые поля означают
+          «поля нет» — карта тогда не показывается вовсе. */}
+      <fieldset className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
+        <legend className="px-1 text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+          Игровое поле
+        </legend>
+
+        <p className="text-caption text-sand">
+          Круг, внутри которого проходит квест. Координаты центра проще всего взять в
+          Google Maps: правый клик по точке — первая строка меню. Оставьте пустым, чтобы
+          не показывать карту.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Широта центра" htmlFor="areaLatitude" error={fields.areaLatitude}>
+            <TextInput
+              id="areaLatitude"
+              name="areaLatitude"
+              type="number"
+              step="any"
+              inputMode="decimal"
+              placeholder="51.3397"
+              defaultValue={event.area_latitude ?? ''}
+            />
+          </Field>
+
+          <Field label="Долгота центра" htmlFor="areaLongitude" error={fields.areaLongitude}>
+            <TextInput
+              id="areaLongitude"
+              name="areaLongitude"
+              type="number"
+              step="any"
+              inputMode="decimal"
+              placeholder="12.3731"
+              defaultValue={event.area_longitude ?? ''}
+            />
+          </Field>
+
+          <Field
+            label="Радиус, метров"
+            htmlFor="areaRadiusMeters"
+            error={fields.areaRadiusMeters}
+            hint="От 100 до 20000."
+          >
+            <TextInput
+              id="areaRadiusMeters"
+              name="areaRadiusMeters"
+              type="number"
+              min="100"
+              max="20000"
+              step="10"
+              placeholder="1000"
+              defaultValue={event.area_radius_meters ?? ''}
+            />
+          </Field>
+        </div>
+
+        <Checkbox
+          name="areaEnforced"
+          defaultChecked={event.area_enforced}
+          label="Строгий режим: не принимать фотографии вне поля"
+          description="Потребует геопозицию к каждой фотографии. Команда, запретившая доступ или стоящая в подворотне, не сможет отправить ничего. Без галочки снимок снаружи не отклоняется, а приходит к вам на проверку с пометкой."
+        />
+        {fields.areaEnforced && (
+          <p className="text-caption text-ink" role="alert">
+            <span aria-hidden="true">! </span>
+            {fields.areaEnforced}
+          </p>
+        )}
+      </fieldset>
+
       <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
         <Checkbox
           name="registrationOpen"

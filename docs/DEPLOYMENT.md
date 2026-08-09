@@ -38,6 +38,7 @@ supabase/migrations/0003_views.sql
 supabase/migrations/0004_rls.sql
 supabase/migrations/0005_storage.sql
 supabase/migrations/0006_seed_event.sql
+supabase/migrations/0007_play_area.sql
 ```
 
 Каждый файл выполняется целиком, одним запуском.

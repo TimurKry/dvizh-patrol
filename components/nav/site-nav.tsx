@@ -13,6 +13,7 @@ export async function SiteNav() {
   if (session) {
     const links: NavLink[] = [
       { href: '/tasks', label: 'Задания' },
+      { href: '/map', label: 'Карта' },
       { href: '/team', label: 'Команда' },
       { href: '/submissions', label: 'Отправки' },
       { href: '/leaderboard', label: 'Рейтинг' },

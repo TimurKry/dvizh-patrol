@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkLocation, distanceMeters } from '@/lib/geo';
+import { checkLocation, checkPlayArea, distanceMeters, toPlayArea } from '@/lib/geo';
 
 /** Рыночная площадь Лейпцига — точка отсчёта в тестах. */
 const MARKT = { latitude: 51.3397, longitude: 12.3731 };
@@ -108,5 +108,61 @@ describe('проверка радиуса', () => {
     });
 
     expect(result.ok).toBe(true);
+  });
+});
+
+describe('игровое поле', () => {
+  const AREA = { latitude: MARKT.latitude, longitude: MARKT.longitude, radiusMeters: 1000 };
+
+  it('собирается только из трёх заполненных колонок', () => {
+    expect(
+      toPlayArea({ area_latitude: 51.3, area_longitude: 12.4, area_radius_meters: 900 }),
+    ).toEqual({ latitude: 51.3, longitude: 12.4, radiusMeters: 900 });
+
+    // Радиуса нет — рисовать и проверять нечем.
+    expect(
+      toPlayArea({ area_latitude: 51.3, area_longitude: 12.4, area_radius_meters: null }),
+    ).toBeNull();
+  });
+
+  it('без поля или без координат ничего не утверждает', () => {
+    expect(checkPlayArea({ area: null, latitude: 51.3, longitude: 12.4 })).toEqual({
+      status: 'unknown',
+    });
+    expect(checkPlayArea({ area: AREA, latitude: null, longitude: null })).toEqual({
+      status: 'unknown',
+    });
+  });
+
+  it('центр внутри', () => {
+    const verdict = checkPlayArea({ area: AREA, ...MARKT });
+    expect(verdict.status).toBe('inside');
+  });
+
+  it('точка за радиусом снаружи, и видно на сколько', () => {
+    // Примерно 0.02° широты — больше двух километров на север.
+    const far = { latitude: MARKT.latitude + 0.02, longitude: MARKT.longitude };
+    const verdict = checkPlayArea({ area: AREA, ...far });
+
+    expect(verdict.status).toBe('outside');
+    if (verdict.status !== 'outside') return;
+    expect(verdict.distance).toBeGreaterThan(2000);
+    expect(verdict.overshoot).toBeGreaterThan(1000);
+  });
+
+  it('погрешность телефона играет за участника', () => {
+    // 1100 метров от центра при радиусе 1000 — снаружи…
+    const edge = { latitude: MARKT.latitude + 0.0099, longitude: MARKT.longitude };
+    expect(checkPlayArea({ area: AREA, ...edge }).status).toBe('outside');
+
+    // …но с честной погрешностью в 150 метров команда внутри.
+    expect(checkPlayArea({ area: AREA, ...edge, accuracy: 150 }).status).toBe('inside');
+  });
+
+  it('огромная заявленная погрешность не открывает поле настежь', () => {
+    // Пять километров от центра. Клиент может прислать любую
+    // точность, поэтому послабление ограничено 150 метрами.
+    const far = { latitude: MARKT.latitude + 0.045, longitude: MARKT.longitude };
+    expect(checkPlayArea({ area: AREA, ...far, accuracy: 100000 }).status).toBe('outside');
   });
 });

@@ -86,7 +86,7 @@ export function TaskCardDemo() {
               Найдите объект и повторите позу как можно точнее.
             </p>
 
-            <p className="mt-auto flex items-center justify-center gap-2 border border-[#babab8] py-3">
+            <p className="mt-auto flex items-center justify-center gap-2 border border-[#87877f] py-3">
               <span aria-hidden="true">◇</span>
               <span className="signal-label text-micro text-[#060609]">Доступно</span>
             </p>

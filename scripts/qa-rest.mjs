@@ -24,6 +24,8 @@
  */
 
 import { createServer } from 'node:http';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import pg from 'pg';
 
 const PORT = Number(process.env.QA_REST_PORT ?? 54321);
@@ -228,6 +230,9 @@ function send(res, status, payload, extraHeaders = {}) {
     'content-type': 'application/json; charset=utf-8',
     'access-control-allow-origin': '*',
     'access-control-allow-headers': '*',
+    // Без явного списка методов Chrome заворачивает preflight для
+    // PUT, и загрузка файла падает ещё до запроса.
+    'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD',
     'access-control-expose-headers': 'content-range',
     ...extraHeaders,
   });
@@ -314,10 +319,191 @@ async function handleAuth(req, res, url) {
   return send(res, 404, { message: 'not implemented in qa facade' });
 }
 
+
+// ═══ Storage ═══════════════════════════════════════════════════
+
+/**
+ * Файловое хранилище на диске.
+ *
+ * Реализовано подмножество Storage API, которым пользуется
+ * `lib/storage/index.ts`: подписанная ссылка на загрузку, запись
+ * по ней, чтение, список и удаление. Подписи не проверяются —
+ * «токен» здесь просто часть URL.
+ *
+ * Без этого куска нельзя проверить главный сценарий продукта:
+ * команда отправляет фотографию, организатор её принимает, баллы
+ * попадают в рейтинг. Всё остальное в стенде существует ради него.
+ */
+const STORAGE_ROOT = process.env.QA_STORAGE_DIR ?? '/tmp/dvizh-qa-storage';
+
+const objectPath = (bucket, key) =>
+  path.join(STORAGE_ROOT, bucket, ...key.split('/').filter((part) => part && part !== '..'));
+
+/**
+ * Тело запроса на запись объекта.
+ *
+ * supabase-js в браузере заворачивает Blob в multipart/form-data,
+ * а в Node шлёт сырые байты. Записать на диск нужно сам файл, а
+ * не конверт, иначе sharp потом не прочитает превью.
+ */
+async function readObjectBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const raw = Buffer.concat(chunks);
+
+  const type = String(req.headers['content-type'] ?? '');
+  const boundary = type.match(/boundary=(?:"([^"]+)"|([^;]+))/);
+  if (!type.startsWith('multipart/form-data') || !boundary) return raw;
+
+  const marker = Buffer.from(`--${boundary[1] ?? boundary[2]}`);
+  let cursor = raw.indexOf(marker);
+
+  while (cursor !== -1) {
+    const headerEnd = raw.indexOf('\r\n\r\n', cursor);
+    if (headerEnd === -1) break;
+
+    const headers = raw.subarray(cursor, headerEnd).toString('utf8');
+    const next = raw.indexOf(marker, headerEnd);
+    const end = next === -1 ? raw.length : next - 2; // без CRLF перед границей
+
+    // Файл — единственная часть с filename; остальные поля
+    // (cacheControl и прочее) нас не интересуют.
+    if (/filename=/i.test(headers)) return raw.subarray(headerEnd + 4, end);
+
+    cursor = next;
+  }
+
+  return raw;
+}
+
+async function handleStorage(req, res, url) {
+  // /storage/v1/<...>
+  const parts = url.pathname.replace(/^\/storage\/v1\//, '').split('/');
+  const [kind] = parts;
+
+  if (kind !== 'object') return send(res, 404, { message: 'not implemented in qa facade' });
+
+  const rest = parts.slice(1);
+
+  // POST /object/upload/sign/{bucket}/{path...}
+  if (rest[0] === 'upload' && rest[1] === 'sign' && req.method === 'POST') {
+    const bucket = rest[2];
+    const key = rest.slice(3).join('/');
+    return send(res, 200, { url: `/object/upload/sign/${bucket}/${key}?token=qa` });
+  }
+
+  // PUT /object/upload/sign/{bucket}/{path...}
+  if (rest[0] === 'upload' && rest[1] === 'sign' && req.method === 'PUT') {
+    const bucket = rest[2];
+    const key = rest.slice(3).join('/');
+    const target = objectPath(bucket, key);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, await readObjectBody(req));
+    return send(res, 200, { Key: `${bucket}/${key}` });
+  }
+
+  // POST /object/sign/{bucket}            — пакет ссылок
+  // POST /object/sign/{bucket}/{path...}  — одна ссылка
+  if (rest[0] === 'sign' && req.method === 'POST') {
+    const bucket = rest[1];
+    const key = rest.slice(2).join('/');
+    const body = (await readBody(req)) ?? {};
+
+    if (!key) {
+      const paths = Array.isArray(body.paths) ? body.paths : [];
+      return send(
+        res,
+        200,
+        paths.map((item) => ({
+          path: item,
+          signedURL: `/object/sign/${bucket}/${item}?token=qa`,
+          error: null,
+        })),
+      );
+    }
+
+    return send(res, 200, { signedURL: `/object/sign/${bucket}/${key}?token=qa` });
+  }
+
+  // Чтение объекта. supabase-js в зависимости от версии зовёт
+  // /object/{bucket}/{path}, /object/authenticated/... или
+  // /object/public/... — поддерживаем все три, потому что
+  // именно на этом месте загрузка и спотыкалась.
+  if (req.method === 'GET') {
+    const prefixed = rest[0] === 'sign' || rest[0] === 'authenticated' || rest[0] === 'public';
+    const bucket = prefixed ? rest[1] : rest[0];
+    const key = rest.slice(prefixed ? 2 : 1).join('/');
+    try {
+      const body = await fs.readFile(objectPath(bucket, key));
+      res.writeHead(200, {
+        'content-type': 'application/octet-stream',
+        'access-control-allow-origin': '*',
+      });
+      return res.end(body);
+    } catch {
+      return send(res, 404, { message: 'Object not found' });
+    }
+  }
+
+  // POST /object/list/{bucket}
+  if (rest[0] === 'list' && req.method === 'POST') {
+    const bucket = rest[1];
+    const body = (await readBody(req)) ?? {};
+    const prefix = String(body.prefix ?? '');
+    const search = String(body.search ?? '');
+    try {
+      const dir = objectPath(bucket, prefix);
+      const names = await fs.readdir(dir);
+      const matched = names.filter((name) => !search || name.includes(search));
+      return send(
+        res,
+        200,
+        matched.map((name) => ({ name, id: name, metadata: {} })),
+      );
+    } catch {
+      return send(res, 200, []);
+    }
+  }
+
+  // DELETE /object/{bucket} с телом { prefixes }
+  if (req.method === 'DELETE') {
+    const bucket = rest[0];
+    const body = (await readBody(req)) ?? {};
+    const prefixes = Array.isArray(body.prefixes) ? body.prefixes : [];
+    for (const key of prefixes) {
+      await fs.rm(objectPath(bucket, key), { force: true });
+    }
+    return send(res, 200, prefixes.map((key) => ({ name: key })));
+  }
+
+  // POST /object/{bucket}/{path...} — прямая загрузка
+  if (req.method === 'POST') {
+    const bucket = rest[0];
+    const key = rest.slice(1).join('/');
+    const target = objectPath(bucket, key);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, await readObjectBody(req));
+    return send(res, 200, { Key: `${bucket}/${key}` });
+  }
+
+  return send(res, 404, { message: 'not implemented in qa facade' });
+}
+
+const VERBOSE = process.env.QA_REST_LOG === '1';
+
 const server = createServer(async (req, res) => {
+  if (VERBOSE) console.log(req.method, req.url);
   if (req.method === 'OPTIONS') return send(res, 204, undefined);
 
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+
+  if (url.pathname.startsWith('/storage/v1/')) {
+    try {
+      return await handleStorage(req, res, url);
+    } catch (error) {
+      return send(res, 400, { message: error.message });
+    }
+  }
 
   if (url.pathname.startsWith('/auth/v1/')) {
     try {

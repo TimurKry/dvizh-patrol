@@ -285,7 +285,7 @@ export function QuestMap({
 
       {showLocateButton && (
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" variant="secondary" size="sm" onClick={locate} disabled={locating}>
+          <Button type="button" variant="secondary" onClick={locate} disabled={locating}>
             {locating ? 'Определяем…' : 'Где я'}
           </Button>
           <p className="text-caption text-faint">

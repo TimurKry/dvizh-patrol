@@ -39,10 +39,10 @@ const STATE: Record<
 };
 
 const TONE_FOOTER: Record<'available' | 'checking' | 'claimed' | 'dim', string> = {
-  available: 'border-[#babab8] text-[#060609]',
-  checking: 'border-[#babab8] border-dashed text-[#5c5c63]',
+  available: 'border-[#87877f] text-[#060609]',
+  checking: 'border-[#87877f] border-dashed text-[#5c5c63]',
   claimed: 'border-signal bg-signal text-canvas',
-  dim: 'border-[#d6d6d2] text-[#8a8a90]',
+  dim: 'border-[#87877f] text-[#66666d]',
 };
 
 export function TaskCard({ item }: { item: TaskWithState }) {
@@ -107,7 +107,7 @@ export function TaskCard({ item }: { item: TaskWithState }) {
             </div>
           ) : (
             <div className="flex aspect-4/3 w-full shrink-0 items-center justify-center bg-[#ebebe6]">
-              <span className="display-figure text-display text-[#c7c7c4]" aria-hidden="true">
+              <span className="display-figure text-display text-[#a8a8a3]" aria-hidden="true">
                 {task.number}
               </span>
             </div>
@@ -119,7 +119,7 @@ export function TaskCard({ item }: { item: TaskWithState }) {
 
           <div className="mt-auto flex flex-col gap-2">
             {state !== 'accepted' && !gone && attemptsLeft > 0 && (
-              <p className="signal-label text-micro text-[#8a8a90]">
+              <p className="signal-label text-micro text-[#66666d]">
                 {attemptsLeft} {attemptsWord(attemptsLeft)}
               </p>
             )}
@@ -156,7 +156,7 @@ export function TaskCard({ item }: { item: TaskWithState }) {
                 api={api}
                 label={`Показать рубашку карточки «${task.title}»`}
                 className={cn(
-                  'border border-[#babab8] text-[#060609] hover:border-signal hover:text-signal',
+                  'border border-[#87877f] text-[#060609] hover:border-signal hover:text-signal',
                   gone && 'flex-1',
                 )}
               />

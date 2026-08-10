@@ -241,7 +241,7 @@ export default async function HomePage() {
                 key={stop.n}
                 delay={index * 80}
                 className={`flex flex-col gap-2 border p-4 ${
-                  stop.accent ? 'border-[#060609] bg-[#060609]' : 'border-[#babab8] bg-[#f5f5f1]'
+                  stop.accent ? 'border-[#060609] bg-[#060609]' : 'border-[#87877f] bg-[#f5f5f1]'
                 }`}
               >
                 <div className="flex items-baseline justify-between gap-3">

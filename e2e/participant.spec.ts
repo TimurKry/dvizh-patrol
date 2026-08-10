@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ensureRegistrationOpen } from './helpers/admin';
 
 /**
  * Путь участника: регистрация, вход по коду, задание, отправка.
@@ -6,9 +7,17 @@ import { expect, test, type Page } from '@playwright/test';
  * Тесты идут по видимому тексту, а не по служебным атрибутам:
  * если формулировка на кнопке изменится, тест должен об этом
  * сказать — участник ориентируется именно по словам.
+ *
+ * Мероприятие должно быть в черновике или в наборе команд. Если
+ * заданы E2E_ADMIN_EMAIL и E2E_ADMIN_PASSWORD, набор открывается
+ * автоматически — иначе его нужно открыть руками до запуска.
  */
 
 const unique = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+
+test.beforeAll(async ({ browser }) => {
+  await ensureRegistrationOpen(browser);
+});
 
 async function registerTeam(page: Page, name: string): Promise<string> {
   await page.goto('/register');
@@ -46,12 +55,15 @@ test.describe('регистрация команды', () => {
     await expect(page).toHaveURL(/\/register/);
   });
 
-  test('повторное название отклоняется', async ({ page, context }) => {
+  test('повторное название отклоняется', async ({ page, browser }) => {
     const name = `Дубль ${unique()}`;
     await registerTeam(page, name);
 
-    // Второй участник в чистом браузере пробует то же название.
-    const second = await context.newPage();
+    // Именно новый контекст, а не вкладка: вкладка унаследовала бы
+    // cookie только что созданной команды, и /register увёл бы её
+    // на страницу команды вместо формы.
+    const secondContext = await browser.newContext();
+    const second = await secondContext.newPage();
     await second.goto('/register');
     await second.getByLabel('Название команды').fill(name);
     await second.getByLabel('Имя капитана').fill('Другой');
@@ -59,7 +71,7 @@ test.describe('регистрация команды', () => {
     await second.getByRole('button', { name: 'Создать команду' }).click();
 
     await expect(second.getByText(/уже зарегистрирована/i)).toBeVisible();
-    await second.close();
+    await secondContext.close();
   });
 });
 
@@ -146,12 +158,72 @@ test.describe('доступность', () => {
   });
 
   test('кнопки на мобильном не меньше 44 пикселей', async ({ page }) => {
-    await page.goto('/register');
+    // Экран входа организатора: единственная форма, которая
+    // отрисовывается в любом статусе мероприятия. Формы участника
+    // закрываются вместе с набором и завершением квеста, и тест
+    // на них зависел бы от порядка прогонов, а не от вёрстки.
+    await page.goto('/admin/login');
 
-    const button = page.getByRole('button', { name: 'Создать команду' });
+    const button = page.getByRole('button', { name: 'Войти' });
     const box = await button.boundingBox();
 
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
+  test('каждая цель нажатия на лендинге проходит 44×44', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    // Проверяем то, во что реально тычут пальцем, а не всё
+    // подряд: ссылки внутри абзацев к правилу 44×44 не
+    // относятся, а вот кнопки и карточки-CTA — относятся.
+    // Панель разработчика Next.js в продакшене отсутствует, и её
+    // 32-пиксельная кнопка к интерфейсу отношения не имеет.
+    const targets = page
+      .locator('a[class*="ticket-notch"], button:visible, nav a:visible')
+      .filter({ hasNot: page.locator('[data-nextjs-dev-tools-button]') });
+    const count = await targets.count();
+    expect(count).toBeGreaterThan(0);
+
+    for (let i = 0; i < count; i += 1) {
+      const target = targets.nth(i);
+      const box = await target.boundingBox();
+      if (!box) continue;
+
+      const label = (await target.getAttribute('aria-label')) ?? (await target.innerText());
+      if (label.includes('Next.js')) continue;
+
+      expect.soft(Math.min(box.width, box.height), label.slice(0, 40)).toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  test('на лендинге нет горизонтальной прокрутки', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    const overflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+  });
+
+  test('при «меньше движения» контент виден сразу и неподвижен', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    // Блоки с .reveal без наблюдателя остались бы прозрачными
+    // навсегда — при reduced-motion они обязаны быть видны сразу.
+    const hidden = await page.evaluate(
+      () =>
+        [...document.querySelectorAll('.reveal')].filter(
+          (el) => Number(getComputedStyle(el).opacity) < 0.99,
+        ).length,
+    );
+
+    expect(hidden).toBe(0);
   });
 });
 
@@ -162,7 +234,7 @@ test.describe('PWA', () => {
 
     const manifest = (await response.json()) as Record<string, unknown>;
     expect(manifest.display).toBe('standalone');
-    expect(manifest.theme_color).toBe('#f7f5f3');
+    expect(manifest.theme_color).toBe('#060609');
     expect(Array.isArray(manifest.icons)).toBe(true);
   });
 

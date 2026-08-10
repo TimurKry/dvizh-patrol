@@ -1,6 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ADMIN_EMAIL, ADMIN_PASSWORD, loginAsAdmin, setEventStatus } from './helpers/admin';
 
 /**
  * Полный цикл: организатор запускает квест, команда отправляет
@@ -10,33 +11,12 @@ import { join } from 'node:path';
  * поэтому он и требует отдельного тестового проекта Supabase.
  */
 
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
-
 test.skip(
   !ADMIN_EMAIL || !ADMIN_PASSWORD,
   'Нужны E2E_ADMIN_EMAIL и E2E_ADMIN_PASSWORD — см. playwright.config.ts',
 );
 
 const unique = () => Math.random().toString(36).slice(2, 8).toUpperCase();
-
-async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login');
-  await page.getByLabel('Email').fill(ADMIN_EMAIL!);
-  await page.getByLabel('Пароль').fill(ADMIN_PASSWORD!);
-  await page.getByRole('button', { name: 'Войти' }).click();
-  await expect(page).toHaveURL(/\/admin$/);
-}
-
-async function setEventStatus(page: Page, buttonName: RegExp): Promise<void> {
-  await page.goto('/admin/event');
-  const button = page.getByRole('button', { name: buttonName });
-  if ((await button.count()) === 0) return;
-
-  page.once('dialog', (dialog) => void dialog.accept());
-  await button.first().click();
-  await page.waitForLoadState('networkidle');
-}
 
 test.describe.serial('полный цикл квеста', () => {
   const teamName = `Цикл ${unique()}`;
@@ -73,7 +53,10 @@ test.describe.serial('полный цикл квеста', () => {
     await setEventStatus(page, /Запустить квест/);
 
     await page.goto('/admin');
-    await expect(page.getByText(/Идёт/)).toBeVisible();
+    // Статус виден и в заголовке сводки, и в сайдбаре — берём
+    // заголовок, иначе строгий режим найдёт два совпадения.
+    await expect(page.getByRole('heading', { name: /Движ/ })).toBeVisible();
+    await expect(page.locator('main').getByText(/Идёт/).first()).toBeVisible();
   });
 
   test('команда видит задания и открывает одно', async ({ browser }) => {
@@ -97,7 +80,9 @@ test.describe.serial('полный цикл квеста', () => {
     const context = await browser.newContext({ storageState: 'e2e-results/team-state.json' });
     const page = await context.newPage();
 
-    await page.goto('/tasks?filter=available');
+    // Фильтров больше нет: команда видит руку из шести карточек
+    // и открывает любую из них.
+    await page.goto('/tasks');
     await page.locator('a[href^="/tasks/"]').first().click();
 
     // Подставляем файл напрямую: настоящую камеру браузер не даст.
@@ -147,7 +132,8 @@ test.describe.serial('полный цикл квеста', () => {
     await page.getByRole('button', { name: 'Принять', exact: true }).click();
     await page.getByRole('button', { name: 'Принять задание' }).click();
 
-    await expect(page.getByText(/Принято|уже была принята/)).toBeVisible();
+    // Слово встречается и в значке статуса, и в подтверждении.
+    await expect(page.getByText(/Принято|уже была принята/).first()).toBeVisible();
   });
 
   test('баллы попали в рейтинг', async ({ page }) => {
@@ -170,7 +156,13 @@ test.describe.serial('полный цикл квеста', () => {
     await setEventStatus(page, /Завершить/);
 
     await page.goto('/admin');
-    await expect(page.getByText(/Завершён/)).toBeVisible();
+    // Статус повторяется в сайдбаре — смотрим на содержимое.
+    await expect(
+      page
+        .locator('main')
+        .getByText(/Завершён/)
+        .first(),
+    ).toBeVisible();
   });
 
   test('после завершения отправки закрыты', async ({ browser }) => {

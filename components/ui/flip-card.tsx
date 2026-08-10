@@ -16,7 +16,9 @@ import { cn } from '@/lib/cn';
  * **Обе стороны лежат друг на друге** через `grid-area: 1 / 1`.
  * Иначе при перевороте высота карточки прыгала бы под содержимое
  * оборота, и соседние карточки в руке ездили бы вверх-вниз —
- * это анимация раскладки, которой в системе нет.
+ * это анимация раскладки, которой в системе нет. Побочный
+ * эффект полезный: высоту задаёт та сторона, которая выше, и
+ * ничего не обрезается.
  *
  * **Невидимая сторона получает `inert`, а не только
  * `aria-hidden`.** `backface-visibility: hidden` прячет её
@@ -29,29 +31,49 @@ import { cn } from '@/lib/cn';
  * нажатие на саму карточку — то, что человек делает пальцем не
  * задумываясь. Нажатия на ссылки и кнопки внутри карточки
  * переворот не запускают: проверяется `closest`.
+ *
+ * Стороны можно передать функцией и получить `toggle` внутрь —
+ * тогда кнопка переворота встаёт в поток разметки рядом с
+ * остальными действиями, а не висит поверх содержимого.
  */
+
+export interface FlipApi {
+  flipped: boolean;
+  toggle: () => void;
+  /** id тела карточки — для `aria-controls` на своей кнопке. */
+  controls: string;
+}
+
+type Side = ReactNode | ((api: FlipApi) => ReactNode);
+
+const render = (side: Side, api: FlipApi): ReactNode =>
+  typeof side === 'function' ? side(api) : side;
 
 export function FlipCard({
   front,
   back,
-  /** Что читает скринридер на кнопке переворота. */
+  /** Что читает скринридер на встроенной кнопке переворота. */
   flipLabel = 'Перевернуть карточку',
+  /** Своя кнопка в разметке сторон — встроенную не рисуем. */
+  ownTrigger = false,
   className,
   bodyClassName,
-  /** Кнопка переворота рисуется поверх карточки в этом углу. */
-  trigger,
 }: {
-  front: ReactNode;
-  back: ReactNode;
+  front: Side;
+  back: Side;
   flipLabel?: string;
+  ownTrigger?: boolean;
   className?: string;
   bodyClassName?: string;
-  trigger?: (props: { flipped: boolean; toggle: () => void; controls: string }) => ReactNode;
 }) {
   const [flipped, setFlipped] = useState(false);
   const bodyId = useId();
 
-  const toggle = () => setFlipped((value) => !value);
+  const api: FlipApi = {
+    flipped,
+    toggle: () => setFlipped((value) => !value),
+    controls: bodyId,
+  };
 
   return (
     <div className={cn('flip-scene relative', className)}>
@@ -63,23 +85,21 @@ export function FlipCard({
           // Ссылка или кнопка внутри карточки делает своё дело,
           // а не переворачивает её заодно.
           if ((event.target as HTMLElement).closest('a,button,input,select,textarea')) return;
-          toggle();
+          api.toggle();
         }}
       >
         <div className="flip-face" aria-hidden={flipped} inert={flipped}>
-          {front}
+          {render(front, api)}
         </div>
         <div className="flip-face flip-face-back" aria-hidden={!flipped} inert={!flipped}>
-          {back}
+          {render(back, api)}
         </div>
       </div>
 
-      {trigger ? (
-        trigger({ flipped, toggle, controls: bodyId })
-      ) : (
+      {!ownTrigger && (
         <button
           type="button"
-          onClick={toggle}
+          onClick={api.toggle}
           aria-pressed={flipped}
           aria-controls={bodyId}
           className={
@@ -96,5 +116,35 @@ export function FlipCard({
         </button>
       )}
     </div>
+  );
+}
+
+/** Кнопка переворота в потоке разметки. Вид задаёт вызывающий. */
+export function FlipButton({
+  api,
+  label,
+  className,
+}: {
+  api: FlipApi;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={api.toggle}
+      aria-pressed={api.flipped}
+      aria-controls={api.controls}
+      className={cn(
+        'tap-target flex items-center justify-center',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal',
+        className,
+      )}
+    >
+      <span className="sr-only">{label}</span>
+      <span aria-hidden="true" className="text-body">
+        ⟲
+      </span>
+    </button>
   );
 }

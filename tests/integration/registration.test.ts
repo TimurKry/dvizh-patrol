@@ -1,12 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import {
-  closePool,
-  createEvent,
-  joinTeam,
-  pool,
-  registerTeam,
-  resetData,
-} from '../helpers/db';
+import { closePool, createEvent, joinTeam, pool, registerTeam, resetData } from '../helpers/db';
 
 /**
  * Регистрация команд и участников.
@@ -98,9 +91,7 @@ describe('лимит команд', () => {
 
     expect((await registerTeam(eventId, 'Третья')).error).toBe('event_full');
 
-    await pool.query(`UPDATE public.teams SET status = 'cancelled' WHERE id = $1`, [
-      first.teamId,
-    ]);
+    await pool.query(`UPDATE public.teams SET status = 'cancelled' WHERE id = $1`, [first.teamId]);
 
     expect((await registerTeam(eventId, 'Третья')).ok).toBe(true);
   });
@@ -151,9 +142,7 @@ describe('правила регистрации', () => {
     const eventId = await createEvent();
 
     const first = await registerTeam(eventId, 'Трамвай');
-    await pool.query(`UPDATE public.teams SET status = 'cancelled' WHERE id = $1`, [
-      first.teamId,
-    ]);
+    await pool.query(`UPDATE public.teams SET status = 'cancelled' WHERE id = $1`, [first.teamId]);
 
     expect((await registerTeam(eventId, 'Трамвай')).ok).toBe(true);
   });
@@ -277,9 +266,7 @@ describe('лимит участников', () => {
     const eventId = await createEvent();
     const team = await registerTeam(eventId, 'Команда');
 
-    await pool.query(`UPDATE public.teams SET status = 'cancelled' WHERE id = $1`, [
-      team.teamId,
-    ]);
+    await pool.query(`UPDATE public.teams SET status = 'cancelled' WHERE id = $1`, [team.teamId]);
 
     expect((await joinTeam(eventId, team.joinCode!, 'Кто-то')).error).toBe('team_cancelled');
   });

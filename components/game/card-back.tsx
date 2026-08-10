@@ -42,10 +42,13 @@ export function CardBack({
   caption,
   hint,
   className,
+  children,
 }: {
   caption: string;
   hint?: string;
   className?: string;
+  /** Действия поверх рубашки — обычно кнопка «вернуть лицом». */
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -67,7 +70,10 @@ export function CardBack({
       <span className="relative font-display text-title font-bold uppercase tracking-[-0.03em]">
         {caption}
       </span>
-      {hint && <span className="signal-label relative text-micro opacity-70">{hint}</span>}
+      {hint && (
+        <span className="signal-label relative max-w-[24ch] text-micro opacity-80">{hint}</span>
+      )}
+      {children && <div className="relative mt-2">{children}</div>}
     </div>
   );
 }

@@ -1,107 +1,179 @@
+'use client';
+
 import Link from 'next/link';
-import { StatusBadge, Tag } from '@/components/ui/status-badge';
-import { TASK_CATEGORY_TEXT, TASK_DIFFICULTY_TEXT, attemptsWord, pointsWord } from '@/lib/messages';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { FlipButton, FlipCard } from '@/components/ui/flip-card';
+import { CardBack } from './card-back';
+import { TASK_CARD_TYPE_TEXT, attemptsWord, pointsWord } from '@/lib/messages';
 import type { TaskWithState } from '@/lib/data/tasks';
 import { cn } from '@/lib/cn';
 
 /**
- * Карточка задания.
+ * Игровая карточка задания · Figma 99:50.
  *
- * Изображение — главное, текста минимум. Всё, что нужно решить
- * на ходу: номер, что снимать, сколько стоит, что уже сделано и
- * сколько попыток осталось.
+ * Три типа (загадка, фото-повтор, актив) × две стороны × три
+ * состояния доступности. Лицевая сторона светлая — она читается
+ * на солнце, где карточку и будут смотреть. Рубашка красится в
+ * цвет команды.
+ *
+ * Карточка одновременно и ссылка, и переворачивающийся объект.
+ * Разведены они так: нажатие на «Открыть» ведёт на страницу
+ * задания, нажатие в любое другое место переворачивает. Логика
+ * этого разделения живёт в FlipCard, здесь только разметка.
+ *
+ * Состояние `claimed_by_other` — не ошибка команды, а исход
+ * гонки, поэтому оно оформлено приглушённо и без красного:
+ * задание просто ушло, ничего чинить не нужно.
  */
 
-const STATE_LABEL: Record<TaskWithState['state'], { text: string; icon: string }> = {
-  available: { text: 'Доступно', icon: '○' },
-  in_review: { text: 'На проверке', icon: '»' },
-  accepted: { text: 'Принято', icon: '✓' },
-  rejected: { text: 'Отклонено', icon: '×' },
-  attempts_exhausted: { text: 'Попытки кончились', icon: '−' },
+const STATE: Record<
+  TaskWithState['state'],
+  { text: string; icon: string; tone: 'available' | 'checking' | 'claimed' | 'dim' }
+> = {
+  available: { text: 'Доступно', icon: '◇', tone: 'available' },
+  rejected: { text: 'Не принято', icon: '×', tone: 'available' },
+  in_review: { text: 'На проверке', icon: '»', tone: 'checking' },
+  accepted: { text: 'Забрали', icon: '✓', tone: 'claimed' },
+  claimed_by_other: { text: 'Забрала другая', icon: '⊘', tone: 'dim' },
+  attempts_exhausted: { text: 'Попытки кончились', icon: '−', tone: 'dim' },
+};
+
+const TONE_FOOTER: Record<'available' | 'checking' | 'claimed' | 'dim', string> = {
+  available: 'border-[#babab8] text-[#060609]',
+  checking: 'border-[#babab8] border-dashed text-[#5c5c63]',
+  claimed: 'border-signal bg-signal text-canvas',
+  dim: 'border-[#d6d6d2] text-[#8a8a90]',
 };
 
 export function TaskCard({ item }: { item: TaskWithState }) {
   const { task, state, attemptsLeft, referenceImageUrl } = item;
-  const label = STATE_LABEL[state];
+  const presentation = STATE[state];
+  const type = TASK_CARD_TYPE_TEXT[task.card_type];
+  const gone = state === 'claimed_by_other';
 
   return (
-    <Link
-      href={`/tasks/${task.id}`}
-      className={cn(
-        'lift group flex flex-col gap-3 border bg-panel p-4',
-        'focus-visible:outline-2 focus-visible:outline-offset-2',
-        state === 'accepted' ? 'border-ink' : 'border-hairline hover:border-signal-line',
-      )}
-    >
-      <div className="zoom-host relative bg-ink-wash">
-        {referenceImageUrl ? (
-          /* Эталон приходит по подписанной ссылке с ограниченным
-             сроком, оптимизатор next/image её кэшировать не должен. */
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={referenceImageUrl}
-            alt=""
-            loading="lazy"
-            className="aspect-4/3 w-full object-cover"
-          />
-        ) : (
-          <div className="flex aspect-4/3 w-full items-center justify-center">
-            <span className="text-display tracking-[-2.32px] text-faint" aria-hidden="true">
-              {task.number}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-caption text-faint">Задание {task.number}</p>
-          <h3 className="mt-1 text-body-lg font-normal transition-colors group-hover:text-signal">
-            {task.title}
-          </h3>
-        </div>
-        <span className="shrink-0 text-body-lg tabular-nums">
-          {task.points}
-          <span className="ml-1 text-caption text-muted">{pointsWord(task.points)}</span>
-        </span>
-      </div>
-
-      {task.short_description && (
-        <p className="clamp-2 text-body text-muted">{task.short_description}</p>
-      )}
-
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
-        <span
+    <FlipCard
+      // Высоту задаёт содержимое, а не жёсткая пропорция: у
+      // длинного названия при aspect-[342/479] обрезалась нижняя
+      // кнопка. Пропорция макета остаётся минимумом.
+      className={cn('min-h-[479px] w-full', gone && 'opacity-60')}
+      ownTrigger
+      front={(api) => (
+        <article
           className={cn(
-            'inline-flex items-center gap-1.5 border px-2.5 py-1 text-caption font-medium',
-            state === 'accepted'
-              ? 'border-ink bg-ink text-canvas'
-              : state === 'in_review'
-                ? 'border-hairline-strong border-dashed text-muted'
-                : state === 'available'
-                  ? 'border-ink text-ink'
-                  : 'border-hairline text-faint',
+            'flex h-full flex-col gap-3 overflow-hidden rounded-[8px] border p-4',
+            'bg-[#f5f5f1] text-[#060609]',
+            state === 'accepted' ? 'border-signal' : 'border-hairline',
           )}
         >
-          {/* «На проверке» — единственное живое состояние: точка
-              пульсирует, чтобы было видно, что процесс идёт, и
-              команда не жала бы «отправить» ещё раз. */}
-          <span aria-hidden="true" className={cn(state === 'in_review' && 'anim-tick')}>
-            {label.icon}
-          </span>
-          {label.text}
-        </span>
+          <div className="flex items-start justify-between gap-3">
+            <span
+              className="flex h-11 w-11 shrink-0 items-center justify-center border border-[#060609] text-body-lg"
+              aria-hidden="true"
+            >
+              {type.icon}
+            </span>
+            <span className="display-figure bg-[#060609] px-3 py-2 text-title text-[#f5f5f1]">
+              {task.points}
+              <span className="sr-only"> {pointsWord(task.points)}</span>
+              <span aria-hidden="true" className="ml-1 text-micro">
+                Б
+              </span>
+            </span>
+          </div>
 
-        <Tag>{TASK_CATEGORY_TEXT[task.category]}</Tag>
-        <Tag>{TASK_DIFFICULTY_TEXT[task.difficulty]}</Tag>
+          <p className="signal-label text-micro text-[#5c5c63]">
+            {type.label} / №{task.number}
+          </p>
 
-        {state !== 'accepted' && attemptsLeft > 0 && (
-          <Tag>
-            {attemptsLeft} {attemptsWord(attemptsLeft)}
-          </Tag>
-        )}
-      </div>
-    </Link>
+          <h3 className="font-display text-title font-bold uppercase text-[#060609]">
+            {task.title}
+          </h3>
+
+          {referenceImageUrl ? (
+            <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-[#060609]">
+              {/* Эталон приходит по подписанной ссылке с ограниченным
+                  сроком, оптимизатор next/image её кэшировать не должен. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={referenceImageUrl}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+              <span className="signal-label absolute top-2 left-2 bg-[#060609] px-2 py-1 text-micro text-[#f5f5f1]">
+                Фото-эталон
+              </span>
+            </div>
+          ) : (
+            <div className="flex aspect-4/3 w-full shrink-0 items-center justify-center bg-[#ebebe6]">
+              <span className="display-figure text-display text-[#c7c7c4]" aria-hidden="true">
+                {task.number}
+              </span>
+            </div>
+          )}
+
+          {task.short_description && (
+            <p className="clamp-3 text-caption text-[#5c5c63]">{task.short_description}</p>
+          )}
+
+          <div className="mt-auto flex flex-col gap-2">
+            {state !== 'accepted' && !gone && attemptsLeft > 0 && (
+              <p className="signal-label text-micro text-[#8a8a90]">
+                {attemptsLeft} {attemptsWord(attemptsLeft)}
+              </p>
+            )}
+
+            <p
+              className={cn(
+                'flex min-h-[44px] items-center justify-center gap-2 border',
+                TONE_FOOTER[presentation.tone],
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(presentation.tone === 'checking' && 'anim-tick')}
+              >
+                {presentation.icon}
+              </span>
+              <span className="signal-label text-micro">{presentation.text}</span>
+            </p>
+
+            <div className="flex gap-2">
+              {!gone && (
+                <Link
+                  href={`/tasks/${task.id}`}
+                  className={cn(
+                    'flex min-h-[44px] flex-1 items-center justify-center border border-[#060609]',
+                    'bg-[#060609] text-[#f5f5f1] hover:border-signal hover:bg-signal hover:text-canvas',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal',
+                  )}
+                >
+                  <span className="signal-label text-micro">Открыть</span>
+                </Link>
+              )}
+              <FlipButton
+                api={api}
+                label={`Показать рубашку карточки «${task.title}»`}
+                className={cn(
+                  'border border-[#babab8] text-[#060609] hover:border-signal hover:text-signal',
+                  gone && 'flex-1',
+                )}
+              />
+            </div>
+          </div>
+        </article>
+      )}
+      back={(api) => (
+        <CardBack caption={type.label} hint={type.hint}>
+          <FlipButton
+            api={api}
+            label={`Вернуть карточку «${task.title}» лицом`}
+            className="border border-current"
+          />
+        </CardBack>
+      )}
+    />
   );
 }
 
@@ -136,7 +208,7 @@ export function SubmissionRow({
   return (
     <Link
       href={href}
-      className="lift flex items-center gap-4 border border-hairline bg-panel p-3 hover:border-signal-line"
+      className="lift flex items-center gap-4 border border-hairline bg-panel p-3 hover:border-signal"
     >
       <div className="h-16 w-16 shrink-0 overflow-hidden bg-ink-wash">
         {previewUrl ? (

@@ -30,6 +30,7 @@ export async function resetData(): Promise<void> {
       public.team_members,
       public.teams,
       public.task_reference_images,
+      public.team_hand,
       public.tasks,
       public.leaderboard_snapshots,
       public.admin_audit_log,
@@ -78,12 +79,10 @@ export interface TestTaskOptions {
   maxAttempts?: number;
   criteria?: string[];
   active?: boolean;
+  cardType?: 'riddle' | 'photo' | 'active';
 }
 
-export async function createTask(
-  eventId: string,
-  options: TestTaskOptions = {},
-): Promise<string> {
+export async function createTask(eventId: string, options: TestTaskOptions = {}): Promise<string> {
   const {
     number = 1,
     points = 50,
@@ -91,14 +90,15 @@ export async function createTask(
     maxAttempts = 2,
     criteria = ['Тестовый критерий'],
     active = true,
+    cardType = 'riddle',
   } = options;
 
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO public.tasks
        (event_id, number, title, description, points, category, difficulty,
-        validation_mode, criteria, max_attempts, active, sort_order)
+        validation_mode, criteria, max_attempts, active, sort_order, card_type)
      VALUES ($1, $2, $3, 'Описание тестового задания', $4, 'object_search', 'easy',
-             $5, $6::jsonb, $7, $8, $2)
+             $5, $6::jsonb, $7, $8, $2, $9)
      RETURNING id`,
     [
       eventId,
@@ -109,10 +109,40 @@ export async function createTask(
       JSON.stringify(criteria),
       maxAttempts,
       active,
+      cardType,
     ],
   );
 
   return rows[0]!.id;
+}
+
+export type CardType = 'riddle' | 'photo' | 'active';
+
+/** Рука команды: то же, что видит интерфейс, и ничего сверх. */
+export async function teamHand(
+  teamId: string,
+): Promise<Array<{ taskId: string; cardType: CardType; attemptsUsed: number; points: number }>> {
+  const { rows } = await pool.query<{
+    r: {
+      ok: boolean;
+      hand: Array<{ taskId: string; cardType: CardType; attemptsUsed: number; points: number }>;
+    };
+  }>(`SELECT public.get_team_hand($1) AS r`, [teamId]);
+  return rows[0]!.r.hand;
+}
+
+/** Кто забрал задание. NULL — задание ещё в общем пуле. */
+export async function taskClaim(
+  taskId: string,
+): Promise<{ teamId: string | null; submissionId: string | null }> {
+  const { rows } = await pool.query<{
+    claimed_by_team_id: string | null;
+    claimed_submission_id: string | null;
+  }>(`SELECT claimed_by_team_id, claimed_submission_id FROM public.tasks WHERE id = $1`, [taskId]);
+  return {
+    teamId: rows[0]?.claimed_by_team_id ?? null,
+    submissionId: rows[0]?.claimed_submission_id ?? null,
+  };
 }
 
 /** Хэш сессии нужного формата: 64 шестнадцатеричных символа. */

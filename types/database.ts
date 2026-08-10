@@ -9,6 +9,12 @@
 
 // ═══ Перечисления ══════════════════════════════════════════════
 
+// Цвет команды описан в lib/team-colors.ts вместе с hex-значениями:
+// держать перечисление в двух местах — верный способ их рассинхронить.
+import type { TeamColor } from '@/lib/team-colors';
+
+export type { TeamColor };
+
 export const EVENT_STATUSES = [
   'draft',
   'registration',
@@ -47,12 +53,7 @@ export const VALIDATION_JOB_STATUSES = [
 ] as const;
 export type ValidationJobStatus = (typeof VALIDATION_JOB_STATUSES)[number];
 
-export const LEADERBOARD_MODES = [
-  'public',
-  'team_position_only',
-  'hidden',
-  'frozen',
-] as const;
+export const LEADERBOARD_MODES = ['public', 'team_position_only', 'hidden', 'frozen'] as const;
 export type LeaderboardMode = (typeof LEADERBOARD_MODES)[number];
 
 export const SCORE_TRANSACTION_TYPES = [
@@ -78,6 +79,14 @@ export type TaskCategory = (typeof TASK_CATEGORIES)[number];
 
 export const TASK_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number];
+
+/**
+ * Тип карточки. Рука команды состоит из двух карточек каждого
+ * типа, поэтому это отдельное поле, а не производная от одной из
+ * восьми категорий.
+ */
+export const TASK_CARD_TYPES = ['riddle', 'photo', 'active'] as const;
+export type TaskCardType = (typeof TASK_CARD_TYPES)[number];
 
 /** Почему отправка ушла в ручную проверку. */
 export const REVIEW_REASONS = [
@@ -138,6 +147,8 @@ export interface TeamRow {
   contact: string | null;
   status: TeamStatus;
   payment_confirmed: boolean;
+  /** Ключ цвета. Hex — в lib/team-colors.ts. NULL, если все шесть заняты. */
+  color: TeamColor | null;
   created_at: string;
   updated_at: string;
 }
@@ -171,6 +182,7 @@ export interface TaskRow {
   description: string;
   points: number;
   category: TaskCategory;
+  card_type: TaskCardType;
   difficulty: TaskDifficulty;
   validation_mode: ValidationMode;
   criteria: string[];
@@ -184,8 +196,41 @@ export interface TaskRow {
   sort_order: number;
   available_from: string | null;
   available_until: string | null;
+  /** Команда, забравшая задание. NULL — задание ещё в общем пуле. */
+  claimed_by_team_id: string | null;
+  claimed_submission_id: string | null;
+  claimed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Карточка на руке команды.
+ *
+ * Приходит из `get_team_hand` в camelCase — это ответ функции,
+ * а не строка таблицы, поэтому именование отличается от
+ * остальных Row-типов намеренно.
+ */
+export interface HandCard {
+  taskId: string;
+  number: number;
+  title: string;
+  shortDescription: string | null;
+  description: string;
+  cardType: TaskCardType;
+  category: TaskCategory;
+  difficulty: TaskDifficulty;
+  points: number;
+  maxAttempts: number;
+  minimumPeople: number;
+  requireLocation: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  radiusMeters: number | null;
+  criteria: string[];
+  dealtAt: string;
+  attemptsUsed: number;
+  lastStatus: SubmissionStatus | null;
 }
 
 export interface TaskReferenceImageRow {

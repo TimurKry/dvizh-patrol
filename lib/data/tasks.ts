@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { BUCKETS, createSignedUrls } from '@/lib/storage';
 import type {
+  HandCard,
   SubmissionRow,
   SubmissionStatus,
   TaskReferenceImageRow,
@@ -15,9 +16,21 @@ import type {
  * сколько попыток осталось, можно ли отправлять сейчас. Считать
  * это в компоненте нельзя — правила должны быть в одном месте
  * и совпадать с тем, что проверит база.
+ *
+ * Команда видит не весь пул, а руку из шести карточек. Раздаёт
+ * её база (`get_team_hand`), и она же следит, чтобы в руке всегда
+ * было по два задания каждого типа. Отдавать сюда весь список
+ * нельзя: он и есть содержание квеста.
  */
 
-export type TaskState = 'available' | 'in_review' | 'accepted' | 'rejected' | 'attempts_exhausted';
+export type TaskState =
+  | 'available'
+  | 'in_review'
+  | 'accepted'
+  | 'rejected'
+  | 'attempts_exhausted'
+  /** Задание успела забрать другая команда — оно больше не играет. */
+  | 'claimed_by_other';
 
 export interface TaskWithState {
   task: TaskRow;
@@ -39,21 +52,58 @@ const ATTEMPT_STATUSES: SubmissionStatus[] = [
   'rejected',
 ];
 
-export async function getTasksForTeam(
+/**
+ * Рука команды: шесть заданий и их состояние.
+ *
+ * `taskIds` ограничивает выборку тем, что реально лежит на руке
+ * или уже трогалось командой. Без этого ограничения страница
+ * заданий вернула бы весь пул, и весь смысл руки пропал бы.
+ */
+export async function getTeamHand(
   eventId: string,
   teamId: string,
   options: { eventLive: boolean },
 ): Promise<TaskWithState[]> {
+  const { data, error } = await supabaseAdmin().rpc('get_team_hand', { p_team_id: teamId });
+
+  if (error) return [];
+
+  const hand = ((data as { hand?: HandCard[] } | null)?.hand ?? []) as HandCard[];
+  if (hand.length === 0) return [];
+
+  const items = await getTasksForTeam(eventId, teamId, options, {
+    taskIds: hand.map((card) => card.taskId),
+  });
+
+  // Порядок раздачи, а не номера заданий: карточка, взятая в руку
+  // раньше, стоит левее и не прыгает при пополнении.
+  const order = new Map(hand.map((card, index) => [card.taskId, index]));
+  return items.sort((a, b) => (order.get(a.task.id) ?? 0) - (order.get(b.task.id) ?? 0));
+}
+
+export async function getTasksForTeam(
+  eventId: string,
+  teamId: string,
+  options: { eventLive: boolean },
+  scope: { taskIds?: string[] } = {},
+): Promise<TaskWithState[]> {
   const db = supabaseAdmin();
 
+  let tasksQuery = db
+    .from('tasks')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('active', true)
+    .order('sort_order', { ascending: true })
+    .order('number', { ascending: true });
+
+  if (scope.taskIds) {
+    if (scope.taskIds.length === 0) return [];
+    tasksQuery = tasksQuery.in('id', scope.taskIds);
+  }
+
   const [tasksResult, submissionsResult, referencesResult] = await Promise.all([
-    db
-      .from('tasks')
-      .select('*')
-      .eq('event_id', eventId)
-      .eq('active', true)
-      .order('sort_order', { ascending: true })
-      .order('number', { ascending: true }),
+    tasksQuery,
     db
       .from('submissions')
       .select('*')
@@ -100,8 +150,13 @@ export async function getTasksForTeam(
       (!task.available_from || new Date(task.available_from).getTime() <= now) &&
       (!task.available_until || new Date(task.available_until).getTime() >= now);
 
+    // Захват сильнее всех прочих состояний: если задание забрала
+    // другая команда, ни попытки, ни проверка уже ничего не решают.
+    const claimedByOther = task.claimed_by_team_id !== null && task.claimed_by_team_id !== teamId;
+
     let state: TaskState = 'available';
-    if (accepted) state = 'accepted';
+    if (claimedByOther) state = 'claimed_by_other';
+    else if (accepted) state = 'accepted';
     else if (inReview) state = 'in_review';
     else if (attemptsLeft === 0) state = 'attempts_exhausted';
     else if (rejected) state = 'rejected';
@@ -114,20 +169,44 @@ export async function getTasksForTeam(
       latestSubmission: taskSubmissions[0] ?? null,
       attemptsUsed,
       attemptsLeft,
-      canSubmit: options.eventLive && withinWindow && !accepted && !inReview && attemptsLeft > 0,
+      canSubmit:
+        options.eventLive &&
+        withinWindow &&
+        !claimedByOther &&
+        !accepted &&
+        !inReview &&
+        attemptsLeft > 0,
       referenceImageUrl: referencePath ? (signedReferences.get(referencePath) ?? null) : null,
     };
   });
 }
 
+/**
+ * Одно задание для страницы задания.
+ *
+ * Доступ ограничен рукой и историей команды: иначе страница
+ * `/tasks/<uuid>` работала бы как способ прочитать любое задание
+ * пула, минуя раздачу.
+ */
 export async function getTaskForTeam(
   eventId: string,
   teamId: string,
   taskId: string,
   options: { eventLive: boolean },
 ): Promise<TaskWithState | null> {
-  const all = await getTasksForTeam(eventId, teamId, options);
-  return all.find((item) => item.task.id === taskId) ?? null;
+  const db = supabaseAdmin();
+
+  const [handResult, touchedResult] = await Promise.all([
+    db.from('team_hand').select('task_id').eq('team_id', teamId).eq('task_id', taskId),
+    db.from('submissions').select('id').eq('team_id', teamId).eq('task_id', taskId).limit(1),
+  ]);
+
+  const inHand = (handResult.data as Array<{ task_id: string }> | null)?.length ?? 0;
+  const touched = (touchedResult.data as Array<{ id: string }> | null)?.length ?? 0;
+  if (inHand === 0 && touched === 0) return null;
+
+  const all = await getTasksForTeam(eventId, teamId, options, { taskIds: [taskId] });
+  return all[0] ?? null;
 }
 
 /** Все эталонные изображения задания — для его страницы. */

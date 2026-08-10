@@ -7,7 +7,12 @@
  * не показываем: участник на улице ничего не может с ними сделать.
  */
 
-import type { SubmissionStatus, TaskCategory, TaskDifficulty } from '@/types/database';
+import type {
+  SubmissionStatus,
+  TaskCardType,
+  TaskCategory,
+  TaskDifficulty,
+} from '@/types/database';
 
 export const ERROR_MESSAGES: Record<string, string> = {
   // Регистрация и вход
@@ -34,6 +39,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   attempt_limit_reached: 'Попытки по этому заданию закончились.',
   submission_not_found: 'Отправка не найдена.',
   task_already_accepted: 'По этому заданию уже принята другая фотография.',
+  task_claimed_by_other_team:
+    'Это задание успела забрать другая команда. Карточка уходит из руки, вместо неё придёт новая.',
 
   // Файлы
   invalid_file_type: 'Можно загружать только изображения.',
@@ -151,6 +158,31 @@ export const TASK_CATEGORY_TEXT: Record<TaskCategory, string> = {
   team: 'Командные',
   creative: 'Творческие',
   special: 'Особые',
+};
+
+/**
+ * Тип карточки. Символ важен не меньше слова: на карточке он
+ * стоит в углу вместо иконки-картинки и читается в обоих шрифтах.
+ */
+export const TASK_CARD_TYPE_TEXT: Record<
+  TaskCardType,
+  { label: string; icon: string; hint: string }
+> = {
+  riddle: {
+    label: 'Загадка',
+    icon: '?',
+    hint: 'Найти объект по описанию — где искать, не сказано.',
+  },
+  photo: {
+    label: 'Фото-повтор',
+    icon: '□',
+    hint: 'Повторить то, что видно: памятник, знак, вывеску.',
+  },
+  active: {
+    label: 'Актив',
+    icon: '↗',
+    hint: 'Сделать что-то в городе, а не просто снять.',
+  },
 };
 
 export const TASK_DIFFICULTY_TEXT: Record<TaskDifficulty, string> = {

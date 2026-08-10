@@ -52,14 +52,15 @@ const ident = (name) => `"${String(name).replace(/"/g, '')}"`;
 /**
  * Разбор `select=`.
  *
- * Поддерживаются три формы: `*`, простой список колонок и
- * одноуровневое вложение `alias:fk (cols)` / `table!inner(cols)`.
- * Вложение превращается в скалярный подзапрос с json_agg —
- * этого хватает обоим местам, где приложение им пользуется.
+ * Рекурсивный: `teams:team_id ( *, events:event_id ( * ) )` —
+ * ровно тот запрос, которым читается сессия команды, и без
+ * второго уровня вложенности он не собирается.
+ *
+ * Вложение превращается в скалярный подзапрос: связь всегда идёт
+ * по внешнему ключу текущей таблицы на `id` целевой, а других
+ * форм приложение не использует.
  */
-function parseSelect(raw, table) {
-  if (!raw || raw === '*') return { columns: '*', embeds: [] };
-
+function splitTopLevel(raw) {
   const parts = [];
   let depth = 0;
   let current = '';
@@ -74,33 +75,67 @@ function parseSelect(raw, table) {
     current += char;
   }
   if (current.trim()) parts.push(current);
+  return parts.map((part) => part.trim()).filter(Boolean);
+}
 
-  const columns = [];
-  const embeds = [];
+function parseEmbed(part) {
+  const open = part.indexOf('(');
+  if (open === -1 || !part.endsWith(')')) return null;
 
-  for (const part of parts.map((p) => p.trim()).filter(Boolean)) {
-    const embed = part.match(/^([a-z_]+)(?::([a-z_]+))?(!inner)?\s*\(([^)]*)\)$/i);
+  const head = part.slice(0, open).trim();
+  const inside = part.slice(open + 1, -1);
+
+  const match = head.match(/^([a-z_]+)(?::([a-z_]+))?(!inner|!left)?$/i);
+  if (!match) return null;
+  const [, name, fkColumn, modifier] = match;
+
+  return {
+    alias: name,
+    // `tasks:task_id (*)` — связь по названной колонке;
+    // `teams!inner(...)` — по <единственное_число>_id.
+    localColumn: fkColumn ?? `${name.replace(/s$/, '')}_id`,
+    target: name,
+    inner: modifier === '!inner',
+    select: inside.trim(),
+  };
+}
+
+/** Проекция таблицы: колонки плюс подзапросы вложений. */
+function projection(raw, table) {
+  if (!raw || raw === '*') return `${ident(table)}.*`;
+
+  const pieces = [];
+
+  for (const part of splitTopLevel(raw)) {
+    const embed = parseEmbed(part);
     if (embed) {
-      const [, name, fkColumn, inner, inside] = embed;
-      embeds.push({
-        alias: name,
-        // `tasks:task_id (*)` — связь по колонке task_id текущей
-        // таблицы; `teams!inner(...)` — по <table>_id в ней же.
-        localColumn: fkColumn ?? `${name.replace(/s$/, '')}_id`,
-        target: fkColumn ? name : name,
-        columns: inside.trim(),
-        inner: Boolean(inner),
-      });
+      pieces.push(embedSql(embed, table));
       continue;
     }
-    if (part === '*') {
-      columns.push(`${ident(table)}.*`);
-      continue;
-    }
-    columns.push(`${ident(table)}.${ident(part)}`);
+    pieces.push(part === '*' ? `${ident(table)}.*` : `${ident(table)}.${ident(part)}`);
   }
 
-  return { columns: columns.length ? columns.join(', ') : '*', embeds };
+  return pieces.length ? pieces.join(', ') : `${ident(table)}.*`;
+}
+
+/**
+ * Вложение как скалярный подзапрос.
+ *
+ * Отдаётся объектом, а не массивом: supabase-js приводит связь
+ * «многие к одному» к объекту, и приложение рассчитывает именно
+ * на это (`normalizeRelation` принимает оба вида, но объект —
+ * то, что вернул бы настоящий PostgREST).
+ */
+function embedSql(embed, table) {
+  const target = ident(embed.target);
+  const inner = projection(embed.select, embed.target);
+  return `(
+    SELECT row_to_json(sub) FROM (
+      SELECT ${inner} FROM public.${target}
+      WHERE ${target}."id" = ${ident(table)}.${ident(embed.localColumn)}
+      LIMIT 1
+    ) sub
+  ) AS ${ident(embed.alias)}`;
 }
 
 function buildWhere(params, table, values) {
@@ -218,16 +253,6 @@ async function withRole(role, run) {
   }
 }
 
-function embedSql(embed, table) {
-  const target = ident(embed.target);
-  const inner = embed.columns === '*' ? `${target}.*` : embed.columns;
-  return `(
-    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json)
-    FROM (SELECT ${inner} FROM ${target}
-          WHERE ${target}."id" = ${ident(table)}.${ident(embed.localColumn)}) sub
-  ) AS ${ident(embed.alias)}`;
-}
-
 const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, undefined);
 
@@ -261,15 +286,14 @@ const server = createServer(async (req, res) => {
     // ═══ Чтение ═════════════════════════════════════════════
     if (req.method === 'GET' || req.method === 'HEAD') {
       const params = [...url.searchParams.entries()];
-      const { columns, embeds } = parseSelect(url.searchParams.get('select'), table);
       const values = [];
       const where = buildWhere(params, table, values);
       const order = buildOrder(url.searchParams.get('order'), table);
       const limit = url.searchParams.get('limit');
 
-      const projection = [columns, ...embeds.map((embed) => embedSql(embed, table))].join(', ');
       const sql =
-        `SELECT ${projection} FROM public.${ident(table)} ${where} ${order}` +
+        `SELECT ${projection(url.searchParams.get('select'), table)} ` +
+        `FROM public.${ident(table)} ${where} ${order}` +
         (limit ? ` LIMIT ${Number(limit)}` : '');
 
       const { rows, count } = await withRole(role, async (client) => {

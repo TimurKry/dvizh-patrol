@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { Card, Eyebrow, Meta } from '@/components/ui/surface';
-import { getTasksForTeam } from '@/lib/data/tasks';
+import { getTeamHand } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
 import { toPlayArea } from '@/lib/geo';
 import type { MapPoint } from '@/components/game/quest-map';
@@ -52,7 +52,10 @@ export default async function MapPage() {
   const points: MapPoint[] = [];
 
   if (tasksOpen) {
-    const items = await getTasksForTeam(session.event.id, session.teamId, {
+    // На карте только рука. Показать точки всего пула значило бы
+    // выдать содержание квеста через карту в обход раздачи —
+    // ровно то, от чего рука и защищает.
+    const items = await getTeamHand(session.event.id, session.teamId, {
       eventLive: session.event.status === 'live',
     });
 

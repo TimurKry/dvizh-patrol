@@ -45,7 +45,7 @@ export function TaskCardDemo() {
 
       {/* ═══ Карточка · Figma 102:33 ════════════════════════ */}
       <FlipCard
-        className="mx-auto aspect-[342/479] w-full max-w-[342px]"
+        className="mx-auto min-h-[479px] w-full max-w-[342px]"
         flipLabel="Показать рубашку карточки"
         front={
           <article className="flex h-full flex-col gap-4 rounded-[8px] border border-hairline bg-[#f5f5f1] p-5 text-[#060609]">

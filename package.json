@@ -22,6 +22,8 @@
     "db:start": "./scripts/local-db.sh start",
     "db:stop": "./scripts/local-db.sh stop",
     "db:reset": "./scripts/local-db.sh reset",
+    "db:qa": "./scripts/local-db.sh reset && ./scripts/local-db.sh psql -q -X -f supabase/local/qa-seed.sql",
+    "qa:rest": "node scripts/qa-rest.mjs",
     "db:psql": "./scripts/local-db.sh psql",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
   },

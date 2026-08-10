@@ -78,7 +78,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
           href="/tasks"
           className="inline-flex items-center gap-2 text-caption text-muted hover:text-ink"
         >
-          <span aria-hidden="true">←</span> Все задания
+          <span aria-hidden="true">←</span> К руке
         </Link>
 
         <header className="mt-5 flex flex-col gap-3">
@@ -86,7 +86,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
           <h1 className="text-headline md:text-headline">{task.title}</h1>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Tag emphasis>
+            <Tag>
               {task.points} {pointsWord(task.points)}
             </Tag>
             <Tag>{TASK_CATEGORY_TEXT[task.category]}</Tag>

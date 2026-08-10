@@ -1,40 +1,75 @@
-import Image from 'next/image';
-import { ButtonLink } from '@/components/ui/button';
-import {
-  CARD_INTERACTIVE,
-  CARD_SURFACE,
-  Card,
-  Eyebrow,
-  SectionTitle,
-} from '@/components/ui/surface';
-import { Tag } from '@/components/ui/status-badge';
+import Link from 'next/link';
 import { Notice } from '@/components/ui/feedback';
+import { Reveal } from '@/components/ui/reveal';
+import { Hero } from '@/components/landing/hero';
+import { SectionHead } from '@/components/landing/section-head';
+import { TaskCardDemo } from '@/components/landing/task-card-demo';
+import { TicketCta } from '@/components/landing/ticket-cta';
+import { QuestMap } from '@/components/game/quest-map';
+import { DotCluster } from '@/components/ui/logo';
 import {
   formatEventDate,
-  formatEventDateLong,
   formatEventTime,
   formatPrice,
   getActiveTaskCount,
   getCurrentEvent,
   getRegistrationStats,
 } from '@/lib/data/event';
-import { EVENT_STATUS_TEXT, tasksWord, teamsWord } from '@/lib/messages';
-import { Countdown } from '@/components/game/countdown';
-import { PosterHero } from '@/components/game/poster-hero';
-import { Ticker } from '@/components/game/ticker';
-import { Reveal } from '@/components/ui/reveal';
-import { CountUp } from '@/components/ui/count-up';
+import { EVENT_STATUS_TEXT, tasksWord } from '@/lib/messages';
+import { TELEGRAM_MANAGER, TELEGRAM_MANAGER_URL } from '@/lib/links';
 
 /**
- * Главная страница.
+ * Главная страница · Figma 74:3 (mobile) и 87:2 (desktop hero).
  *
- * Всё, что можно, берётся из базы: дата, цена, лимиты, число
- * заданий. Тексты-заглушки появляются только если мероприятие
- * ещё не заведено.
+ * Всё, что можно, берётся из базы: дата, время, цена, лимиты,
+ * число заданий, граница игрового поля. Ни одной зашитой даты.
+ *
+ * Пять блоков в порядке макета: герой, примеры карточек, игровое
+ * поле, маршрут вечера, регистрация и подвал.
  */
 
 // Данные меняются по ходу регистрации, кэшировать страницу нельзя.
 export const dynamic = 'force-dynamic';
+
+/**
+ * Маршрут вечера. Времени в базе нет — `events` хранит один
+ * `starts_at`, а не расписание, поэтому первая точка получает
+ * время оттуда, а остальные описаны относительно неё. Как только
+ * организатор пришлёт полный тайминг (content/11-schedule), это
+ * место превратится в чтение из таблицы.
+ */
+function routeStops(startTime: string) {
+  return [
+    {
+      n: '01',
+      when: startTime,
+      title: 'Старт патруля',
+      text: 'Код открывает задания. Команда выходит в центр.',
+      accent: false,
+    },
+    {
+      n: '02',
+      when: '3–4 часа',
+      title: 'Городской квест',
+      text: 'Фото, загадки, активы. Баллы считаются на сервере.',
+      accent: false,
+    },
+    {
+      n: '03',
+      when: 'перед BBQ',
+      title: 'Не забудьте закупиться',
+      text: 'Вода, еда и всё, что понадобится вашей команде.',
+      accent: false,
+    },
+    {
+      n: '04',
+      when: 'после финиша',
+      title: 'Общий BBQ',
+      text: 'Встречаемся, считаем баллы и объявляем результат.',
+      accent: true,
+    },
+  ];
+}
 
 export default async function HomePage() {
   const event = await getCurrentEvent();
@@ -42,11 +77,10 @@ export default async function HomePage() {
   if (!event) {
     return (
       <div className="page-well py-24">
-        <Eyebrow>Движ-Патруль</Eyebrow>
-        <h1 className="mt-4 text-headline md:text-display">Мероприятие ещё не опубликовано</h1>
+        <p className="signal-label text-label text-signal">Движ-Патруль</p>
+        <h1 className="mt-4 text-headline lg:text-display">Мероприятие ещё не опубликовано</h1>
         <p className="mt-4 max-w-prose text-body text-muted">
-          Квест готовится. Загляните позже — здесь появятся дата, стоимость и кнопка регистрации
-          команды.
+          Квест готовится. Загляните позже — здесь появятся дата, стоимость и кнопка входа команды.
         </p>
       </div>
     );
@@ -58,304 +92,278 @@ export default async function HomePage() {
   ]);
 
   const showCountdown = event.status === 'registration' || event.status === 'live';
+  const time = formatEventTime(event);
+  const tasksLabel = taskCount ? `${taskCount} ${tasksWord(taskCount)}` : '30–50 заданий';
+
+  const area =
+    event.area_latitude !== null &&
+    event.area_longitude !== null &&
+    event.area_radius_meters !== null
+      ? {
+          latitude: event.area_latitude,
+          longitude: event.area_longitude,
+          radiusMeters: event.area_radius_meters,
+        }
+      : null;
 
   return (
     <>
-      {/* ═══ Герой ═══════════════════════════════════════════ */}
-      <PosterHero
-        city={event.city}
+      <Hero
         title={event.title}
         subtitle={event.subtitle ?? 'Городской фото-квест'}
-        dayMonth={formatEventDate(event).slice(0, 5)}
-        date={formatEventDate(event).slice(0, 5)}
-        time={formatEventTime(event)}
+        city={event.city}
+        date={formatEventDate(event)}
+        time={time}
         price={formatPrice(event)}
-        timezoneNote={event.timezone}
-        tasksNote={`${taskCount || '30+'} ${taskCount ? tasksWord(taskCount) : 'заданий'}`}
-        actions={
-          <>
-            {stats.canRegister ? (
-              <ButtonLink href="/register" size="lg">
-                Создать команду
-              </ButtonLink>
-            ) : (
-              <ButtonLink href="/rules" size="lg">
-                Как это устроено
-              </ButtonLink>
-            )}
-            <ButtonLink href="/join" variant="secondary" size="lg">
-              Войти по коду
-            </ButtonLink>
-          </>
+        startsAt={event.starts_at}
+        status={event.status}
+        showCountdown={showCountdown}
+        primary={
+          stats.canRegister
+            ? {
+                href: TELEGRAM_MANAGER_URL,
+                label: 'Создать команду',
+                sub: `Telegram · @${TELEGRAM_MANAGER}`,
+                external: true,
+              }
+            : { href: '/rules', label: 'Как это устроено', sub: 'Правила квеста', external: false }
         }
-      >
-        {showCountdown && (
-          <div className="flex justify-center">
-            <Countdown target={event.starts_at} status={event.status} />
-          </div>
-        )}
-      </PosterHero>
+      />
 
       {!stats.canRegister && (
-        <section className="page-well mt-6">
+        <section className="page-well">
           <Notice icon="•">
             {event.status === 'registration' && stats.isFull
-              ? 'Регистрация команд завершена — все доступные места заняты.'
+              ? `Все ${event.max_teams} мест заняты — набор команд закрыт.`
               : event.status === 'draft' || event.status === 'registration'
-                ? 'Регистрация пока закрыта. Следите за анонсом.'
-                : `Статус мероприятия: ${EVENT_STATUS_TEXT[event.status] ?? event.status}. Новые команды не регистрируются.`}
+                ? 'Набор команд пока закрыт. Следите за анонсом.'
+                : `Статус мероприятия: ${EVENT_STATUS_TEXT[event.status] ?? event.status}. Новые команды не набираются.`}
           </Notice>
         </section>
       )}
 
-      <section className="page-well mt-10">
-        <Reveal>
-          <p className="mx-auto max-w-prose text-center text-body text-muted">
-            Команда до {event.team_size} человек, {taskCount || '30+'}{' '}
-            {taskCount ? tasksWord(taskCount) : 'заданий'} по центру Лейпцига и один вечер, который
-            потом ещё долго пересказывают. Маршрута нет — вы сами решаете, куда идти.
-          </p>
-        </Reveal>
-      </section>
-
-      {/* ═══ Афишная лента ═══════════════════════════════════ */}
-      <Ticker
-        className="mt-10"
-        items={[
-          event.city,
-          formatEventDate(event),
-          formatEventTime(event),
-          `${taskCount || '30+'} ${taskCount ? tasksWord(taskCount) : 'заданий'}`,
-          formatPrice(event),
-          'Свободный маршрут',
-          'После квеста — BBQ',
-        ]}
-      />
-
-      {/* ═══ Постер ══════════════════════════════════════════ */}
-      <section className="page-well mt-12">
-        <Reveal>
-          <div className="overflow-hidden border border-hairline bg-panel">
-            <Image
-              src="/assets/dvizh-patrol-poster.jpg"
-              alt={`Постер мероприятия «Движ-Патруль», ${event.city}, ${formatEventDate(event)}`}
-              width={1122}
-              height={1402}
-              priority
-              sizes="(min-width: 1024px) 900px, 100vw"
-              className="mx-auto h-auto w-full max-w-[900px]"
+      {/* ═══ 02 · Примеры заданий · Figma 81:4 ══════════════ */}
+      <section className="page-well py-14 lg:py-24">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-16">
+          <Reveal>
+            <SectionHead
+              index="02 / Примеры заданий"
+              title={
+                <>
+                  Три типа
+                  <br />
+                  движения
+                </>
+              }
+              intro="Загадка, фото-повтор или городской актив. Карточка показывает главное сразу, детали — по перевороту."
             />
-          </div>
-        </Reveal>
-      </section>
+          </Reveal>
 
-      {/* ═══ Факты ═══════════════════════════════════════════ */}
-      <section className="page-well mt-12 md:mt-20">
-        <div className="signal-rule mb-6" />
-        <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[
-            {
-              term: 'Дата',
-              value: formatEventDate(event),
-              note: formatEventDateLong(event),
-              count: null,
-            },
-            {
-              term: 'Старт',
-              value: formatEventTime(event),
-              note: `${event.city}, ${event.timezone}`,
-              count: null,
-            },
-            { term: 'Участие', value: formatPrice(event), note: 'с человека', count: null },
-            {
-              term: 'Задания',
-              value: taskCount ? String(taskCount) : '30+',
-              note: taskCount ? tasksWord(taskCount) : 'готовятся',
-              // Единственная цифра здесь, которая читается как
-              // счётчик, — её и оживляем. Остальные — дата, время
-              // и цена: набегающие они выглядели бы как сбой.
-              count: taskCount || null,
-            },
-          ].map((fact, index) => (
-            /* Обёртка появления и есть карточка: внутри <dl>
-               допустим один уровень div вокруг пары dt/dd,
-               второй сделал бы разметку невалидной. */
-            <Reveal
-              key={fact.term}
-              delay={index * 70}
-              className={`${CARD_SURFACE} ${CARD_INTERACTIVE} flex flex-col gap-1 p-4`}
-            >
-              <dt className="signal-label text-caption text-faint">{fact.term}</dt>
-              <dd className="display-figure text-title text-signal">
-                {fact.count ? <CountUp value={fact.count} /> : fact.value}
-              </dd>
-              <p className="text-caption text-faint">{fact.note}</p>
-            </Reveal>
-          ))}
-        </dl>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Tag>
-            до {event.max_teams} {teamsWord(event.max_teams)}
-          </Tag>
-          <Tag>до {event.team_size} человек в команде</Tag>
-          <Tag>свободный маршрут</Tag>
-          <Tag>после квеста — BBQ</Tag>
-          {stats.canRegister && (
-            <Tag emphasis>
-              свободно мест: {stats.free} из {event.max_teams}
-            </Tag>
-          )}
+          <Reveal delay={90}>
+            <TaskCardDemo />
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══ Как это работает ════════════════════════════════ */}
-      <section className="page-well mt-20">
-        <Reveal>
-          <Eyebrow>Механика</Eyebrow>
-          <SectionTitle className="mt-3">Четыре шага, и вы в игре</SectionTitle>
-        </Reveal>
+      {/* ═══ 03 · Игровое поле · Figma 83:2 ═════════════════ */}
+      <section className="border-t border-hairline bg-canvas-deep py-14 lg:py-24">
+        <div className="page-well flex flex-col gap-8">
+          <Reveal>
+            <SectionHead
+              index="03 / Игровое поле"
+              title={
+                <>
+                  Центр —
+                  <br />
+                  наша доска
+                </>
+              }
+              intro={
+                area
+                  ? 'Внутри круга — задания. Карту можно двигать и приближать.'
+                  : 'Границу поля организатор объявит до старта. Карту можно двигать и приближать.'
+              }
+            />
+          </Reveal>
 
-        <ol className="mt-8 grid gap-6 md:grid-cols-4">
-          {[
-            {
-              n: '01',
-              title: 'Соберите команду',
-              text: `Капитан создаёт команду и получает код из шести символов. Остальные входят по этому коду — до ${event.team_size} человек.`,
-            },
-            {
-              n: '02',
-              title: 'Откройте задания',
-              text: 'В 15:00 список открывается. Порядок любой: берите то, что ближе, или то, что дороже.',
-            },
-            {
-              n: '03',
-              title: 'Снимите и отправьте',
-              text: 'Фотография уходит на проверку прямо из браузера. Ждать ответа не нужно — идите дальше.',
-            },
-            {
-              n: '04',
-              title: 'Следите за рейтингом',
-              text: 'Баллы начисляются автоматически. Таблица обновляется по ходу квеста.',
-            },
-          ].map((step, index) => (
-            <Reveal as="li" key={step.n} delay={index * 90} className="flex flex-col gap-2">
-              {/* Номер шага и линейка под ним — цитата нижней
-                  строки постера, только по вертикали. */}
-              <span className="display-figure text-title text-signal">{step.n}</span>
-              <span aria-hidden="true" className="h-px w-10 bg-signal-line" />
-              <h3 className="text-body-lg font-normal">{step.title}</h3>
-              <p className="text-body text-muted">{step.text}</p>
-            </Reveal>
-          ))}
-        </ol>
-      </section>
+          <Reveal delay={90}>
+            <div className="border border-hairline bg-panel p-2">
+              <QuestMap area={area} points={[]} className="h-[340px] lg:h-[460px]" />
+              <p className="signal-label px-2 py-3 text-micro text-muted">
+                Leipzig / Spielfeld · drag · pinch
+              </p>
+            </div>
+          </Reveal>
 
-      {/* ═══ Примеры заданий ═════════════════════════════════ */}
-      <section className="page-well mt-20">
-        <Reveal>
-          <Eyebrow>Что придётся делать</Eyebrow>
-          <SectionTitle className="mt-3">Примеры заданий</SectionTitle>
-        </Reveal>
-
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              src: '/assets/tile-tower.webp',
-              title: 'Повторить памятник',
-              text: 'Найти городскую скульптуру и точно воспроизвести позу.',
-            },
-            {
-              src: '/assets/tile-roofs.webp',
-              title: 'Оживить знак',
-              text: 'Отыскать дорожный знак и разыграть то, что на нём нарисовано.',
-            },
-            {
-              src: '/assets/tile-facade.webp',
-              title: 'Найти по описанию',
-              text: 'Объект определённой формы, цвета или возраста — без подсказки, где искать.',
-            },
-            {
-              src: '/assets/tile-square.webp',
-              title: 'Обменять скрепку',
-              text: 'Начать с канцелярской скрепки и выменять что-то стоящее у прохожих.',
-            },
-            {
-              src: '/assets/tile-arcade.webp',
-              title: 'Командный кадр',
-              text: 'Собрать всю команду в одну композицию в неочевидном месте.',
-            },
-            {
-              src: '/assets/tile-plaza.webp',
-              title: 'Городской типаж',
-              text: 'Познакомиться с local-персонажем и сфотографироваться с его согласия.',
-            },
-          ].map((example, index) => (
-            <Reveal
-              as="article"
-              key={`${example.title}-${index}`}
-              delay={(index % 3) * 90}
-              className="group flex flex-col gap-3"
-            >
-              <div className="zoom-host border border-hairline">
-                <Image
-                  src={example.src}
-                  alt=""
-                  width={320}
-                  height={320}
-                  className="aspect-4/3 w-full object-cover"
-                />
-              </div>
-              <h3 className="text-body-lg font-normal transition-colors group-hover:text-signal">
-                {example.title}
-              </h3>
-              <p className="text-body text-muted">{example.text}</p>
-            </Reveal>
-          ))}
+          <Reveal delay={140}>
+            <dl className="grid grid-cols-3 border border-hairline">
+              {[
+                { term: 'Маршрут', value: 'свободный', signal: false },
+                { term: 'Заданий', value: taskCount ? String(taskCount) : '30–50', signal: true },
+                { term: 'Игра', value: '3–4 ч', signal: false },
+              ].map((fact, index) => (
+                <div
+                  key={fact.term}
+                  className={`flex flex-col items-center gap-1 px-2 py-4 ${
+                    index > 0 ? 'border-l border-hairline' : ''
+                  }`}
+                >
+                  <dd
+                    className={`display-figure text-title ${fact.signal ? 'text-signal' : 'text-ink'}`}
+                  >
+                    {fact.value}
+                  </dd>
+                  <dt className="signal-label text-micro text-muted">{fact.term}</dt>
+                </div>
+              ))}
+            </dl>
+          </Reveal>
         </div>
       </section>
 
-      {/* ═══ Правила и BBQ ═══════════════════════════════════ */}
-      <section className="page-well mt-20 grid gap-6 lg:grid-cols-2">
-        <Card interactive className="flex flex-col gap-4 p-6">
-          <Eyebrow>Коротко</Eyebrow>
-          <h2 className="text-title">Правила</h2>
-          <ul className="flex flex-col gap-3 text-body text-muted">
-            {[
-              'Каждое задание засчитывается команде один раз.',
-              'Число попыток задаётся отдельно для каждого задания.',
-              'Фотографировать людей — только с их согласия.',
-              'Безопасность важнее баллов: не лезьте на конструкции и не нарушайте ПДД.',
-              'Результат подтверждает организатор, его решение окончательное.',
-            ].map((rule) => (
-              <li key={rule} className="flex gap-3">
-                <span aria-hidden="true" className="text-faint">
-                  —
-                </span>
-                <span>{rule}</span>
-              </li>
+      {/* ═══ 04 · Маршрут вечера · Figma 84:2 ═══════════════
+          Единственная светлая секция на сайте. Инверсия здесь
+          не украшение: маршрут — это то, что читают заранее и
+          вслух, и на светлом длинный список читается легче. */}
+      <section className="bg-[#f5f5f1] py-14 lg:py-24">
+        <div className="page-well flex flex-col gap-8">
+          <Reveal>
+            <SectionHead
+              tone="paper"
+              index="04 / Маршрут вечера"
+              title={
+                <>
+                  От старта
+                  <br />
+                  до углей
+                </>
+              }
+              intro="Четыре понятные точки — без мелкого расписания и лишнего шума."
+            />
+          </Reveal>
+
+          <ol className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
+            {routeStops(time).map((stop, index) => (
+              <Reveal
+                as="li"
+                key={stop.n}
+                delay={index * 80}
+                className={`flex flex-col gap-2 border p-4 ${
+                  stop.accent ? 'border-[#060609] bg-[#060609]' : 'border-[#babab8] bg-[#f5f5f1]'
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span
+                    className={`display-figure text-caption ${
+                      stop.accent ? 'text-signal' : 'text-[#5c5c63]'
+                    }`}
+                  >
+                    {stop.n}
+                  </span>
+                  <span
+                    className={`signal-label text-micro ${
+                      stop.accent ? 'text-signal' : 'text-[#060609]'
+                    }`}
+                  >
+                    {stop.when}
+                  </span>
+                </div>
+                <h3 className={`text-title ${stop.accent ? 'text-[#f5f5f1]' : 'text-[#060609]'}`}>
+                  {stop.title}
+                </h3>
+                <p className={`text-caption ${stop.accent ? 'text-[#b8b8ba]' : 'text-[#5c5c63]'}`}>
+                  {stop.text}
+                </p>
+              </Reveal>
             ))}
-          </ul>
-          <ButtonLink href="/rules" variant="secondary" size="sm" className="self-start">
-            Полные правила
-          </ButtonLink>
-        </Card>
+          </ol>
 
-        <Card interactive className="flex flex-col gap-4 p-6">
-          <Eyebrow>После финиша</Eyebrow>
-          <h2 className="text-title">BBQ</h2>
-          <p className="text-body text-muted">
-            Когда последняя фотография отправлена, а рейтинг заморожен, начинается вторая часть
-            вечера — барбекю. Там же объявляются результаты и разбираются самые спорные кадры.
-          </p>
-          <p className="text-body text-muted">
-            Участие в BBQ входит в стоимость. Если у вас есть ограничения по еде, предупредите
-            организатора заранее.
-          </p>
-        </Card>
+          {/* Цена BBQ для гостей — Figma 84:37. Значение ждёт
+              подтверждения организатора (content/10-bbq-info),
+              поэтому ссылка ведёт к менеджеру, а не в оплату. */}
+          <Reveal delay={200}>
+            <Link
+              href={TELEGRAM_MANAGER_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="lift flex min-h-[58px] items-center justify-between gap-4 bg-signal px-4 py-3 text-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+            >
+              <span className="flex flex-col gap-1">
+                <span className="signal-label text-micro">Не участвуешь в квесте?</span>
+                <span className="display-figure text-title">Приходи на BBQ</span>
+              </span>
+              <span aria-hidden="true" className="text-title font-bold">
+                ↗
+              </span>
+            </Link>
+          </Reveal>
+        </div>
       </section>
 
-      <div className="h-20" />
+      {/* ═══ 05 · Регистрация · Figma 85:2 ══════════════════ */}
+      <section className="border-t border-hairline py-14 lg:py-24">
+        <div className="page-well flex flex-col gap-6">
+          <Reveal>
+            <SectionHead
+              index="05 / Регистрация"
+              title={
+                <>
+                  Выходим
+                  <br />в город?
+                </>
+              }
+            />
+          </Reveal>
+
+          <Reveal delay={70}>
+            <p className="signal-label text-label text-muted">
+              {formatEventDate(event)} · {time} · {event.city}
+            </p>
+          </Reveal>
+
+          <Reveal delay={110}>
+            <dl className="flex items-center justify-between gap-4 border border-hairline bg-panel px-4 py-4">
+              <div className="flex flex-col gap-1">
+                <dd className="display-figure text-headline text-signal">{formatPrice(event)}</dd>
+                <dt className="signal-label text-micro text-muted">с участника</dt>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <dd className="display-figure text-headline">
+                  {event.max_teams} × {event.team_size}
+                </dd>
+                <dt className="signal-label text-micro text-muted">команд × человек</dt>
+              </div>
+            </dl>
+          </Reveal>
+
+          <Reveal delay={150}>
+            <TicketCta
+              href={TELEGRAM_MANAGER_URL}
+              label="Записаться"
+              sub={`t.me/${TELEGRAM_MANAGER}`}
+              external
+            />
+          </Reveal>
+
+          <Reveal delay={190}>
+            <p className="max-w-[46ch] text-body text-muted">
+              Напишите Тимуру: согласуем состав, название команды и выдадим код. Аккаунт заводить не
+              нужно — на квесте достаточно кода из шести символов и имени.
+            </p>
+          </Reveal>
+
+          <Reveal delay={230}>
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-hairline pt-6">
+              <DotCluster size={28} />
+              <p className="signal-label text-micro text-ink">Менеджер · @{TELEGRAM_MANAGER}</p>
+              <p className="signal-label text-micro text-muted">
+                {event.city} · {formatEventDate(event)}
+              </p>
+              <p className="signal-label text-micro text-muted">{tasksLabel}</p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
     </>
   );
 }

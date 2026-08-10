@@ -1,18 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/cn';
 import type { EventStatus } from '@/types/database';
 
 /**
  * Обратный отсчёт до старта.
+ *
+ * Figma 79:11…79:23: четыре крупных числа Unbounded, разделённые
+ * точками, подписи в разрядку под ними. Первое число — сигнальное,
+ * остальные светлые: так глаз сразу цепляется за самую крупную
+ * оставшуюся единицу.
  *
  * Целевое время приходит с сервера в UTC, поэтому переведённые
  * или сбитые часы телефона влияют только на отображаемую
  * длительность, но никогда — на реальные права: можно ли
  * отправлять фотографии, решает сервер.
  *
- * До монтирования компонент ничего не рендерит, иначе разметка
- * сервера и клиента разойдётся.
+ * До монтирования компонент держит место фиксированной высотой,
+ * иначе разметка сервера и клиента разойдётся, а раскладка
+ * дёрнется в момент гидратации.
  */
 
 function split(ms: number) {
@@ -27,7 +34,15 @@ function split(ms: number) {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export function Countdown({ target, status }: { target: string; status: EventStatus }) {
+export function Countdown({
+  target,
+  status,
+  className,
+}: {
+  target: string;
+  status: EventStatus;
+  className?: string;
+}) {
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
@@ -39,34 +54,53 @@ export function Countdown({ target, status }: { target: string; status: EventSta
   }, [target]);
 
   if (remaining === null) {
-    return <div className="h-[68px]" aria-hidden="true" />;
+    return <div className={cn('h-[72px]', className)} aria-hidden="true" />;
   }
 
   if (remaining <= 0) {
     return (
-      <p className="text-body text-muted" role="status">
-        {status === 'live' ? 'Квест идёт прямо сейчас.' : 'Время старта наступило.'}
+      <p className={cn('signal-label text-label text-signal', className)} role="status">
+        {status === 'live' ? 'Квест идёт прямо сейчас' : 'Время старта наступило'}
       </p>
     );
   }
 
   const { days, hours, minutes, seconds } = split(remaining);
 
+  const units = [
+    { value: days, label: 'дней', signal: true },
+    { value: hours, label: 'часов', signal: false },
+    { value: minutes, label: 'мин', signal: false },
+    { value: seconds, label: 'сек', signal: false },
+  ];
+
   return (
     <div
-      className="inline-flex items-end gap-4 border border-hairline bg-panel px-5 py-3"
+      className={cn('flex items-start justify-center', className)}
       role="timer"
       aria-label={`До старта ${days} дней ${hours} часов ${minutes} минут`}
     >
-      {[
-        { value: days, label: 'дн' },
-        { value: hours, label: 'ч' },
-        { value: minutes, label: 'мин' },
-        { value: seconds, label: 'сек' },
-      ].map((unit) => (
-        <div key={unit.label} className="flex flex-col items-center">
-          <span className="text-title tabular-nums tracking-[-0.48px]">{pad(unit.value)}</span>
-          <span className="text-caption text-faint">{unit.label}</span>
+      {units.map((unit, index) => (
+        <div key={unit.label} className="flex items-start">
+          {index > 0 && (
+            <span
+              aria-hidden="true"
+              className="display-figure px-1 pt-[6px] text-body-lg text-signal sm:px-2"
+            >
+              ·
+            </span>
+          )}
+          <div className="flex min-w-[64px] flex-col items-center sm:min-w-[84px]">
+            <span
+              className={cn(
+                'display-figure text-headline sm:text-display',
+                unit.signal ? 'text-signal' : 'text-ink',
+              )}
+            >
+              {pad(unit.value)}
+            </span>
+            <span className="signal-label mt-1 text-micro text-muted">{unit.label}</span>
+          </div>
         </div>
       ))}
     </div>

@@ -55,8 +55,12 @@ export interface QuestMapProps {
   showLocateButton?: boolean;
 }
 
-const BRICK = '#9b1c17';
-const INK = '#2b1a14';
+// Цвета Mono Signal. Leaflet рисует слои императивно и не видит
+// CSS-переменных, поэтому значения дублируются здесь; менять их
+// нужно вместе с @theme в app/globals.css.
+const SIGNAL = '#ff00b3';
+const INK = '#f5f5f1';
+const CANVAS = '#060609';
 
 /** Центр Лейпцига — куда смотреть, пока не известно ничего лучше. */
 const FALLBACK = { latitude: 51.3397, longitude: 12.3731 };
@@ -113,9 +117,9 @@ export function QuestMap({
       if (area) {
         L.circle([area.latitude, area.longitude], {
           radius: area.radiusMeters,
-          color: BRICK,
+          color: SIGNAL,
           weight: 2,
-          fillColor: BRICK,
+          fillColor: SIGNAL,
           fillOpacity: 0.06,
         })
           .addTo(map)
@@ -219,7 +223,7 @@ export function QuestMap({
           className: '',
           html:
             `<span style="display:block;width:16px;height:16px;border-radius:9999px;` +
-            `background:${INK};border:3px solid #faefe5"></span>`,
+            `background:${SIGNAL};border:3px solid ${CANVAS}"></span>`,
           iconSize: [16, 16],
           iconAnchor: [8, 8],
         }),
@@ -246,9 +250,15 @@ export function QuestMap({
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Тайлы OpenStreetMap светлые, а система тёмная: белый
+          прямоугольник посреди чёрной страницы бьёт по глазам
+          ночью, а сигнальные метки на нём теряются. Инверсия с
+          коррекцией тона даёт тёмную карту, не требуя платного
+          поставщика тайлов. Фильтр применяется только к слою
+          подложки — метки, круги и подписи остаются как есть. */}
       <div
         ref={hostRef}
-        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep`}
+        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-[0.92] [&_.leaflet-tile-pane]:contrast-[0.9] [&_.leaflet-tile-pane]:grayscale-[0.35]`}
         // Карта — интерактивный виджет. Скринридеру от неё пользы
         // нет, весь смысл продублирован списком заданий рядом.
         role="presentation"
@@ -285,11 +295,11 @@ function escapeHtml(value: string): string {
 }
 
 function pinHtml(point: MapPoint): string {
-  const background = point.done ? INK : BRICK;
+  const background = point.done ? INK : SIGNAL;
   return (
     `<span style="display:flex;align-items:center;justify-content:center;` +
     `width:30px;height:30px;border-radius:9999px;background:${background};` +
-    `color:#faefe5;border:2px solid #faefe5;font:600 13px/1 Oswald,sans-serif">` +
+    `color:${CANVAS};border:2px solid ${CANVAS};font:600 13px/1 Onest,sans-serif">` +
     `${escapeHtml(point.label)}</span>`
   );
 }
@@ -298,7 +308,7 @@ function popupHtml(point: MapPoint): string {
   const title = escapeHtml(point.title);
   const body = point.done ? '<div>Уже принято</div>' : '';
   const link = point.href
-    ? `<a href="${escapeHtml(point.href)}" style="color:${BRICK}">Открыть задание</a>`
+    ? `<a href="${escapeHtml(point.href)}" style="color:${SIGNAL}">Открыть задание</a>`
     : '';
   return `<strong>${title}</strong>${body}${link ? `<div>${link}</div>` : ''}`;
 }

@@ -17,11 +17,7 @@ export async function getCurrentEvent(): Promise<EventRow | null> {
   const db = supabaseAdmin();
 
   // Сначала — событие с известным slug.
-  const bySlug = await db
-    .from('events')
-    .select('*')
-    .eq('slug', CURRENT_EVENT_SLUG)
-    .maybeSingle();
+  const bySlug = await db.from('events').select('*').eq('slug', CURRENT_EVENT_SLUG).maybeSingle();
 
   if (bySlug.data) return bySlug.data as EventRow;
 

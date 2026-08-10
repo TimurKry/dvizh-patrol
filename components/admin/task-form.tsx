@@ -194,7 +194,7 @@ export function TaskForm({
         </Field>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
+      <div className="flex flex-col gap-4 border border-hairline bg-panel p-4">
         <Checkbox
           name="requireLocation"
           checked={needsLocation}

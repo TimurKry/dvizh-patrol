@@ -30,11 +30,7 @@ export default async function AdminTeamsPage() {
 
   const db = supabaseAdmin();
   const [teamsResult, membersResult, scoresResult, stats] = await Promise.all([
-    db
-      .from('teams')
-      .select('*')
-      .eq('event_id', event.id)
-      .order('created_at', { ascending: true }),
+    db.from('teams').select('*').eq('event_id', event.id).order('created_at', { ascending: true }),
     db.from('team_members').select('id, team_id'),
     db.from('team_scores').select('team_id, total_points, accepted_count'),
     getRegistrationStats(event),
@@ -61,7 +57,7 @@ export default async function AdminTeamsPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Eyebrow>Управление</Eyebrow>
-          <h1 className="mt-2 text-heading">Команды</h1>
+          <h1 className="mt-2 text-headline">Команды</h1>
         </div>
 
         <dl className="flex flex-wrap gap-4 text-caption">
@@ -73,7 +69,7 @@ export default async function AdminTeamsPage() {
             ['Участников', `${stats.members} / ${event.max_teams * event.team_size}`],
           ].map(([term, value]) => (
             <div key={term} className="flex flex-col">
-              <dt className="text-sepia">{term}</dt>
+              <dt className="text-muted">{term}</dt>
               <dd className="text-body tabular-nums">{value}</dd>
             </div>
           ))}
@@ -88,7 +84,7 @@ export default async function AdminTeamsPage() {
           <table className="w-full min-w-[720px] border-collapse text-body">
             <caption className="sr-only">Список зарегистрированных команд</caption>
             <thead>
-              <tr className="border-b border-hairline text-left text-caption text-sepia">
+              <tr className="border-b border-hairline text-left text-caption text-muted">
                 <th scope="col" className="py-2 pr-4 font-medium">
                   Команда
                 </th>
@@ -129,7 +125,7 @@ export default async function AdminTeamsPage() {
                     <td className="py-3 pr-4 font-mono text-caption tabular-nums">
                       {team.join_code}
                     </td>
-                    <td className="py-3 pr-4 text-sepia">{team.captain_name}</td>
+                    <td className="py-3 pr-4 text-muted">{team.captain_name}</td>
                     <td className="py-3 pr-4 tabular-nums">
                       {count} / {event.team_size}
                     </td>
@@ -138,12 +134,12 @@ export default async function AdminTeamsPage() {
                         {TEAM_STATUS_TEXT[team.status]}
                       </Tag>
                     </td>
-                    <td className="py-3 pr-4 text-caption text-sepia">
+                    <td className="py-3 pr-4 text-caption text-muted">
                       {team.payment_confirmed ? 'подтверждена' : '—'}
                     </td>
                     <td className="py-3 text-right tabular-nums">
                       {score?.total_points ?? 0}
-                      <span className="ml-1 text-caption text-sepia">
+                      <span className="ml-1 text-caption text-muted">
                         {pointsWord(score?.total_points ?? 0)}
                       </span>
                     </td>
@@ -157,10 +153,10 @@ export default async function AdminTeamsPage() {
 
       {/* ═══ Создание вручную ═══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
-        <h2 className="text-subheading">Создать команду вручную</h2>
-        <p className="text-body text-sepia">
-          Пригодится, если команда зарегистрировалась офлайн. Лимит {event.max_teams}{' '}
-          соблюдается, окно регистрации — нет.
+        <h2 className="text-body-lg">Создать команду вручную</h2>
+        <p className="text-body text-muted">
+          Пригодится, если команда зарегистрировалась офлайн. Лимит {event.max_teams} соблюдается,
+          окно регистрации — нет.
         </p>
 
         <ActionForm
@@ -182,7 +178,7 @@ export default async function AdminTeamsPage() {
           </div>
         </ActionForm>
 
-        <p className="text-caption text-sepia">
+        <p className="text-caption text-muted">
           Всего в команде может быть до {event.team_size} {membersWord(event.team_size)}.
         </p>
       </Card>

@@ -31,19 +31,16 @@ export default async function RulesPage() {
         />
 
         {event && (
-          <div className="rounded-[16px] border border-hairline bg-paper p-4">
+          <div className=" border border-hairline bg-panel p-4">
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
                 ['Дата', formatEventDateLong(event)],
                 ['Старт', `${formatEventTime(event)} (${event.timezone})`],
                 ['Участие', `${formatPrice(event)} с человека`],
-                [
-                  'Заданий',
-                  taskCount ? `${taskCount} ${tasksWord(taskCount)}` : 'готовятся',
-                ],
+                ['Заданий', taskCount ? `${taskCount} ${tasksWord(taskCount)}` : 'готовятся'],
               ].map(([term, value]) => (
                 <div key={term} className="flex flex-col gap-1">
-                  <dt className="text-caption text-sepia">{term}</dt>
+                  <dt className="text-caption text-muted">{term}</dt>
                   <dd className="text-body">{value}</dd>
                 </div>
               ))}
@@ -91,9 +88,9 @@ export default async function RulesPage() {
 
         <ProseSection title="Проверка">
           <P>
-            Часть заданий проверяется автоматически, часть — организатором. Автоматическая
-            проверка может только засчитать фотографию или передать её человеку. Отклонить
-            задание окончательно может лишь организатор.
+            Часть заданий проверяется автоматически, часть — организатором. Автоматическая проверка
+            может только засчитать фотографию или передать её человеку. Отклонить задание
+            окончательно может лишь организатор.
           </P>
           <List
             items={[
@@ -117,8 +114,8 @@ export default async function RulesPage() {
 
         <ProseSection title="Безопасность и уважение">
           <P>
-            Ни одно задание не стоит травмы или конфликта. Если выполнение выглядит опасным —
-            не выполняйте его.
+            Ни одно задание не стоит травмы или конфликта. Если выполнение выглядит опасным — не
+            выполняйте его.
           </P>
           <List
             items={[

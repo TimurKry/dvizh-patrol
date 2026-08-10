@@ -36,17 +36,16 @@ export default async function TeamMembersPage() {
       <div className="mx-auto flex max-w-xl flex-col gap-6">
         <Link
           href="/team"
-          className="inline-flex items-center gap-2 text-caption text-sepia hover:text-ink"
+          className="inline-flex items-center gap-2 text-caption text-muted hover:text-ink"
         >
           <span aria-hidden="true">←</span> Команда
         </Link>
 
         <header className="flex flex-col gap-2">
           <Eyebrow>Капитан</Eyebrow>
-          <h1 className="text-heading">Состав команды</h1>
-          <p className="text-body text-sepia">
-            {members.length} из {session.event.team_size}{' '}
-            {membersWord(session.event.team_size)}
+          <h1 className="text-headline">Состав команды</h1>
+          <p className="text-body text-muted">
+            {members.length} из {session.event.team_size} {membersWord(session.event.team_size)}
           </p>
         </header>
 
@@ -67,7 +66,7 @@ export default async function TeamMembersPage() {
                 <div className="min-w-0">
                   <p className="truncate text-body">{member.name}</p>
                   {member.id === session.memberId && (
-                    <p className="text-caption text-sepia">это вы</p>
+                    <p className="text-caption text-muted">это вы</p>
                   )}
                 </div>
 
@@ -83,9 +82,9 @@ export default async function TeamMembersPage() {
           </ul>
         </Card>
 
-        <p className="text-caption text-sepia">
-          Удалённый участник теряет доступ немедленно. Войти заново он сможет по коду команды,
-          если останутся свободные места.
+        <p className="text-caption text-muted">
+          Удалённый участник теряет доступ немедленно. Войти заново он сможет по коду команды, если
+          останутся свободные места.
         </p>
       </div>
 

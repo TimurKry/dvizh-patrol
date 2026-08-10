@@ -24,15 +24,14 @@ export default async function JoinPage({
 
   const [event, params] = await Promise.all([getCurrentEvent(), searchParams]);
 
-  const joinable =
-    event && ['registration', 'live', 'paused'].includes(event.status);
+  const joinable = event && ['registration', 'live', 'paused'].includes(event.status);
 
   return (
     <div className="page-well py-10 md:py-16">
       <div className="mx-auto max-w-xl">
         <Eyebrow>Вход</Eyebrow>
-        <h1 className="mt-3 text-heading md:text-heading-lg">Войти по коду</h1>
-        <p className="mt-4 text-body text-sepia">
+        <h1 className="mt-3 text-headline md:text-headline">Войти по коду</h1>
+        <p className="mt-4 text-body text-muted">
           Введите код из шести символов, который дал капитан.
         </p>
 

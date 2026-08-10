@@ -30,11 +30,7 @@ export default async function AdminSubmissionPage({
   const { submissionId } = await params;
 
   const db = supabaseAdmin();
-  const { data } = await db
-    .from('submissions')
-    .select('*')
-    .eq('id', submissionId)
-    .maybeSingle();
+  const { data } = await db.from('submissions').select('*').eq('id', submissionId).maybeSingle();
 
   const submission = data as SubmissionRow | null;
   if (!submission) notFound();
@@ -116,11 +112,11 @@ export default async function AdminSubmissionPage({
   return (
     <div className="page-well flex max-w-5xl flex-col gap-6 py-8">
       <div>
-        <Link href="/admin/submissions" className="text-caption text-sepia hover:text-ink">
+        <Link href="/admin/submissions" className="text-caption text-muted hover:text-ink">
           ← Очередь проверки
         </Link>
         <Eyebrow className="mt-4">{team?.name ?? 'Команда удалена'}</Eyebrow>
-        <h1 className="mt-2 text-heading">
+        <h1 className="mt-2 text-headline">
           {task ? `${task.number}. ${task.title}` : 'Задание удалено'}
         </h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -143,7 +139,7 @@ export default async function AdminSubmissionPage({
         {/* ═══ Фотографии ═══════════════════════════════════ */}
         <div className="flex flex-col gap-4">
           <figure className="flex flex-col gap-2">
-            <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+            <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
               Фотография команды
             </figcaption>
             {imageUrl ? (
@@ -151,10 +147,10 @@ export default async function AdminSubmissionPage({
               <img
                 src={imageUrl}
                 alt="Фотография, отправленная командой"
-                className="w-full rounded-[16px] border border-hairline"
+                className="w-full border border-hairline"
               />
             ) : (
-              <div className="flex aspect-4/3 items-center justify-center rounded-[16px] border border-dashed border-hairline-strong text-body text-sepia">
+              <div className="flex aspect-4/3 items-center justify-center border border-dashed border-hairline-strong text-body text-muted">
                 Файл недоступен или удалён по сроку хранения
               </div>
             )}
@@ -162,14 +158,14 @@ export default async function AdminSubmissionPage({
 
           {referenceUrl && (
             <figure className="flex flex-col gap-2">
-              <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+              <figcaption className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
                 Эталон задания
               </figcaption>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={referenceUrl}
                 alt="Эталонное изображение задания"
-                className="w-full rounded-[16px] border border-hairline"
+                className="w-full border border-hairline"
               />
             </figure>
           )}
@@ -179,7 +175,7 @@ export default async function AdminSubmissionPage({
               <div className="flex items-center gap-2">
                 <Tag emphasis>похожая фотография</Tag>
                 {submission.duplicate_similarity !== null && (
-                  <span className="text-caption text-sepia">
+                  <span className="text-caption text-muted">
                     сходство {(Number(submission.duplicate_similarity) * 100).toFixed(0)}%
                   </span>
                 )}
@@ -190,14 +186,14 @@ export default async function AdminSubmissionPage({
                 <img
                   src={duplicate.url}
                   alt="Похожая фотография, отправленная ранее"
-                  className="w-full rounded-[12px] border border-hairline"
+                  className="w-full border border-hairline"
                 />
               )}
 
-              <p className="text-caption text-sepia">
+              <p className="text-caption text-muted">
                 Команда «{duplicate.teamName}», задание «{duplicate.taskTitle}»
               </p>
-              <p className="text-caption text-sepia">
+              <p className="text-caption text-muted">
                 Совпадение не отклоняет отправку автоматически — решение за вами.
               </p>
             </Card>
@@ -208,17 +204,17 @@ export default async function AdminSubmissionPage({
         <div className="flex flex-col gap-4">
           {task && (
             <Card className="flex flex-col gap-3 p-4">
-              <h2 className="text-subheading">Условие</h2>
-              <p className="whitespace-pre-line text-body text-sepia">{task.description}</p>
+              <h2 className="text-body-lg">Условие</h2>
+              <p className="whitespace-pre-line text-body text-muted">{task.description}</p>
 
               {task.criteria.length > 0 && (
                 <>
-                  <h3 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+                  <h3 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
                     Критерии
                   </h3>
                   <ol className="flex flex-col gap-1">
                     {task.criteria.map((criterion, index) => (
-                      <li key={index} className="text-body text-sepia">
+                      <li key={index} className="text-body text-muted">
                         {index + 1}. {criterion}
                       </li>
                     ))}
@@ -227,7 +223,7 @@ export default async function AdminSubmissionPage({
               )}
 
               {task.minimum_people > 0 && (
-                <p className="text-caption text-sepia">
+                <p className="text-caption text-muted">
                   Минимум людей в кадре: {task.minimum_people}
                 </p>
               )}
@@ -238,7 +234,7 @@ export default async function AdminSubmissionPage({
           {submission.ai_result && (
             <Card className="flex flex-col gap-3 p-4">
               <div className="flex items-baseline justify-between gap-2">
-                <h2 className="text-subheading">Автоматическая проверка</h2>
+                <h2 className="text-body-lg">Автоматическая проверка</h2>
                 {submission.ai_confidence !== null && (
                   <span className="text-body tabular-nums">
                     {Number(submission.ai_confidence).toFixed(2)}
@@ -246,7 +242,7 @@ export default async function AdminSubmissionPage({
                 )}
               </div>
 
-              <p className="text-body text-sepia">{submission.ai_result.reason}</p>
+              <p className="text-body text-muted">{submission.ai_result.reason}</p>
 
               {submission.ai_result.checks?.length > 0 && (
                 <ul className="flex flex-col gap-2 border-t border-hairline pt-3">
@@ -256,14 +252,10 @@ export default async function AdminSubmissionPage({
                         {check.passed ? '✓' : '×'}
                       </span>
                       <span className="min-w-0">
-                        <span className={check.passed ? '' : 'font-medium'}>
-                          {check.criterion}
-                        </span>
-                        {check.comment && (
-                          <span className="block text-sepia">{check.comment}</span>
-                        )}
+                        <span className={check.passed ? '' : 'font-medium'}>{check.criterion}</span>
+                        {check.comment && <span className="block text-muted">{check.comment}</span>}
                       </span>
-                      <span className="ml-auto shrink-0 tabular-nums text-sepia">
+                      <span className="ml-auto shrink-0 tabular-nums text-muted">
                         {check.confidence.toFixed(2)}
                       </span>
                     </li>
@@ -272,7 +264,7 @@ export default async function AdminSubmissionPage({
               )}
 
               {submission.ai_result.model && (
-                <p className="text-caption text-sand">
+                <p className="text-caption text-faint">
                   {submission.ai_result.model}
                   {submission.ai_result.durationMs
                     ? ` · ${(submission.ai_result.durationMs / 1000).toFixed(1)} с`
@@ -291,14 +283,14 @@ export default async function AdminSubmissionPage({
 
           {submission.latitude !== null && submission.longitude !== null && (
             <Card className="flex flex-col gap-1 p-4">
-              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
                 Геопозиция
               </h2>
               <p className="text-body tabular-nums">
                 {submission.latitude.toFixed(5)}, {submission.longitude.toFixed(5)}
               </p>
               {submission.location_accuracy !== null && (
-                <p className="text-caption text-sepia">
+                <p className="text-caption text-muted">
                   погрешность ±{Math.round(submission.location_accuracy)} м
                 </p>
               )}

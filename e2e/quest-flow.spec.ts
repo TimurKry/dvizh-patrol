@@ -101,7 +101,7 @@ test.describe.serial('полный цикл квеста', () => {
     await page.locator('a[href^="/tasks/"]').first().click();
 
     // Подставляем файл напрямую: настоящую камеру браузер не даст.
-    const poster = readFileSync(join(process.cwd(), 'public/assets/dvizh-patrol-poster.jpg'));
+    const poster = readFileSync(join(process.cwd(), 'e2e/fixtures/photo.jpg'));
     await page.locator('input[type="file"]').first().setInputFiles({
       name: 'photo.jpg',
       mimeType: 'image/jpeg',

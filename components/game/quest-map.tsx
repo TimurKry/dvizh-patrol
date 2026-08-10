@@ -126,9 +126,7 @@ export function QuestMap({
         // потому зависит от текущего вида. toBounds — чистая
         // арифметика по метрам, её результат не зависит ни от
         // зума, ни от порядка вызовов.
-        bounds.extend(
-          L.latLng(area.latitude, area.longitude).toBounds(area.radiusMeters * 2),
-        );
+        bounds.extend(L.latLng(area.latitude, area.longitude).toBounds(area.radiusMeters * 2));
       }
 
       for (const point of points) {
@@ -250,7 +248,7 @@ export function QuestMap({
     <div className="flex flex-col gap-3">
       <div
         ref={hostRef}
-        className={`${className} w-full overflow-hidden rounded-[16px] border border-hairline bg-canvas-deep`}
+        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep`}
         // Карта — интерактивный виджет. Скринридеру от неё пользы
         // нет, весь смысл продублирован списком заданий рядом.
         role="presentation"
@@ -261,7 +259,7 @@ export function QuestMap({
           <Button type="button" variant="secondary" size="sm" onClick={locate} disabled={locating}>
             {locating ? 'Определяем…' : 'Где я'}
           </Button>
-          <p className="text-caption text-sand">
+          <p className="text-caption text-faint">
             Местоположение запрашивается один раз и никуда не отправляется.
           </p>
         </div>

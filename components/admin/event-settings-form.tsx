@@ -190,15 +190,14 @@ export function EventSettingsForm({
       {/* ═══ Игровое поле ══════════════════════════════════
           Круг на карте: центр и радиус. Пустые поля означают
           «поля нет» — карта тогда не показывается вовсе. */}
-      <fieldset className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
-        <legend className="px-1 text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+      <fieldset className="flex flex-col gap-4 border border-hairline bg-panel p-4">
+        <legend className="px-1 text-caption font-medium uppercase tracking-[0.08em] text-muted">
           Игровое поле
         </legend>
 
-        <p className="text-caption text-sand">
-          Круг, внутри которого проходит квест. Координаты центра проще всего взять в
-          Google Maps: правый клик по точке — первая строка меню. Оставьте пустым, чтобы
-          не показывать карту.
+        <p className="text-caption text-faint">
+          Круг, внутри которого проходит квест. Координаты центра проще всего взять в Google Maps:
+          правый клик по точке — первая строка меню. Оставьте пустым, чтобы не показывать карту.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -259,7 +258,7 @@ export function EventSettingsForm({
         )}
       </fieldset>
 
-      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
+      <div className="flex flex-col gap-4 border border-hairline bg-panel p-4">
         <Checkbox
           name="registrationOpen"
           defaultChecked={event.registration_open}

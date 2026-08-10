@@ -67,8 +67,8 @@ export function TaskFilters({
               className={cn(
                 'shrink-0 rounded-[9999px] border px-4 py-2 text-caption font-medium transition-colors',
                 filter === item.value
-                  ? 'border-ink bg-ink text-paper'
-                  : 'border-hairline bg-paper text-sepia hover:border-hairline-strong',
+                  ? 'border-ink bg-ink text-canvas'
+                  : 'border-hairline bg-panel text-muted hover:border-hairline-strong',
               )}
             >
               {item.label}
@@ -78,12 +78,12 @@ export function TaskFilters({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-caption text-sepia">
+        <label className="flex items-center gap-2 text-caption text-muted">
           Сортировка
           <select
             value={sort}
             onChange={(e) => setParam('sort', e.target.value)}
-            className="min-h-[40px] rounded-[12px] border border-hairline bg-paper px-3 text-caption"
+            className="min-h-[40px] border border-hairline bg-panel px-3 text-caption"
           >
             {SORTS.map((item) => (
               <option key={item.value} value={item.value}>
@@ -94,12 +94,12 @@ export function TaskFilters({
         </label>
 
         {categories.length > 1 && (
-          <label className="flex items-center gap-2 text-caption text-sepia">
+          <label className="flex items-center gap-2 text-caption text-muted">
             Категория
             <select
               value={category}
               onChange={(e) => setParam('category', e.target.value)}
-              className="min-h-[40px] rounded-[12px] border border-hairline bg-paper px-3 text-caption"
+              className="min-h-[40px] border border-hairline bg-panel px-3 text-caption"
             >
               <option value="all">все</option>
               {categories.map((item) => (

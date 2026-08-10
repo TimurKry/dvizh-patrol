@@ -36,7 +36,6 @@ import { CountUp } from '@/components/ui/count-up';
 // Данные меняются по ходу регистрации, кэшировать страницу нельзя.
 export const dynamic = 'force-dynamic';
 
-
 export default async function HomePage() {
   const event = await getCurrentEvent();
 
@@ -44,10 +43,10 @@ export default async function HomePage() {
     return (
       <div className="page-well py-24">
         <Eyebrow>Движ-Патруль</Eyebrow>
-        <h1 className="mt-4 text-heading-lg md:text-display">Мероприятие ещё не опубликовано</h1>
-        <p className="mt-4 max-w-prose text-body text-sepia">
-          Квест готовится. Загляните позже — здесь появятся дата, стоимость и кнопка
-          регистрации команды.
+        <h1 className="mt-4 text-headline md:text-display">Мероприятие ещё не опубликовано</h1>
+        <p className="mt-4 max-w-prose text-body text-muted">
+          Квест готовится. Загляните позже — здесь появятся дата, стоимость и кнопка регистрации
+          команды.
         </p>
       </div>
     );
@@ -111,10 +110,10 @@ export default async function HomePage() {
 
       <section className="page-well mt-10">
         <Reveal>
-          <p className="mx-auto max-w-prose text-center text-body text-sepia">
+          <p className="mx-auto max-w-prose text-center text-body text-muted">
             Команда до {event.team_size} человек, {taskCount || '30+'}{' '}
-            {taskCount ? tasksWord(taskCount) : 'заданий'} по центру Лейпцига и один вечер,
-            который потом ещё долго пересказывают. Маршрута нет — вы сами решаете, куда идти.
+            {taskCount ? tasksWord(taskCount) : 'заданий'} по центру Лейпцига и один вечер, который
+            потом ещё долго пересказывают. Маршрута нет — вы сами решаете, куда идти.
           </p>
         </Reveal>
       </section>
@@ -136,7 +135,7 @@ export default async function HomePage() {
       {/* ═══ Постер ══════════════════════════════════════════ */}
       <section className="page-well mt-12">
         <Reveal>
-          <div className="overflow-hidden rounded-[16px] border border-hairline bg-paper">
+          <div className="overflow-hidden border border-hairline bg-panel">
             <Image
               src="/assets/dvizh-patrol-poster.jpg"
               alt={`Постер мероприятия «Движ-Патруль», ${event.city}, ${formatEventDate(event)}`}
@@ -152,7 +151,7 @@ export default async function HomePage() {
 
       {/* ═══ Факты ═══════════════════════════════════════════ */}
       <section className="page-well mt-12 md:mt-20">
-        <div className="brick-rule mb-6" />
+        <div className="signal-rule mb-6" />
         <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             {
@@ -186,17 +185,19 @@ export default async function HomePage() {
               delay={index * 70}
               className={`${CARD_SURFACE} ${CARD_INTERACTIVE} flex flex-col gap-1 p-4`}
             >
-              <dt className="poster-label text-caption text-sand">{fact.term}</dt>
-              <dd className="poster-figure text-heading-sm text-brick">
+              <dt className="signal-label text-caption text-faint">{fact.term}</dt>
+              <dd className="display-figure text-title text-signal">
                 {fact.count ? <CountUp value={fact.count} /> : fact.value}
               </dd>
-              <p className="text-caption text-sand">{fact.note}</p>
+              <p className="text-caption text-faint">{fact.note}</p>
             </Reveal>
           ))}
         </dl>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <Tag>до {event.max_teams} {teamsWord(event.max_teams)}</Tag>
+          <Tag>
+            до {event.max_teams} {teamsWord(event.max_teams)}
+          </Tag>
           <Tag>до {event.team_size} человек в команде</Tag>
           <Tag>свободный маршрут</Tag>
           <Tag>после квеста — BBQ</Tag>
@@ -241,10 +242,10 @@ export default async function HomePage() {
             <Reveal as="li" key={step.n} delay={index * 90} className="flex flex-col gap-2">
               {/* Номер шага и линейка под ним — цитата нижней
                   строки постера, только по вертикали. */}
-              <span className="poster-figure text-heading-sm text-brick">{step.n}</span>
-              <span aria-hidden="true" className="h-px w-10 bg-brick-line" />
-              <h3 className="text-subheading font-normal">{step.title}</h3>
-              <p className="text-body text-sepia">{step.text}</p>
+              <span className="display-figure text-title text-signal">{step.n}</span>
+              <span aria-hidden="true" className="h-px w-10 bg-signal-line" />
+              <h3 className="text-body-lg font-normal">{step.title}</h3>
+              <p className="text-body text-muted">{step.text}</p>
             </Reveal>
           ))}
         </ol>
@@ -296,7 +297,7 @@ export default async function HomePage() {
               delay={(index % 3) * 90}
               className="group flex flex-col gap-3"
             >
-              <div className="zoom-host rounded-[12px] border border-hairline">
+              <div className="zoom-host border border-hairline">
                 <Image
                   src={example.src}
                   alt=""
@@ -305,10 +306,10 @@ export default async function HomePage() {
                   className="aspect-4/3 w-full object-cover"
                 />
               </div>
-              <h3 className="text-subheading font-normal transition-colors group-hover:text-brick">
+              <h3 className="text-body-lg font-normal transition-colors group-hover:text-signal">
                 {example.title}
               </h3>
-              <p className="text-body text-sepia">{example.text}</p>
+              <p className="text-body text-muted">{example.text}</p>
             </Reveal>
           ))}
         </div>
@@ -318,8 +319,8 @@ export default async function HomePage() {
       <section className="page-well mt-20 grid gap-6 lg:grid-cols-2">
         <Card interactive className="flex flex-col gap-4 p-6">
           <Eyebrow>Коротко</Eyebrow>
-          <h2 className="text-heading-sm">Правила</h2>
-          <ul className="flex flex-col gap-3 text-body text-sepia">
+          <h2 className="text-title">Правила</h2>
+          <ul className="flex flex-col gap-3 text-body text-muted">
             {[
               'Каждое задание засчитывается команде один раз.',
               'Число попыток задаётся отдельно для каждого задания.',
@@ -328,7 +329,7 @@ export default async function HomePage() {
               'Результат подтверждает организатор, его решение окончательное.',
             ].map((rule) => (
               <li key={rule} className="flex gap-3">
-                <span aria-hidden="true" className="text-sand">
+                <span aria-hidden="true" className="text-faint">
                   —
                 </span>
                 <span>{rule}</span>
@@ -342,12 +343,12 @@ export default async function HomePage() {
 
         <Card interactive className="flex flex-col gap-4 p-6">
           <Eyebrow>После финиша</Eyebrow>
-          <h2 className="text-heading-sm">BBQ</h2>
-          <p className="text-body text-sepia">
+          <h2 className="text-title">BBQ</h2>
+          <p className="text-body text-muted">
             Когда последняя фотография отправлена, а рейтинг заморожен, начинается вторая часть
             вечера — барбекю. Там же объявляются результаты и разбираются самые спорные кадры.
           </p>
-          <p className="text-body text-sepia">
+          <p className="text-body text-muted">
             Участие в BBQ входит в стоимость. Если у вас есть ограничения по еде, предупредите
             организатора заранее.
           </p>

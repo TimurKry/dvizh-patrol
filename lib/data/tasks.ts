@@ -17,12 +17,7 @@ import type {
  * и совпадать с тем, что проверит база.
  */
 
-export type TaskState =
-  | 'available'
-  | 'in_review'
-  | 'accepted'
-  | 'rejected'
-  | 'attempts_exhausted';
+export type TaskState = 'available' | 'in_review' | 'accepted' | 'rejected' | 'attempts_exhausted';
 
 export interface TaskWithState {
   task: TaskRow;
@@ -64,10 +59,7 @@ export async function getTasksForTeam(
       .select('*')
       .eq('team_id', teamId)
       .order('submitted_at', { ascending: false }),
-    db
-      .from('task_reference_images')
-      .select('*')
-      .order('sort_order', { ascending: true }),
+    db.from('task_reference_images').select('*').order('sort_order', { ascending: true }),
   ]);
 
   const tasks = (tasksResult.data as TaskRow[] | null) ?? [];
@@ -80,10 +72,9 @@ export async function getTasksForTeam(
     if (!referenceByTask.has(ref.task_id)) referenceByTask.set(ref.task_id, ref.image_path);
   }
 
-  const signedReferences = await createSignedUrls(
-    BUCKETS.references,
-    [...referenceByTask.values()],
-  );
+  const signedReferences = await createSignedUrls(BUCKETS.references, [
+    ...referenceByTask.values(),
+  ]);
 
   const byTask = new Map<string, SubmissionRow[]>();
   for (const submission of submissions) {
@@ -96,9 +87,7 @@ export async function getTasksForTeam(
 
   return tasks.map((task) => {
     const taskSubmissions = byTask.get(task.id) ?? [];
-    const attemptsUsed = taskSubmissions.filter((s) =>
-      ATTEMPT_STATUSES.includes(s.status),
-    ).length;
+    const attemptsUsed = taskSubmissions.filter((s) => ATTEMPT_STATUSES.includes(s.status)).length;
     const attemptsLeft = Math.max(0, task.max_attempts - attemptsUsed);
 
     const accepted = taskSubmissions.find((s) => s.status === 'accepted');
@@ -125,8 +114,7 @@ export async function getTasksForTeam(
       latestSubmission: taskSubmissions[0] ?? null,
       attemptsUsed,
       attemptsLeft,
-      canSubmit:
-        options.eventLive && withinWindow && !accepted && !inReview && attemptsLeft > 0,
+      canSubmit: options.eventLive && withinWindow && !accepted && !inReview && attemptsLeft > 0,
       referenceImageUrl: referencePath ? (signedReferences.get(referencePath) ?? null) : null,
     };
   });
@@ -143,9 +131,9 @@ export async function getTaskForTeam(
 }
 
 /** Все эталонные изображения задания — для его страницы. */
-export async function getTaskReferences(taskId: string): Promise<
-  Array<{ id: string; url: string; caption: string | null }>
-> {
+export async function getTaskReferences(
+  taskId: string,
+): Promise<Array<{ id: string; url: string; caption: string | null }>> {
   const { data } = await supabaseAdmin()
     .from('task_reference_images')
     .select('*')

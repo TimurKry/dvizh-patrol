@@ -41,10 +41,7 @@ const KINDS = [
 
 type Kind = (typeof KINDS)[number];
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ kind: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ kind: string }> }) {
   const admin = await getAdmin();
   if (!admin) {
     return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
@@ -75,8 +72,13 @@ export async function GET(
 
       const { data: scoreData } = await db.from('team_scores').select('*');
       const scores = new Map(
-        ((scoreData as Array<{ team_id: string; total_points: number; accepted_count: number }> | null) ??
-          []).map((s) => [s.team_id, s]),
+        (
+          (scoreData as Array<{
+            team_id: string;
+            total_points: number;
+            accepted_count: number;
+          }> | null) ?? []
+        ).map((s) => [s.team_id, s]),
       );
 
       return csvResponse(
@@ -115,8 +117,9 @@ export async function GET(
         .order('created_at');
 
       const rows =
-        (data as Array<TeamMemberRow & { teams: { name: string; event_id: string } | null }> | null) ??
-        [];
+        (data as Array<
+          TeamMemberRow & { teams: { name: string; event_id: string } | null }
+        > | null) ?? [];
 
       return csvResponse(
         `участники-${stamp}.csv`,
@@ -135,11 +138,7 @@ export async function GET(
     }
 
     case 'tasks': {
-      const { data } = await db
-        .from('tasks')
-        .select('*')
-        .eq('event_id', event.id)
-        .order('number');
+      const { data } = await db.from('tasks').select('*').eq('event_id', event.id).order('number');
       const tasks = (data as TaskRow[] | null) ?? [];
 
       return csvResponse(

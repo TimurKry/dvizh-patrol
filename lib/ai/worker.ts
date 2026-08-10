@@ -238,9 +238,7 @@ async function failJob(job: ClaimedJob, error: string): Promise<void> {
 }
 
 /** Первое эталонное изображение задания, если оно есть. */
-async function loadReference(
-  taskId: string,
-): Promise<{ base64: string; mimeType: string } | null> {
+async function loadReference(taskId: string): Promise<{ base64: string; mimeType: string } | null> {
   const { data } = await supabaseAdmin()
     .from('task_reference_images')
     .select('image_path')

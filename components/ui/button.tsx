@@ -5,19 +5,16 @@ import { cn } from '@/lib/cn';
 /**
  * Кнопки.
  *
- * Основная — кирпичная заливка с постера. Вторичная — тёплая
- * бумага с волосяной рамкой. Габариты одинаковые, чтобы пара
- * читалась как единый блок.
+ * Основная — сплошной сигнал с тёмной надписью, как CTA в Figma
+ * 79:24. Вторичная — панель с волосяной рамкой и светлой
+ * надписью, 79:30. Габариты одинаковые, чтобы пара читалась как
+ * единый блок.
  *
- * Красный здесь работает так же, как на постере: им набрано
- * главное и только главное. Разливать его по всем элементам
- * подряд нельзя — тогда акцент перестаёт быть акцентом.
+ * Пурпурный работает в системе ровно как сигнал: им набрано
+ * главное и только главное. Две основные кнопки на экран — это
+ * уже на одну больше, чем нужно.
  *
- * Надписи набраны плакатным шрифтом в капители, как нижняя
- * строка постера («ДАТА», «СТАРТ», «УЧАСТИЕ»).
- *
- * Теней нет. Радиус 16px везде, кроме размера sm — там 12px,
- * потому что 16px на кнопке высотой 36px выглядит как таблетка.
+ * Надписи набраны Unbounded в капители. Углы прямые, теней нет.
  */
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -25,61 +22,44 @@ type Size = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-brick text-paper border border-brick ' +
-    'hover:bg-brick-deep hover:border-brick-deep active:bg-brick-deep ' +
-    'disabled:bg-sand disabled:border-sand',
+    'bg-signal text-canvas border border-signal ' +
+    'hover:bg-signal-deep hover:border-signal-deep active:bg-signal-deep ' +
+    'disabled:bg-faint disabled:border-faint disabled:text-canvas',
   secondary:
-    'bg-paper text-ink border border-hairline-strong ' +
-    'hover:border-brick hover:text-brick active:bg-brick-wash',
+    'bg-canvas text-ink border border-ink ' +
+    'hover:border-signal hover:text-signal active:bg-signal-wash',
   ghost:
-    'bg-transparent text-sepia border border-transparent ' +
-    'hover:bg-brick-wash hover:text-brick active:bg-brick-wash',
-  // Разрушающее действие: контур кирпичом, заливка — только при
+    'bg-transparent text-muted border border-transparent ' +
+    'hover:bg-ink-wash hover:text-ink active:bg-ink-wash',
+  // Разрушающее действие: контур сигналом, заливка — только при
   // наведении. Иначе оно спорило бы с основной кнопкой за внимание.
-  danger:
-    'bg-paper text-brick border border-brick ' +
-    'hover:bg-brick hover:text-paper',
+  danger: 'bg-canvas text-signal border border-signal hover:bg-signal hover:text-canvas',
 };
 
 const SIZES: Record<Size, string> = {
-  sm: 'text-caption px-4 py-2 rounded-[12px] min-h-[36px] tracking-[0.08em]',
-  md: 'text-body px-6 py-4 rounded-[16px] min-h-[44px] tracking-[0.06em]',
-  lg: 'text-subheading px-8 py-5 rounded-[16px] min-h-[52px] tracking-[0.06em]',
+  // Ниже 44px опускается только sm, и он не используется как
+  // единственная цель нажатия на мобильном — там всегда md и выше.
+  sm: 'text-caption px-4 py-2 min-h-[36px] tracking-[0.08em]',
+  md: 'text-caption px-6 py-4 min-h-[44px] tracking-[0.06em]',
+  lg: 'text-body px-8 py-5 min-h-[52px] tracking-[0.06em]',
 };
 
 /**
  * Кнопка чуть приподнимается под курсором и проседает при
  * нажатии. Двигается только transform, поэтому соседние элементы
  * стоят на месте, а браузер не пересчитывает раскладку.
- * `disabled:transform-none` — выключенная кнопка не должна
- * реагировать вовсе, иначе она выглядит нажимаемой.
+ * Выключенная кнопка не реагирует вовсе, иначе она выглядит
+ * нажимаемой.
  */
 const BASE =
-  'relative inline-flex items-center justify-center gap-2 select-none uppercase overflow-hidden ' +
-  'font-poster font-medium ' +
+  'relative inline-flex items-center justify-center gap-2 select-none uppercase ' +
+  'font-display font-medium ' +
   'transition-[color,background-color,border-color,transform] duration-200 ease-out ' +
   'hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.985] ' +
+  'motion-reduce:transform-none motion-reduce:transition-none ' +
   'disabled:cursor-not-allowed disabled:opacity-60 ' +
   'disabled:hover:translate-y-0 disabled:active:scale-100 ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brick';
-
-/**
- * Блик по кирпичной заливке. Живёт отдельным слоем, чтобы не
- * трогать текст кнопки; `group-hover` запускает его один раз за
- * наведение, а не по кругу.
- */
-function Sheen() {
-  return (
-    <span
-      aria-hidden="true"
-      className={
-        'pointer-events-none absolute inset-y-0 -left-full w-1/3 ' +
-        'bg-[linear-gradient(90deg,transparent,rgb(250_239_229/0.28),transparent)] ' +
-        'group-hover:animate-[dp-sheen_0.9s_ease-out] motion-reduce:hidden'
-      }
-    />
-  );
-}
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
 
 interface CommonProps {
   variant?: Variant;
@@ -99,10 +79,16 @@ export function Button({
 }: CommonProps & Omit<ComponentProps<'button'>, 'className' | 'children'>) {
   return (
     <button
-      className={cn('group', BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className)}
+      className={cn(
+        'group',
+        BASE,
+        VARIANTS[variant],
+        SIZES[size],
+        fullWidth && 'w-full',
+        className,
+      )}
       {...rest}
     >
-      {variant === 'primary' && <Sheen />}
       <span className="relative">{children}</span>
     </button>
   );
@@ -118,10 +104,16 @@ export function ButtonLink({
 }: CommonProps & Omit<ComponentProps<typeof Link>, 'className' | 'children'>) {
   return (
     <Link
-      className={cn('group', BASE, VARIANTS[variant], SIZES[size], fullWidth && 'w-full', className)}
+      className={cn(
+        'group',
+        BASE,
+        VARIANTS[variant],
+        SIZES[size],
+        fullWidth && 'w-full',
+        className,
+      )}
       {...rest}
     >
-      {variant === 'primary' && <Sheen />}
       <span className="relative">{children}</span>
     </Link>
   );

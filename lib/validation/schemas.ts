@@ -89,43 +89,36 @@ export const submissionConfirmSchema = z.object({
 
 // ═══ Мероприятие ═══════════════════════════════════════════════
 
-export const eventSettingsSchema = z.object({
-  title: trimmed(2, 120, 'Название'),
-  subtitle: z.string().trim().max(200).optional().or(z.literal('')),
-  city: trimmed(2, 80, 'Город'),
-  timezone: trimmed(3, 60, 'Часовой пояс'),
-  startsAt: z.string().min(1, 'Укажите дату и время начала'),
-  priceCents: z.number().int().min(0, 'Цена не может быть отрицательной'),
-  maxTeams: z
-    .number()
-    .int()
-    .min(1, 'Минимум одна команда')
-    .max(10, 'Максимум десять команд'),
-  teamSize: z
-    .number()
-    .int()
-    .min(1, 'Минимум один участник')
-    .max(4, 'Максимум четыре участника'),
-  registrationOpen: z.boolean(),
-  leaderboardMode: z.enum(LEADERBOARD_MODES),
-  aiValidationEnabled: z.boolean(),
-  aiAcceptThreshold: z.number().min(0).max(1),
-  photoRetentionDays: z.number().int().min(1).max(3650).nullable(),
+export const eventSettingsSchema = z
+  .object({
+    title: trimmed(2, 120, 'Название'),
+    subtitle: z.string().trim().max(200).optional().or(z.literal('')),
+    city: trimmed(2, 80, 'Город'),
+    timezone: trimmed(3, 60, 'Часовой пояс'),
+    startsAt: z.string().min(1, 'Укажите дату и время начала'),
+    priceCents: z.number().int().min(0, 'Цена не может быть отрицательной'),
+    maxTeams: z.number().int().min(1, 'Минимум одна команда').max(10, 'Максимум десять команд'),
+    teamSize: z.number().int().min(1, 'Минимум один участник').max(4, 'Максимум четыре участника'),
+    registrationOpen: z.boolean(),
+    leaderboardMode: z.enum(LEADERBOARD_MODES),
+    aiValidationEnabled: z.boolean(),
+    aiAcceptThreshold: z.number().min(0).max(1),
+    photoRetentionDays: z.number().int().min(1).max(3650).nullable(),
 
-  // ─── Игровое поле ───────────────────────────────────────────
-  // Три поля живут вместе: либо круг задан целиком, либо его нет.
-  // То же ограничение стоит в базе, но поймать ошибку в форме
-  // приятнее, чем получить отказ от Postgres.
-  areaLatitude: z.number().min(-90).max(90).nullable(),
-  areaLongitude: z.number().min(-180).max(180).nullable(),
-  areaRadiusMeters: z
-    .number()
-    .int()
-    .min(100, 'Радиус меньше 100 метров съест погрешность телефона')
-    .max(20000, 'Максимум 20 километров')
-    .nullable(),
-  areaEnforced: z.boolean(),
-})
+    // ─── Игровое поле ───────────────────────────────────────────
+    // Три поля живут вместе: либо круг задан целиком, либо его нет.
+    // То же ограничение стоит в базе, но поймать ошибку в форме
+    // приятнее, чем получить отказ от Postgres.
+    areaLatitude: z.number().min(-90).max(90).nullable(),
+    areaLongitude: z.number().min(-180).max(180).nullable(),
+    areaRadiusMeters: z
+      .number()
+      .int()
+      .min(100, 'Радиус меньше 100 метров съест погрешность телефона')
+      .max(20000, 'Максимум 20 километров')
+      .nullable(),
+    areaEnforced: z.boolean(),
+  })
   .superRefine((value, ctx) => {
     const filled = [value.areaLatitude, value.areaLongitude, value.areaRadiusMeters].filter(
       (v) => v !== null,
@@ -265,10 +258,11 @@ export const reviewDecisionSchema = z.object({
 export const scoreAdjustmentSchema = z.object({
   teamId: z.string().uuid(),
   points: z.number().int().min(-1000).max(1000),
-  transactionType: z.enum(SCORE_TRANSACTION_TYPES).refine(
-    (v) => v === 'manual_adjustment' || v === 'bonus' || v === 'penalty',
-    { message: 'Допустимы только ручная корректировка, бонус и штраф' },
-  ),
+  transactionType: z
+    .enum(SCORE_TRANSACTION_TYPES)
+    .refine((v) => v === 'manual_adjustment' || v === 'bonus' || v === 'penalty', {
+      message: 'Допустимы только ручная корректировка, бонус и штраф',
+    }),
   reason: trimmed(3, 300, 'Причина'),
 });
 

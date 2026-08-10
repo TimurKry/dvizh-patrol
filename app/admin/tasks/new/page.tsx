@@ -37,11 +37,11 @@ export default async function NewTaskPage() {
   return (
     <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
       <div>
-        <Link href="/admin/tasks" className="text-caption text-sepia hover:text-ink">
+        <Link href="/admin/tasks" className="text-caption text-muted hover:text-ink">
           ← Все задания
         </Link>
         <Eyebrow className="mt-4">Создание</Eyebrow>
-        <h1 className="mt-2 text-heading">Новое задание</h1>
+        <h1 className="mt-2 text-headline">Новое задание</h1>
       </div>
 
       <TaskForm eventId={event.id} nextNumber={nextNumber} />

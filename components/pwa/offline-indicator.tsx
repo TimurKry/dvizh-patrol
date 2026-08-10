@@ -26,12 +26,8 @@ export function OfflineIndicator() {
   if (!offline) return null;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="page-well sticky top-[72px] z-30 pb-2"
-    >
-      <p className="rounded-[16px] border border-ink bg-paper px-4 py-2 text-caption">
+    <div role="status" aria-live="polite" className="page-well sticky top-[72px] z-30 pb-2">
+      <p className=" border border-ink bg-panel px-4 py-2 text-caption">
         <span aria-hidden="true">◍ </span>
         Нет соединения. Выбранные фотографии сохранятся и отправятся, когда связь вернётся.
       </p>

@@ -53,15 +53,16 @@ function applySort(items: TaskWithState[], sort: Sort): TaskWithState[] {
       return sorted.sort((a, b) => b.task.points - a.task.points || a.task.number - b.task.number);
     case 'category':
       return sorted.sort(
-        (a, b) =>
-          a.task.category.localeCompare(b.task.category) || a.task.number - b.task.number,
+        (a, b) => a.task.category.localeCompare(b.task.category) || a.task.number - b.task.number,
       );
     case 'status':
       return sorted.sort(
         (a, b) => STATE_ORDER[a.state] - STATE_ORDER[b.state] || a.task.number - b.task.number,
       );
     default:
-      return sorted.sort((a, b) => a.task.sort_order - b.task.sort_order || a.task.number - b.task.number);
+      return sorted.sort(
+        (a, b) => a.task.sort_order - b.task.sort_order || a.task.number - b.task.number,
+      );
   }
 }
 
@@ -85,7 +86,7 @@ export default async function TasksPage({
     return (
       <div className="page-well with-bottom-nav py-8 md:py-12">
         <Eyebrow>Команда «{session.team.name}»</Eyebrow>
-        <h1 className="mt-3 text-heading md:text-heading-lg">Задания</h1>
+        <h1 className="mt-3 text-headline md:text-headline">Задания</h1>
         <div className="mt-8">
           <EmptyState
             title="Задания ещё закрыты"
@@ -118,8 +119,8 @@ export default async function TasksPage({
     <div className="page-well with-bottom-nav py-8 md:py-12">
       <Eyebrow>Команда «{session.team.name}»</Eyebrow>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-heading md:text-heading-lg">Задания</h1>
-        <p className="text-body text-sepia">
+        <h1 className="text-headline md:text-headline">Задания</h1>
+        <p className="text-body text-muted">
           принято {accepted} из {items.length} {tasksWord(items.length)}
         </p>
       </div>
@@ -127,8 +128,7 @@ export default async function TasksPage({
       {session.event.status === 'paused' && (
         <div className="mt-6">
           <Notice tone="strong" icon="‖">
-            Квест приостановлен организатором. Задания видны, но отправка временно
-            недоступна.
+            Квест приостановлен организатором. Задания видны, но отправка временно недоступна.
           </Notice>
         </div>
       )}
@@ -142,12 +142,7 @@ export default async function TasksPage({
       )}
 
       <div className="mt-6">
-        <TaskFilters
-          filter={filter}
-          sort={sort}
-          category={category}
-          categories={categories}
-        />
+        <TaskFilters filter={filter} sort={sort} category={category} categories={categories} />
       </div>
 
       <div className="mt-6">

@@ -31,7 +31,7 @@ const QuestMap = dynamicImport(
   () => import('@/components/game/quest-map').then((m) => m.QuestMap),
   {
     loading: () => (
-      <div className="h-[260px] w-full animate-pulse rounded-[16px] border border-hairline bg-canvas-deep" />
+      <div className="h-[260px] w-full animate-pulse border border-hairline bg-canvas-deep" />
     ),
   },
 );
@@ -76,14 +76,14 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
       <div className="mx-auto max-w-2xl">
         <Link
           href="/tasks"
-          className="inline-flex items-center gap-2 text-caption text-sepia hover:text-ink"
+          className="inline-flex items-center gap-2 text-caption text-muted hover:text-ink"
         >
           <span aria-hidden="true">←</span> Все задания
         </Link>
 
         <header className="mt-5 flex flex-col gap-3">
-          <p className="text-caption text-sand">Задание {task.number}</p>
-          <h1 className="text-heading md:text-heading-lg">{task.title}</h1>
+          <p className="text-caption text-faint">Задание {task.number}</p>
+          <h1 className="text-headline md:text-headline">{task.title}</h1>
 
           <div className="flex flex-wrap items-center gap-2">
             <Tag emphasis>
@@ -109,10 +109,10 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                 <img
                   src={reference.url}
                   alt={reference.caption ?? `Пример к заданию ${task.number}`}
-                  className="w-full rounded-[12px] border border-hairline"
+                  className="w-full border border-hairline"
                 />
                 {reference.caption && (
-                  <figcaption className="text-caption text-sepia">{reference.caption}</figcaption>
+                  <figcaption className="text-caption text-muted">{reference.caption}</figcaption>
                 )}
               </figure>
             ))}
@@ -125,7 +125,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             дойти до него без карты в чужом городе трудно. */}
         {task.latitude != null && task.longitude != null && (
           <div className="mt-6 flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
               Где искать
             </h2>
             <QuestMap
@@ -153,13 +153,13 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
 
           {task.criteria.length > 0 && (
             <Card className="flex flex-col gap-3 p-4">
-              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+              <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
                 Что должно быть в кадре
               </h2>
               <ul className="flex flex-col gap-2">
                 {task.criteria.map((criterion, index) => (
-                  <li key={index} className="flex gap-3 text-body text-sepia">
-                    <span aria-hidden="true" className="text-sand">
+                  <li key={index} className="flex gap-3 text-body text-muted">
+                    <span aria-hidden="true" className="text-faint">
                       {index + 1}.
                     </span>
                     <span>{criterion}</span>
@@ -180,7 +180,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                 <Tag>ещё не отправляли</Tag>
               )}
             </div>
-            <p className="text-caption text-sepia">
+            <p className="text-caption text-muted">
               {state === 'accepted'
                 ? 'задание засчитано'
                 : `осталось ${attemptsLeft} ${attemptsWord(attemptsLeft)} из ${task.max_attempts}`}
@@ -191,7 +191,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             <Notice icon={SUBMISSION_STATUS_TEXT[latestSubmission.status].icon}>
               <p>{SUBMISSION_STATUS_TEXT[latestSubmission.status].hint}</p>
               {latestSubmission.review_reason && (
-                <p className="mt-1 text-caption text-sepia">
+                <p className="mt-1 text-caption text-muted">
                   {REVIEW_REASON_TEXT[latestSubmission.review_reason] ??
                     latestSubmission.review_reason}
                 </p>

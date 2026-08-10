@@ -50,13 +50,16 @@ export function NavShell({
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-40 pt-3 pb-2" style={{ paddingTop: 'calc(var(--safe-top) + 12px)' }}>
+    <header
+      className="sticky top-0 z-40 pt-3 pb-2"
+      style={{ paddingTop: 'calc(var(--safe-top) + 12px)' }}
+    >
       <div className="page-well">
         <nav
           aria-label="Основная навигация"
           className={cn(
             'flex items-center gap-2 rounded-[9999px] border border-hairline',
-            'bg-paper px-3 py-2',
+            'bg-panel px-3 py-2',
           )}
         >
           <Link
@@ -77,8 +80,8 @@ export function NavShell({
                   className={cn(
                     'inline-flex items-center rounded-[9999px] px-3 py-2 text-body transition-colors',
                     isActive(link.href)
-                      ? 'bg-brick text-paper'
-                      : 'text-sepia hover:bg-ink-wash hover:text-ink',
+                      ? 'bg-signal text-canvas'
+                      : 'text-muted hover:bg-ink-wash hover:text-ink',
                   )}
                 >
                   {link.label}
@@ -93,8 +96,8 @@ export function NavShell({
                 href={action.href}
                 className={cn(
                   'lift hidden items-center rounded-[9999px] border border-ink bg-ink',
-                  'px-4 py-2 text-caption font-medium text-paper sm:inline-flex',
-                  'hover:border-brick hover:bg-brick',
+                  'px-4 py-2 text-caption font-medium text-canvas sm:inline-flex',
+                  'hover:border-signal hover:bg-signal',
                 )}
               >
                 {action.label}
@@ -137,7 +140,7 @@ export function NavShell({
         {open && (
           <div
             id="nav-mobile-menu"
-            className="anim-rise mt-2 rounded-[16px] border border-hairline bg-paper p-2 md:hidden"
+            className="anim-rise mt-2 border border-hairline bg-panel p-2 md:hidden"
           >
             <ul className="flex flex-col">
               {links.map((link) => (
@@ -146,8 +149,8 @@ export function NavShell({
                     href={link.href}
                     aria-current={isActive(link.href) ? 'page' : undefined}
                     className={cn(
-                      'flex min-h-[48px] items-center rounded-[12px] px-4 text-body',
-                      isActive(link.href) ? 'bg-ink-wash font-medium' : 'text-sepia',
+                      'flex min-h-[48px] items-center px-4 text-body',
+                      isActive(link.href) ? 'bg-ink-wash font-medium' : 'text-muted',
                     )}
                   >
                     {link.label}
@@ -158,7 +161,7 @@ export function NavShell({
                 <li className="mt-1 border-t border-hairline pt-1">
                   <Link
                     href={action.href}
-                    className="flex min-h-[48px] items-center rounded-[12px] bg-ink px-4 text-body font-medium text-paper"
+                    className="flex min-h-[48px] items-center bg-ink px-4 text-body font-medium text-canvas"
                   >
                     {action.label}
                   </Link>

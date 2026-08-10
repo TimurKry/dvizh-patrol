@@ -15,10 +15,10 @@ import { useFieldError } from '@/components/ui/field-errors';
  */
 
 const CONTROL =
-  'w-full bg-paper text-ink rounded-[16px] border px-4 py-3 ' +
-  'text-body placeholder:text-sand min-h-[48px] ' +
+  'w-full bg-panel text-ink border px-4 py-3 ' +
+  'text-body placeholder:text-faint min-h-[48px] ' +
   'transition-colors focus:outline-none focus-visible:border-ink ' +
-  'disabled:bg-ink-wash disabled:text-sand disabled:cursor-not-allowed';
+  'disabled:bg-ink-wash disabled:text-faint disabled:cursor-not-allowed';
 
 export function Field({
   label,
@@ -47,7 +47,7 @@ export function Field({
       <label htmlFor={htmlFor} className="text-caption font-medium text-ink">
         {label}
         {required && (
-          <span className="text-sepia" aria-hidden="true">
+          <span className="text-muted" aria-hidden="true">
             {' '}
             *
           </span>
@@ -60,7 +60,7 @@ export function Field({
           {shownError}
         </p>
       ) : hint ? (
-        <p className="text-caption text-sepia">{hint}</p>
+        <p className="text-caption text-muted">{hint}</p>
       ) : null}
     </div>
   );
@@ -149,7 +149,7 @@ export function Checkbox({
           type="checkbox"
           className={cn(
             'peer h-full w-full cursor-pointer appearance-none',
-            'rounded-[6px] border border-hairline-strong bg-paper',
+            ' border border-hairline-strong bg-panel',
             'checked:border-ink checked:bg-ink',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
             'disabled:cursor-not-allowed disabled:opacity-50',
@@ -176,7 +176,7 @@ export function Checkbox({
       </span>
       <label htmlFor={inputId} className="cursor-pointer text-body leading-snug">
         {label}
-        {description && <span className="mt-1 block text-caption text-sepia">{description}</span>}
+        {description && <span className="mt-1 block text-caption text-muted">{description}</span>}
       </label>
     </div>
   );

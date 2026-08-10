@@ -99,7 +99,12 @@ export async function getLeaderboard(
 export async function getTeamStanding(
   event: EventRow,
   teamId: string,
-): Promise<{ position: number; totalTeams: number; totalPoints: number; acceptedCount: number } | null> {
+): Promise<{
+  position: number;
+  totalTeams: number;
+  totalPoints: number;
+  acceptedCount: number;
+} | null> {
   const { data } = await supabaseAdmin()
     .from('leaderboard')
     .select('*')

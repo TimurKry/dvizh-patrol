@@ -85,7 +85,9 @@ export async function createSignedUrl(
   path: string,
   expiresIn: number = env().SIGNED_URL_TTL_SECONDS,
 ): Promise<string | null> {
-  const { data, error } = await supabaseAdmin().storage.from(bucket).createSignedUrl(path, expiresIn);
+  const { data, error } = await supabaseAdmin()
+    .storage.from(bucket)
+    .createSignedUrl(path, expiresIn);
   if (error || !data) return null;
   return data.signedUrl;
 }

@@ -52,7 +52,9 @@ const schema = z.object({
   NEXT_PUBLIC_APP_URL: z
     .string()
     .optional()
-    .transform((v) => (v && v.trim() !== '' ? v.trim().replace(/\/+$/, '') : 'http://localhost:3000')),
+    .transform((v) =>
+      v && v.trim() !== '' ? v.trim().replace(/\/+$/, '') : 'http://localhost:3000',
+    ),
 
   NEXT_PUBLIC_SUPABASE_URL: z.string().url('NEXT_PUBLIC_SUPABASE_URL должен быть валидным URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20, 'NEXT_PUBLIC_SUPABASE_ANON_KEY не задан'),
@@ -60,9 +62,7 @@ const schema = z.object({
 
   ADMIN_EMAIL: optionalText,
 
-  SESSION_SECRET: z
-    .string()
-    .min(32, 'SESSION_SECRET должен быть не короче 32 символов'),
+  SESSION_SECRET: z.string().min(32, 'SESSION_SECRET должен быть не короче 32 символов'),
 
   WORKER_SECRET: optionalText,
 

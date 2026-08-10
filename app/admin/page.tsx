@@ -60,7 +60,10 @@ export default async function AdminDashboardPage() {
   const stats = statsResult.data as AdminDashboardRow | null;
   const recent =
     (recentResult.data as Array<
-      SubmissionRow & { tasks: Pick<TaskRow, 'number' | 'title'> | null; teams: { name: string } | null }
+      SubmissionRow & {
+        tasks: Pick<TaskRow, 'number' | 'title'> | null;
+        teams: { name: string } | null;
+      }
     > | null) ?? [];
 
   const aiReady = isAiConfigured() && event.ai_validation_enabled;
@@ -71,8 +74,8 @@ export default async function AdminDashboardPage() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Eyebrow>{EVENT_STATUS_TEXT[event.status] ?? event.status}</Eyebrow>
-          <h1 className="mt-2 text-heading">{event.title}</h1>
-          <p className="mt-1 text-body text-sepia">
+          <h1 className="mt-2 text-headline">{event.title}</h1>
+          <p className="mt-1 text-body text-muted">
             {event.city}, {formatEventDateLong(event)} в {formatEventTime(event)}
           </p>
         </div>
@@ -143,9 +146,9 @@ export default async function AdminDashboardPage() {
             },
           ].map((item) => (
             <Card key={item.term} className="flex flex-col gap-1">
-              <dt className="text-caption text-sepia">{item.term}</dt>
-              <dd className="text-heading-sm tabular-nums tracking-[-0.48px]">{item.value}</dd>
-              <p className="text-caption text-sand">{item.note}</p>
+              <dt className="text-caption text-muted">{item.term}</dt>
+              <dd className="text-title tabular-nums tracking-[-0.48px]">{item.value}</dd>
+              <p className="text-caption text-faint">{item.note}</p>
             </Card>
           ))}
         </dl>
@@ -154,7 +157,7 @@ export default async function AdminDashboardPage() {
       {/* ═══ Очередь ════════════════════════════════════════ */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-subheading">Очередь проверки</h2>
+          <h2 className="text-body-lg">Очередь проверки</h2>
           <ActionButton action={requeueStaleAction} values={{ eventId: event.id }}>
             Повторно обработать зависшие
           </ActionButton>
@@ -170,8 +173,8 @@ export default async function AdminDashboardPage() {
             ['Похожие', stats?.possible_duplicates ?? 0],
           ].map(([label, value]) => (
             <Card key={String(label)} className="flex flex-col gap-1">
-              <span className="text-caption text-sepia">{label}</span>
-              <span className="text-subheading tabular-nums">{value}</span>
+              <span className="text-caption text-muted">{label}</span>
+              <span className="text-body-lg tabular-nums">{value}</span>
             </Card>
           ))}
         </div>
@@ -187,7 +190,7 @@ export default async function AdminDashboardPage() {
       {/* ═══ Последние отправки ═════════════════════════════ */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-subheading">Последние отправки</h2>
+          <h2 className="text-body-lg">Последние отправки</h2>
           <Link href="/admin/submissions" className="text-caption underline underline-offset-2">
             Все отправки
           </Link>
@@ -201,13 +204,13 @@ export default async function AdminDashboardPage() {
               <li key={row.id}>
                 <Link
                   href={`/admin/submissions/${row.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[16px] border border-hairline bg-paper px-4 py-3 hover:border-hairline-strong"
+                  className="flex items-center justify-between gap-4 border border-hairline bg-panel px-4 py-3 hover:border-hairline-strong"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-body">
                       {row.tasks ? `${row.tasks.number}. ${row.tasks.title}` : 'Задание удалено'}
                     </p>
-                    <p className="text-caption text-sepia">{row.teams?.name ?? '—'}</p>
+                    <p className="text-caption text-muted">{row.teams?.name ?? '—'}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {row.duplicate_submission_id && <Tag>похожа</Tag>}
@@ -221,7 +224,9 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="flex flex-wrap gap-2 border-t border-hairline pt-6">
-        <Tag>{teamsWord(event.max_teams)}: до {event.max_teams}</Tag>
+        <Tag>
+          {teamsWord(event.max_teams)}: до {event.max_teams}
+        </Tag>
         <Tag>в команде до {event.team_size}</Tag>
         <Tag>регистрация {event.registration_open ? 'открыта' : 'закрыта'}</Tag>
         <Tag>рейтинг: {event.leaderboard_mode}</Tag>

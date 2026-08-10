@@ -26,8 +26,8 @@ export default async function SubmissionsPage() {
       <div className="mx-auto max-w-2xl">
         <Eyebrow>Команда «{session.team.name}»</Eyebrow>
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-heading md:text-heading-lg">Отправки</h1>
-          <p className="text-body text-sepia">
+          <h1 className="text-headline md:text-headline">Отправки</h1>
+          <p className="text-body text-muted">
             {submissions.length} {photosWord(submissions.length)}
           </p>
         </div>

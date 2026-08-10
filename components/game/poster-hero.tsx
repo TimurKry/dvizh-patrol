@@ -33,10 +33,30 @@ export interface PosterHeroProps {
 
 /** Плитки коллажа. Наклон задаётся переменной для анимации покачивания. */
 const COLLAGE = [
-  { src: '/assets/tile-roofs.webp', className: 'left-[1%] top-[24%] w-16 lg:w-24', tilt: '-6deg', delay: '0s' },
-  { src: '/assets/tile-tower.webp', className: 'right-[2%] top-[20%] w-14 lg:w-20', tilt: '4deg', delay: '1.4s' },
-  { src: '/assets/tile-facade.webp', className: 'left-[3%] top-[42%] w-14 lg:w-20', tilt: '3deg', delay: '2.6s' },
-  { src: '/assets/tile-square.webp', className: 'right-[1%] top-[38%] w-16 lg:w-24', tilt: '-4deg', delay: '3.8s' },
+  {
+    src: '/assets/tile-roofs.webp',
+    className: 'left-[1%] top-[24%] w-16 lg:w-24',
+    tilt: '-6deg',
+    delay: '0s',
+  },
+  {
+    src: '/assets/tile-tower.webp',
+    className: 'right-[2%] top-[20%] w-14 lg:w-20',
+    tilt: '4deg',
+    delay: '1.4s',
+  },
+  {
+    src: '/assets/tile-facade.webp',
+    className: 'left-[3%] top-[42%] w-14 lg:w-20',
+    tilt: '3deg',
+    delay: '2.6s',
+  },
+  {
+    src: '/assets/tile-square.webp',
+    className: 'right-[1%] top-[38%] w-16 lg:w-24',
+    tilt: '-4deg',
+    delay: '3.8s',
+  },
 ];
 
 export function PosterHero({
@@ -56,7 +76,7 @@ export function PosterHero({
 
   return (
     <section className="page-well pt-4">
-      <div className="paper-grain relative overflow-hidden rounded-[16px] border border-brick-line bg-canvas-deep">
+      <div className="paper-grain relative overflow-hidden border border-signal-line bg-canvas-deep">
         {/* ═══ Фотография города ═══════════════════════════════
             На постере дом вырастает снизу, а не заливает лист
             целиком — здесь так же: полоса прижата к нижнему краю
@@ -88,7 +108,7 @@ export function PosterHero({
               key={tile.src}
               src={tile.src}
               alt=""
-              className={cn('anim-float absolute rounded-[12px] border border-brick-line', tile.className)}
+              className={cn('anim-float absolute border border-signal-line', tile.className)}
               style={
                 {
                   '--tilt': tile.tilt,
@@ -103,15 +123,15 @@ export function PosterHero({
         <div className="relative px-5 pt-5 pb-6 md:px-10 md:pt-7 md:pb-9">
           {/* Верхняя линейка постера с ромбом посередине. */}
           <div className="anim-fade relative mb-5 flex items-center" aria-hidden="true">
-            <span className="h-px flex-1 bg-brick-line" />
-            <span className="px-3 text-[10px] leading-none text-brick">◆</span>
-            <span className="h-px flex-1 bg-brick-line" />
+            <span className="h-px flex-1 bg-signal-line" />
+            <span className="px-3 text-[10px] leading-none text-signal">◆</span>
+            <span className="h-px flex-1 bg-signal-line" />
           </div>
 
           {/* Служебная строка постера */}
           <div className="anim-fade flex items-start justify-between gap-4">
-            <span className="poster-label text-caption text-brick">Движ · Патруль</span>
-            <span className="poster-figure text-right leading-[0.95] text-brick text-heading-sm">
+            <span className="signal-label text-caption text-signal">Движ · Патруль</span>
+            <span className="display-figure text-right leading-[0.95] text-signal text-title">
               {day}
               <span className="mx-0.5 font-normal">/</span>
               <br className="sm:hidden" />
@@ -119,23 +139,23 @@ export function PosterHero({
             </span>
           </div>
 
-          <div className="anim-draw delay-1 mt-3 h-px w-full bg-brick-line" />
+          <div className="anim-draw delay-1 mt-3 h-px w-full bg-signal-line" />
 
           {/* Название города — самое крупное на постере */}
-          <h1 className="anim-headline delay-2 mt-6 text-center text-[clamp(3rem,17vw,11rem)] leading-[0.82] text-brick md:mt-10">
+          <h1 className="anim-headline delay-2 mt-6 text-center text-[clamp(3rem,17vw,11rem)] leading-[0.82] text-signal md:mt-10">
             {city}
           </h1>
 
           {/* Имя квеста */}
-          <p className="anim-headline delay-3 poster-display mt-1 text-center text-[clamp(1.6rem,7vw,4.5rem)] leading-[0.9] text-brick">
+          <p className="anim-headline delay-3 display-figure mt-1 text-center text-[clamp(1.6rem,7vw,4.5rem)] leading-[0.9] text-signal">
             {title}
           </p>
 
           {/* Разряженный подзаголовок между линейками */}
           <div className="anim-fade delay-4 mt-4 flex items-center justify-center gap-3">
-            <span className="h-px w-6 bg-brick-line sm:w-16" />
-            <span className="poster-label text-center text-caption text-brick">{subtitle}</span>
-            <span className="h-px w-6 bg-brick-line sm:w-16" />
+            <span className="h-px w-6 bg-signal-line sm:w-16" />
+            <span className="signal-label text-center text-caption text-signal">{subtitle}</span>
+            <span className="h-px w-6 bg-signal-line sm:w-16" />
           </div>
 
           {children && <div className="anim-rise delay-5 mt-7">{children}</div>}
@@ -147,7 +167,7 @@ export function PosterHero({
           )}
 
           {/* ═══ Нижняя строка постера ═════════════════════════ */}
-          <div className="anim-draw delay-5 mt-8 h-px w-full bg-brick-line" />
+          <div className="anim-draw delay-5 mt-8 h-px w-full bg-signal-line" />
 
           <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
             {[
@@ -159,23 +179,23 @@ export function PosterHero({
                 key={item.term}
                 className={cn(
                   'anim-rise flex flex-col items-center gap-1',
-                  index === 1 && 'border-x border-brick-line',
+                  index === 1 && 'border-x border-signal-line',
                   index === 0 && 'delay-3',
                   index === 1 && 'delay-4',
                   index === 2 && 'delay-5',
                 )}
               >
-                <dd className="poster-figure text-heading-sm text-brick md:text-heading">
+                <dd className="display-figure text-title text-signal md:text-headline">
                   {item.value}
                 </dd>
-                <dt className="poster-label text-[11px] text-sepia">{item.term}</dt>
-                {item.note && <p className="text-[11px] text-sand">{item.note}</p>}
+                <dt className="signal-label text-[11px] text-muted">{item.term}</dt>
+                {item.note && <p className="text-[11px] text-faint">{item.note}</p>}
               </div>
             ))}
           </dl>
 
           <div className="anim-fade delay-5 mt-5 text-center">
-            <span className="poster-label brick-diamond text-[11px] text-brick">{tasksNote}</span>
+            <span className="signal-label brick-diamond text-[11px] text-signal">{tasksNote}</span>
           </div>
         </div>
       </div>

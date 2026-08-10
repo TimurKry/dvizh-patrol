@@ -19,12 +19,12 @@ function Row({ entry }: { entry: LeaderboardEntry }) {
   return (
     <li
       className={cn(
-        'flex items-center gap-4 rounded-[16px] border px-4 py-3',
-        entry.isOwn ? 'border-ink bg-paper' : 'border-hairline bg-paper',
+        'flex items-center gap-4 border px-4 py-3',
+        entry.isOwn ? 'border-ink bg-panel' : 'border-hairline bg-panel',
       )}
     >
       <span
-        className="w-8 shrink-0 text-heading-sm tabular-nums tracking-[-0.48px]"
+        className="w-8 shrink-0 text-title tabular-nums tracking-[-0.48px]"
         aria-label={`Место ${entry.position}`}
       >
         {entry.position}
@@ -33,16 +33,16 @@ function Row({ entry }: { entry: LeaderboardEntry }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-body font-medium">
           {entry.teamName}
-          {entry.isOwn && <span className="ml-2 text-caption text-sepia">— ваша команда</span>}
+          {entry.isOwn && <span className="ml-2 text-caption text-muted">— ваша команда</span>}
         </p>
-        <p className="text-caption text-sepia">
+        <p className="text-caption text-muted">
           {entry.acceptedCount} {tasksWord(entry.acceptedCount)} принято
         </p>
       </div>
 
-      <span className="shrink-0 text-subheading tabular-nums">
+      <span className="shrink-0 text-body-lg tabular-nums">
         {entry.totalPoints}
-        <span className="ml-1 text-caption text-sepia">{pointsWord(entry.totalPoints)}</span>
+        <span className="ml-1 text-caption text-muted">{pointsWord(entry.totalPoints)}</span>
       </span>
     </li>
   );
@@ -54,8 +54,8 @@ export default async function LeaderboardPage() {
   if (!event) {
     return (
       <div className="page-well py-20">
-        <h1 className="text-heading">Рейтинг</h1>
-        <p className="mt-4 text-body text-sepia">Мероприятие ещё не заведено.</p>
+        <h1 className="text-headline">Рейтинг</h1>
+        <p className="mt-4 text-body text-muted">Мероприятие ещё не заведено.</p>
       </div>
     );
   }
@@ -66,7 +66,7 @@ export default async function LeaderboardPage() {
     <div className="page-well py-10 md:py-16">
       <div className="mx-auto max-w-2xl">
         <Eyebrow>{event.city}</Eyebrow>
-        <h1 className="mt-3 text-heading md:text-heading-lg">Рейтинг</h1>
+        <h1 className="mt-3 text-headline md:text-headline">Рейтинг</h1>
 
         <div className="mt-8">
           {view.mode === 'not_started' && (
@@ -96,12 +96,12 @@ export default async function LeaderboardPage() {
 
               {view.entry ? (
                 <Card className="flex flex-col items-center gap-2 py-10 text-center">
-                  <p className="text-caption text-sepia">Ваше место</p>
+                  <p className="text-caption text-muted">Ваше место</p>
                   <p className="text-display tracking-[-2.32px]">{view.entry.position}</p>
-                  <p className="text-body text-sepia">
+                  <p className="text-body text-muted">
                     из {view.totalTeams} {teamsWord(view.totalTeams)}
                   </p>
-                  <p className="mt-2 text-subheading">
+                  <p className="mt-2 text-body-lg">
                     {view.entry.totalPoints} {pointsWord(view.entry.totalPoints)}
                   </p>
                 </Card>
@@ -149,9 +149,9 @@ export default async function LeaderboardPage() {
         </div>
 
         {view.mode !== 'hidden' && view.mode !== 'not_started' && (
-          <p className="mt-6 text-caption text-sepia">
-            Сортировка: сумма баллов, затем число принятых заданий, затем время последнего
-            принятого задания.
+          <p className="mt-6 text-caption text-muted">
+            Сортировка: сумма баллов, затем число принятых заданий, затем время последнего принятого
+            задания.
           </p>
         )}
       </div>

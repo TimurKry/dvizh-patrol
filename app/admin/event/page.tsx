@@ -61,21 +61,21 @@ export default async function AdminEventPage() {
     <div className="page-well flex max-w-3xl flex-col gap-8 py-8">
       <header>
         <Eyebrow>Управление</Eyebrow>
-        <h1 className="mt-2 text-heading">Мероприятие</h1>
+        <h1 className="mt-2 text-headline">Мероприятие</h1>
       </header>
 
       {/* ═══ Состояние ══════════════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-subheading">
+          <h2 className="text-body-lg">
             Статус: {EVENT_STATUS_TEXT[event.status] ?? event.status}
           </h2>
-          <p className="text-caption text-sepia">
+          <p className="text-caption text-muted">
             команд {stats.active} / {event.max_teams}, участников {stats.members}
           </p>
         </div>
 
-        <p className="text-body text-sepia">{STATUS_DESCRIPTION[event.status]}</p>
+        <p className="text-body text-muted">{STATUS_DESCRIPTION[event.status]}</p>
 
         <div className="flex flex-wrap gap-2">
           {TRANSITIONS[event.status].map((transition) => (
@@ -98,21 +98,21 @@ export default async function AdminEventPage() {
             </ActionButton>
           ))}
           {TRANSITIONS[event.status].length === 0 && (
-            <p className="text-caption text-sepia">Из архива переходов нет.</p>
+            <p className="text-caption text-muted">Из архива переходов нет.</p>
           )}
         </div>
       </Card>
 
       {event.status === 'live' && (
         <Notice icon="•">
-          Пока квест идёт, менять число заданий и их условия не стоит: команды уже строят
-          маршрут. Выключение задания скрывает его у всех немедленно.
+          Пока квест идёт, менять число заданий и их условия не стоит: команды уже строят маршрут.
+          Выключение задания скрывает его у всех немедленно.
         </Notice>
       )}
 
       {/* ═══ Настройки ══════════════════════════════════════ */}
       <section className="flex flex-col gap-4">
-        <h2 className="text-subheading">Настройки</h2>
+        <h2 className="text-body-lg">Настройки</h2>
         <EventSettingsForm event={event} teamsRegistered={stats.active} />
       </section>
     </div>

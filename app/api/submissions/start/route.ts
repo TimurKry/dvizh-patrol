@@ -4,12 +4,7 @@ import { maxUploadBytes } from '@/lib/env';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getTeamSession } from '@/lib/session/team-session';
 import { callRpc, supabaseAdmin } from '@/lib/supabase/admin';
-import {
-  BUCKETS,
-  createSignedUpload,
-  extensionFor,
-  submissionPath,
-} from '@/lib/storage';
+import { BUCKETS, createSignedUpload, extensionFor, submissionPath } from '@/lib/storage';
 import { submissionStartSchema } from '@/lib/validation/schemas';
 import { errorMessage } from '@/lib/messages';
 

@@ -28,12 +28,12 @@ export function TaskCard({ item }: { item: TaskWithState }) {
     <Link
       href={`/tasks/${task.id}`}
       className={cn(
-        'lift group flex flex-col gap-3 rounded-[16px] border bg-paper p-4',
+        'lift group flex flex-col gap-3 border bg-panel p-4',
         'focus-visible:outline-2 focus-visible:outline-offset-2',
-        state === 'accepted' ? 'border-ink' : 'border-hairline hover:border-brick-line',
+        state === 'accepted' ? 'border-ink' : 'border-hairline hover:border-signal-line',
       )}
     >
-      <div className="zoom-host relative rounded-[12px] bg-ink-wash">
+      <div className="zoom-host relative bg-ink-wash">
         {referenceImageUrl ? (
           /* Эталон приходит по подписанной ссылке с ограниченным
              сроком, оптимизатор next/image её кэшировать не должен. */
@@ -46,7 +46,7 @@ export function TaskCard({ item }: { item: TaskWithState }) {
           />
         ) : (
           <div className="flex aspect-4/3 w-full items-center justify-center">
-            <span className="text-display tracking-[-2.32px] text-sand" aria-hidden="true">
+            <span className="text-display tracking-[-2.32px] text-faint" aria-hidden="true">
               {task.number}
             </span>
           </div>
@@ -55,32 +55,32 @@ export function TaskCard({ item }: { item: TaskWithState }) {
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-caption text-sand">Задание {task.number}</p>
-          <h3 className="mt-1 text-subheading font-normal transition-colors group-hover:text-brick">
+          <p className="text-caption text-faint">Задание {task.number}</p>
+          <h3 className="mt-1 text-body-lg font-normal transition-colors group-hover:text-signal">
             {task.title}
           </h3>
         </div>
-        <span className="shrink-0 text-subheading tabular-nums">
+        <span className="shrink-0 text-body-lg tabular-nums">
           {task.points}
-          <span className="ml-1 text-caption text-sepia">{pointsWord(task.points)}</span>
+          <span className="ml-1 text-caption text-muted">{pointsWord(task.points)}</span>
         </span>
       </div>
 
       {task.short_description && (
-        <p className="clamp-2 text-body text-sepia">{task.short_description}</p>
+        <p className="clamp-2 text-body text-muted">{task.short_description}</p>
       )}
 
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[12px] border px-2.5 py-1 text-caption font-medium',
+            'inline-flex items-center gap-1.5 border px-2.5 py-1 text-caption font-medium',
             state === 'accepted'
-              ? 'border-ink bg-ink text-paper'
+              ? 'border-ink bg-ink text-canvas'
               : state === 'in_review'
-                ? 'border-hairline-strong border-dashed text-sepia'
+                ? 'border-hairline-strong border-dashed text-muted'
                 : state === 'available'
                   ? 'border-ink text-ink'
-                  : 'border-hairline text-sand',
+                  : 'border-hairline text-faint',
           )}
         >
           {/* «На проверке» — единственное живое состояние: точка
@@ -136,14 +136,14 @@ export function SubmissionRow({
   return (
     <Link
       href={href}
-      className="lift flex items-center gap-4 rounded-[16px] border border-hairline bg-paper p-3 hover:border-brick-line"
+      className="lift flex items-center gap-4 border border-hairline bg-panel p-3 hover:border-signal-line"
     >
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[12px] bg-ink-wash">
+      <div className="h-16 w-16 shrink-0 overflow-hidden bg-ink-wash">
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-caption text-sand">
+          <div className="flex h-full w-full items-center justify-center text-caption text-faint">
             —
           </div>
         )}
@@ -151,16 +151,16 @@ export function SubmissionRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-body">
-          {taskNumber !== null && <span className="text-sand">{taskNumber}. </span>}
+          {taskNumber !== null && <span className="text-faint">{taskNumber}. </span>}
           {title}
         </p>
-        <p className="mt-1 text-caption text-sepia">{time}</p>
+        <p className="mt-1 text-caption text-muted">{time}</p>
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1">
         <StatusBadge status={status} />
         {points > 0 && (
-          <span className="text-caption tabular-nums text-sepia">
+          <span className="text-caption tabular-nums text-muted">
             +{points} {pointsWord(points)}
           </span>
         )}

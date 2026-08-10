@@ -1,112 +1,146 @@
 @import 'tailwindcss';
 
 /* ─────────────────────────────────────────────────────────────
-   Дизайн-система «Движ-Патруль».
+   Дизайн-система «Движ-Патруль» · V3 Mono Signal.
 
-   Палитра снята пипеткой с утверждённого постера, а не подобрана
-   на глаз. Доли в изображении: тёплый кремовый 47%, кирпичный
-   красный 9%, тёмная сепия и охра — остальное.
+   Источник — Figma QwulpVXicMtUs4bEhYSr59, страницы «V3 / Mono
+   Signal» (74:2) и «V3 / Task Card System» (93:2).
 
-   От исходной системы Cosmos (DESIGN (1).md) осталась структура:
-   плоские поверхности, единый радиус 16px, отсутствие теней,
-   editorial-набор. Монохром заменён палитрой постера по прямому
-   указанию заказчика — обоснование в docs/DESIGN_SYSTEM.md.
+   Система строится на одном приёме: интерфейс чёрно-белый, а
+   пурпурный — единственный сигнал. Он означает «сюда» и больше
+   ничего. Как только пурпурного становится больше одного-двух
+   элементов на экран, сигнал перестаёт читаться.
+
+   Цвета команд (красный, зелёный, синий, жёлтый, оранжевый,
+   розовый) в интерфейс не попадают. Они живут только на рубашках
+   карточек, орнаментах и командных маркерах — см. lib/team-colors.ts.
 
    Правила, которые остаются в силе:
-   · фон страницы — кремовый, никогда не белый;
-   · тёмный тон тёплый (#2b1a14), никогда не #000000;
-   · один радиус 16px, изображения 12px;
-   · никаких теней и градиентов;
-   · красный — акцент, а не заливка всего подряд.
+   · фон страницы почти чёрный #060609, но не #000000;
+   · поверхность — #121216, отличается от фона, а не от текста;
+   · углы прямые; радиус есть только у игровых карточек — 8px;
+   · теней нет нигде, глубина передаётся контрастом и волосяной
+     линией #404045;
+   · анимируются только transform и opacity.
    ───────────────────────────────────────────────────────────── */
 
 @theme {
   /* ─── Цвет ─────────────────────────────────────────────── */
 
-  /* Фон страницы. Доминирующий цвет постера. */
-  --color-canvas: #f0dbc9;
-  /* Чуть плотнее — для чередующихся полос и подложек. */
-  --color-canvas-deep: #e7cdb8;
-  /* Карточки и поля. Теплее и светлее холста, но не белый. */
-  --color-paper: #faefe5;
+  /* Фон страницы. Не чёрный: на OLED чистый #000 даёт ореол
+     вокруг светлого текста и «проваливает» границы панелей. */
+  --color-canvas: #060609;
+  /* Чуть светлее фона — чередующиеся полосы и подложки секций. */
+  --color-canvas-deep: #0b0b0f;
 
-  /* Кирпичный с постера — акцент системы. */
-  --color-brick: #9b1c17;
-  --color-brick-deep: #7e150f;
-  /* Осветлённый оттенок оттуда же: буквы на фоне неба. */
-  --color-brick-soft: #b6371b;
+  /* Поверхность первого уровня: панели, карточки, поля. */
+  --color-panel: #121216;
+  /* Поверхность второго уровня: строки внутри панели, ховер. */
+  --color-panel-high: #1b1b21;
 
-  /* Тёмный тон тёплый: чёрный на кремовом выглядит грязным. */
-  --color-ink: #2b1a14;
-  /* Основной текст абзацев. Контраст на холсте 6.6:1. */
-  --color-sepia: #6b4636;
-  /* Подсказки и неактивное. Только для крупного текста. */
-  --color-sand: #8a6a55;
+  /* Текст. Не чистый белый: #FFF на почти-чёрном звенит. */
+  --color-ink: #f5f5f1;
+  /* Абзацы и вторичные подписи. Контраст на холсте 9.1:1. */
+  --color-muted: #a3a3a8;
+  /* Неактивное и служебное. Контраст 4.6:1 — проходит AA. */
+  --color-faint: #76767d;
 
-  /* Линии — это чернила и кирпич с низкой непрозрачностью,
-     а не отдельные серые. Так они всегда согласованы. */
-  --color-hairline: rgb(43 26 20 / 0.14);
-  --color-hairline-strong: rgb(43 26 20 / 0.26);
-  --color-brick-line: rgb(155 28 23 / 0.32);
-  --color-ink-wash: rgb(43 26 20 / 0.05);
-  --color-brick-wash: rgb(155 28 23 / 0.07);
+  /* Волосяная линия. Единственная граница в системе. */
+  --color-hairline: #404045;
+  --color-hairline-strong: #5a5a61;
+
+  /* Сигнал. Ровно один акцент на всю систему. */
+  --color-signal: #ff00b3;
+  /* Затемнённый сигнал — нажатие и наведение на залитой кнопке. */
+  --color-signal-deep: #d40094;
+  /* Сигнал с низкой непрозрачностью: подложки и линейки. */
+  --color-signal-line: rgb(255 0 179 / 0.34);
+  --color-signal-wash: rgb(255 0 179 / 0.1);
+
+  /* Светлые washes для подложек на тёмном. */
+  --color-ink-wash: rgb(245 245 241 / 0.06);
+  --color-ink-wash-strong: rgb(245 245 241 / 0.12);
 
   /* ─── Шрифт ────────────────────────────────────────────── */
 
-  /* Плакатный: узкий гротеск в капители, как заголовки постера. */
-  --font-poster: var(--font-oswald), 'Oswald', 'PT Sans Narrow', Impact, sans-serif;
-  /* Текстовый: с кириллицей и осью веса, покрывающей 350. */
-  --font-text: var(--font-literata), 'Literata', Georgia, 'Times New Roman', serif;
+  /* Дисплейный: геометрический гротеск с полной кириллицей.
+     Заголовки, числа, метки кнопок. */
+  --font-display: var(--font-unbounded), 'Unbounded', 'Arial Black', sans-serif;
+  /* Интерфейсный: нейтральный гротеск, кириллица родная. */
+  --font-ui: var(--font-onest), 'Onest', system-ui, -apple-system, sans-serif;
 
   /* ─── Типографическая шкала ────────────────────────────── */
-  --text-caption: 14px;
+
+  /* Нижняя граница — 11px. В Figma служебные метки набраны 8–9px;
+     на реальном телефоне в солнечный день это нечитаемо, а
+     мастер-промпт требует контраст 4.5:1 для основного текста.
+     Пропорции сохранены, абсолютные размеры подняты до пола. */
+
+  --text-micro: 11px;
+  --text-micro--line-height: 1.4;
+  --text-micro--letter-spacing: 0.12em;
+
+  --text-label: 12px;
+  --text-label--line-height: 1.35;
+  --text-label--letter-spacing: 0.16em;
+
+  --text-eyebrow: 13px;
+  --text-eyebrow--line-height: 1.3;
+  --text-eyebrow--letter-spacing: 0.18em;
+
+  --text-caption: 13px;
   --text-caption--line-height: 1.5;
   --text-caption--letter-spacing: 0;
 
-  --text-body: 16px;
-  --text-body--line-height: 1.5;
-  --text-body--letter-spacing: -0.18px;
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+  --text-body--letter-spacing: 0;
 
-  --text-subheading: 18px;
-  --text-subheading--line-height: 1.29;
-  --text-subheading--letter-spacing: -0.2px;
+  --text-body-lg: 17px;
+  --text-body-lg--line-height: 1.5;
+  --text-body-lg--letter-spacing: -0.1px;
 
-  --text-heading-sm: 24px;
-  --text-heading-sm--line-height: 1.2;
-  --text-heading-sm--letter-spacing: -0.48px;
+  --text-title-sm: 15px;
+  --text-title-sm--line-height: 1.25;
+  --text-title-sm--letter-spacing: -0.4px;
 
-  --text-heading: 33px;
-  --text-heading--line-height: 1.1;
-  --text-heading--letter-spacing: -1.32px;
+  --text-title: 20px;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.6px;
 
-  --text-heading-lg: 38px;
-  --text-heading-lg--line-height: 1.08;
-  --text-heading-lg--letter-spacing: -1.52px;
+  --text-headline: 28px;
+  --text-headline--line-height: 1.12;
+  --text-headline--letter-spacing: -1.2px;
 
-  --text-display: 58px;
-  --text-display--line-height: 1.02;
-  --text-display--letter-spacing: -1.5px;
+  --text-display: 45px;
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -2.2px;
 
-  --text-display-xl: 74px;
-  --text-display-xl--line-height: 0.88;
-  --text-display-xl--letter-spacing: -2px;
+  --text-display-xl: 72px;
+  --text-display-xl--line-height: 0.9;
+  --text-display-xl--letter-spacing: -3.6px;
 
   /* ─── Вес ──────────────────────────────────────────────── */
-  --font-weight-display: 350;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
   /* ─── Интервалы ────────────────────────────────────────── */
   --spacing: 4px;
 
   /* ─── Радиусы ──────────────────────────────────────────── */
-  --radius-tile: 12px;
-  --radius-surface: 16px;
+
+  /* Углы прямые. Единственное скругление в системе — игровая
+     карточка: 8px, значение из переменной Figma --card-radius. */
+  --radius-none: 0px;
+  --radius-card: 8px;
   --radius-pill: 9999px;
 
   /* ─── Раскладка ────────────────────────────────────────── */
   --page-max-width: 1280px;
-  --section-gap: 80px;
+  --admin-max-width: 1440px;
+  --section-gap: 72px;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -115,12 +149,19 @@
 
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: dark;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    /* Высота нижней навигации участника. Используется как
-       нижний отступ контента, чтобы панель ничего не закрывала. */
-    --bottom-nav-height: 64px;
+    /* Высота нижней навигации участника. Используется как нижний
+       отступ контента, чтобы панель ничего не закрывала. */
+    --bottom-nav-height: 68px;
+    /* Цвет команды. Значение подставляет сервер на командных
+       экранах; по умолчанию — сигнальный пурпурный. Держать
+       переменную здесь, а не в компоненте, нужно затем, чтобы
+       рубашка карточки и командные маркеры красились одним
+       источником. */
+    --team-color: #ff00b3;
+    --team-on-color: #060609;
   }
 
   html {
@@ -132,10 +173,9 @@
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);
-    font-family: var(--font-text);
+    font-family: var(--font-ui);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
-    letter-spacing: var(--text-body--letter-spacing);
     font-weight: var(--font-weight-regular);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -143,47 +183,38 @@
     overflow-x: hidden;
   }
 
-  /* Заголовки набираются плакатным шрифтом в капители — так же,
-     как «LEIPZIG» и «ДВИЖ ПАТРУЛЬ» на постере. */
+  /* Заголовки набираются дисплейным шрифтом в капители. */
   h1,
   h2,
   h3 {
-    font-family: var(--font-poster);
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-bold);
     text-transform: uppercase;
-    letter-spacing: 0.01em;
-    line-height: 1.02;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
     text-wrap: balance;
   }
 
-  /* Главный заголовок страницы — кирпичный, как «LEIPZIG» на
-     постере. Ровно один такой на экран: дальше идут тёмные h2,
-     иначе акцент перестаёт работать. */
-  h1 {
-    color: var(--color-brick);
-  }
-
-  /* Мелкие подзаголовки остаются текстовым шрифтом: капитель на
-     18px в интерфейсе быстро утомляет. */
+  /* Мелкие подзаголовки остаются интерфейсным шрифтом: Unbounded
+     на 15px в плотном списке нечитаем. */
   h4,
   h5,
   h6 {
-    font-family: var(--font-text);
-    font-weight: var(--font-weight-medium);
+    font-family: var(--font-ui);
+    font-weight: var(--font-weight-semibold);
     text-wrap: balance;
   }
 
-  /* Фокус обязан быть виден: квест проходят на улице, часто
-     одной рукой и с включёнными вспомогательными технологиями. */
+  /* Фокус обязан быть виден: квест проходят на улице, часто одной
+     рукой и с включёнными вспомогательными технологиями. */
   :focus-visible {
-    outline: 2px solid var(--color-brick);
+    outline: 2px solid var(--color-signal);
     outline-offset: 2px;
-    border-radius: 4px;
   }
 
   ::selection {
-    background: var(--color-brick);
-    color: var(--color-paper);
+    background: var(--color-signal);
+    color: var(--color-canvas);
   }
 
   /* Поля ввода на iOS не должны вызывать зум: 16px — минимум. */
@@ -222,7 +253,7 @@
     width: 100%;
     max-width: var(--page-max-width);
     margin-inline: auto;
-    padding-inline: 20px;
+    padding-inline: 16px;
   }
 
   @media (min-width: 768px) {
@@ -233,49 +264,56 @@
 
   /* Плоская поверхность первого уровня. Теней нет нигде. */
   .surface {
-    background-color: var(--color-paper);
+    background-color: var(--color-panel);
     border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-surface);
   }
 
-  /* Плакатный набор для служебных надписей: «ДВИЖ·ПАТРУЛЬ»,
-     «ДАТА», «СТАРТ» — как в верхней и нижней строке постера. */
-  .poster-label {
-    font-family: var(--font-poster);
-    font-weight: 500;
+  /* Служебная надпись в капители и разрядку: «ДАТА», «СТАРТ»,
+     «РУКА 6 / 6». Основа всей мелкой типографики системы. */
+  .signal-label {
+    font-family: var(--font-ui);
+    font-weight: var(--font-weight-semibold);
     text-transform: uppercase;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
   }
 
-  /* Крупный плакатный набор там, где это не заголовок:
-     образцы шкалы, числа в карточках, обратный отсчёт. */
-  .poster-display {
-    font-family: var(--font-poster);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.01em;
-  }
-
-  /* Цифры на постере набраны плотно и крупно. */
-  .poster-figure {
-    font-family: var(--font-poster);
-    font-weight: 600;
+  /* Крупный дисплейный набор вне заголовков: числа отсчёта,
+     значения фактов, счёт команды. */
+  .display-figure {
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-bold);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.03em;
   }
 
-  /* Тонкая красная линейка — рамка постера. */
-  .brick-rule {
-    border-top: 1px solid var(--color-brick-line);
+  /* Тонкая сигнальная линейка. */
+  .signal-rule {
+    border-top: 1px solid var(--color-signal-line);
   }
 
-  /* Ромб-разделитель между надписями внизу постера. */
-  .brick-diamond::before {
-    content: '◆';
-    color: var(--color-brick);
-    font-size: 0.7em;
-    margin-inline-end: 0.6em;
-    vertical-align: 0.1em;
+  /* Билетный вырез по бокам CTA — половинки круга цвета холста.
+     Именно они превращают прямоугольник в билет, не добавляя ни
+     одной картинки. Хост обязан иметь position: relative и
+     overflow: hidden. */
+  .ticket-notch::before,
+  .ticket-notch::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    background: var(--color-canvas);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .ticket-notch::before {
+    left: -7px;
+  }
+
+  .ticket-notch::after {
+    right: -7px;
   }
 
   /* Минимальная зона нажатия на мобильном — 44×44. */
@@ -305,11 +343,9 @@
     border-width: 0;
   }
 
-  /* Скелетон загрузки. Пульсация мягкая, чтобы не соперничать
-     с фотографиями. */
+  /* Скелетон загрузки. */
   .skeleton {
     background-color: var(--color-ink-wash);
-    border-radius: var(--radius-tile);
     animation: skeleton-pulse 1.6s ease-in-out infinite;
   }
 
@@ -319,7 +355,7 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.55;
+      opacity: 0.5;
     }
   }
 
@@ -354,10 +390,9 @@
    бюджетном телефоне посреди города это разница между «плавно»
    и «дёргается».
 
-   Всё, что ниже, полностью отключается при prefers-reduced-motion:
-   блок в конце файла возвращает элементы в конечное состояние,
-   а не просто убирает анимацию — иначе появляющийся контент
-   остался бы невидимым.
+   Блок в конце файла возвращает элементы в конечное состояние
+   при prefers-reduced-motion, а не просто убирает анимацию —
+   иначе появляющийся контент остался бы невидимым.
    ───────────────────────────────────────────────────────────── */
 
 @layer utilities {
@@ -381,12 +416,11 @@
     }
   }
 
-  /* Заголовок выходит снизу из-под обрезки — так «встаёт»
-     плакатная типографика. */
+  /* Заголовок выходит снизу из-под обрезки. */
   @keyframes dp-headline {
     from {
       opacity: 0;
-      transform: translate3d(0, 0.32em, 0);
+      transform: translate3d(0, 0.3em, 0);
     }
     to {
       opacity: 1;
@@ -394,28 +428,18 @@
     }
   }
 
-  /* Медленный наезд на фотографию: город будто дышит. */
-  @keyframes dp-kenburns {
-    from {
-      transform: scale(1.06) translate3d(0, 1%, 0);
-    }
-    to {
-      transform: scale(1.14) translate3d(0, -1%, 0);
-    }
-  }
-
-  /* Плитки коллажа покачиваются вразнобой. */
+  /* Полароиды покачиваются вразнобой вокруг собственного угла. */
   @keyframes dp-float {
     0%,
     100% {
       transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
     }
     50% {
-      transform: translate3d(0, -10px, 0) rotate(calc(var(--tilt, 0deg) * 1.6));
+      transform: translate3d(0, -9px, 0) rotate(calc(var(--tilt, 0deg) * 1.5));
     }
   }
 
-  /* Линейка прочерчивается, как рамка на постере. */
+  /* Линейка прочерчивается слева направо. */
   @keyframes dp-draw {
     from {
       transform: scaleX(0);
@@ -425,30 +449,19 @@
     }
   }
 
-  /* Бегущая строка выходных данных, как афишная лента. */
+  /* Бегущая строка. Лента продублирована, поэтому уезжаем ровно
+     на половину: в этот момент вторая копия стоит там же, где
+     стояла первая, и стык не виден. */
   @keyframes dp-marquee {
     from {
       transform: translate3d(0, 0, 0);
     }
     to {
-      /* Лента продублирована, поэтому уезжаем ровно на половину:
-         в этот момент вторая копия стоит там же, где стояла
-         первая, и стык не виден. */
       transform: translate3d(-50%, 0, 0);
     }
   }
 
-  /* Блик по кирпичной кнопке при наведении. */
-  @keyframes dp-sheen {
-    from {
-      transform: translate3d(-120%, 0, 0) skewX(-18deg);
-    }
-    to {
-      transform: translate3d(320%, 0, 0) skewX(-18deg);
-    }
-  }
-
-  /* Пульс секунд в обратном отсчёте. */
+  /* Пульс секунд в обратном отсчёте и статусов «в работе». */
   @keyframes dp-tick {
     0%,
     100% {
@@ -471,10 +484,6 @@
     animation: dp-headline 0.9s cubic-bezier(0.16, 0.9, 0.24, 1) both;
   }
 
-  .anim-kenburns {
-    animation: dp-kenburns 24s ease-in-out infinite alternate;
-  }
-
   .anim-float {
     animation: dp-float 7s ease-in-out infinite;
   }
@@ -492,25 +501,12 @@
     animation: dp-marquee 38s linear infinite;
   }
 
-  /* Зернистость бумаги. Постер напечатан, а не отрисован в
-     вакууме: лёгкий шум убирает «цифровую» стерильность
-     сплошной заливки. SVG-фильтр вместо картинки — ничего не
-     грузится по сети. */
-  .paper-grain::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.28;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-  }
-
   /* Подъём при наведении. Только transform — раскладка не едет. */
   .lift {
     transition:
       transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
-      border-color 0.25s ease;
+      border-color 0.25s ease,
+      opacity 0.25s ease;
   }
 
   .lift:hover {
@@ -544,25 +540,22 @@
     transform: scaleX(1);
   }
 
-  /* Наезд на фотографию внутри карточки-примера. */
-  .zoom-host {
-    overflow: hidden;
-  }
-
-  .zoom-host img {
-    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
-  }
-
-  .zoom-host:hover img {
-    transform: scale(1.06);
-  }
-
   /* Задержки для ступенчатого выхода. */
-  .delay-1 { animation-delay: 0.08s; }
-  .delay-2 { animation-delay: 0.16s; }
-  .delay-3 { animation-delay: 0.26s; }
-  .delay-4 { animation-delay: 0.38s; }
-  .delay-5 { animation-delay: 0.52s; }
+  .delay-1 {
+    animation-delay: 0.08s;
+  }
+  .delay-2 {
+    animation-delay: 0.16s;
+  }
+  .delay-3 {
+    animation-delay: 0.26s;
+  }
+  .delay-4 {
+    animation-delay: 0.38s;
+  }
+  .delay-5 {
+    animation-delay: 0.52s;
+  }
 
   /* Появление при прокрутке. Начальное состояние задаётся здесь,
      класс is-visible вешает наблюдатель из components/ui/reveal. */
@@ -581,8 +574,88 @@
   }
 }
 
-/* Уважение к настройке «меньше движения»: элементы сразу
-   в конечном состоянии, ничего не двигается и не мигает. */
+/* ─────────────────────────────────────────────────────────────
+   Полароид
+
+   Чёрно-белая улика, которая оживает при наведении. Цвет
+   возвращается фильтром, а не подменой файла: одна картинка,
+   один запрос, переход без подгрузки.
+
+   filter не входит в пару transform/opacity, но он не вызывает
+   ни layout, ни paint основного дерева — браузер считает его на
+   том же композиторе. Это единственное исключение в системе, и
+   оно ограничено декоративными снимками лендинга.
+   ───────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .polaroid {
+    background-color: #f7f7f5;
+    border: 1px solid #38383d;
+  }
+
+  .polaroid-photo {
+    filter: grayscale(1) contrast(1.12);
+    transition:
+      filter 0.45s ease,
+      opacity 0.45s ease;
+  }
+
+  /* Цвет только там, где есть настоящее наведение: на телефоне
+     hover залипает после тапа и снимок остаётся цветным навсегда. */
+  @media (hover: hover) and (pointer: fine) {
+    .polaroid-host:hover .polaroid-photo,
+    .polaroid-host:focus-visible .polaroid-photo {
+      filter: none;
+    }
+
+    .polaroid-host:hover,
+    .polaroid-host:focus-visible {
+      border-color: var(--color-signal);
+    }
+  }
+
+  /* Клавиатура должна давать тот же результат, что и мышь. */
+  .polaroid-host:focus-visible .polaroid-photo {
+    filter: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Переворот карточки
+
+   Figma «Motion / Card flip» (100:68): 420ms, perspective 900px,
+   только rotateY, никакой анимации раскладки. Обе стороны лежат
+   друг на друге через grid-area, поэтому высота не прыгает.
+   ───────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .flip-scene {
+    perspective: 900px;
+  }
+
+  .flip-body {
+    display: grid;
+    transform-style: preserve-3d;
+    transition: transform 420ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  .flip-body[data-flipped='true'] {
+    transform: rotateY(180deg);
+  }
+
+  .flip-face {
+    grid-area: 1 / 1;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .flip-face-back {
+    transform: rotateY(180deg);
+  }
+}
+
+/* Уважение к настройке «меньше движения»: элементы сразу в
+   конечном состоянии, ничего не двигается и не мигает. */
 @media (prefers-reduced-motion: reduce) {
   .anim-rise,
   .anim-fade,
@@ -593,7 +666,6 @@
     transform: none !important;
   }
 
-  .anim-kenburns,
   .anim-float,
   .anim-tick,
   .anim-marquee {
@@ -608,14 +680,24 @@
 
   .lift,
   .lift:hover,
-  .lift:active,
-  .zoom-host img,
-  .zoom-host:hover img {
+  .lift:active {
     transform: none !important;
     transition: none !important;
   }
 
   .underline-slide::after {
+    transition: none !important;
+  }
+
+  .polaroid-photo {
+    transition: none !important;
+  }
+
+  /* Переворот остаётся мгновенным: сторона сразу в конечном
+     состоянии. Figma 100:83 требует именно этого, а не отмены
+     самого переворота — иначе кнопка «перевернуть» перестала бы
+     что-либо делать. */
+  .flip-body {
     transition: none !important;
   }
 }

@@ -27,9 +27,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Разделы команды"
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-paper md:hidden',
-      )}
+      className={cn('fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-panel md:hidden')}
       style={{ paddingBottom: 'var(--safe-bottom)' }}
     >
       <ul className="mx-auto flex max-w-lg">
@@ -42,7 +40,7 @@ export function BottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex h-16 flex-col items-center justify-center gap-1',
-                  active ? 'text-ink' : 'text-sand',
+                  active ? 'text-ink' : 'text-faint',
                 )}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">

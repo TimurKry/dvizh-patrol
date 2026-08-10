@@ -13,11 +13,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Задание' };
 
-export default async function EditTaskPage({
-  params,
-}: {
-  params: Promise<{ taskId: string }>;
-}) {
+export default async function EditTaskPage({ params }: { params: Promise<{ taskId: string }> }) {
   await requireAdmin();
   const { taskId } = await params;
 
@@ -40,19 +36,19 @@ export default async function EditTaskPage({
   return (
     <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
       <div>
-        <Link href="/admin/tasks" className="text-caption text-sepia hover:text-ink">
+        <Link href="/admin/tasks" className="text-caption text-muted hover:text-ink">
           ← Все задания
         </Link>
         <Eyebrow className="mt-4">Задание {task.number}</Eyebrow>
-        <h1 className="mt-2 text-heading">{task.title}</h1>
+        <h1 className="mt-2 text-headline">{task.title}</h1>
       </div>
 
       <TaskForm eventId={task.event_id} task={task} nextNumber={task.number} />
 
       {/* ═══ Массовые действия ══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
-        <h2 className="text-subheading">Групповые действия</h2>
-        <p className="text-body text-sepia">
+        <h2 className="text-body-lg">Групповые действия</h2>
+        <p className="text-body text-muted">
           Отправок по заданию: {count ?? 0}, из них ждут решения: {waiting ?? 0}.
         </p>
 
@@ -78,9 +74,9 @@ export default async function EditTaskPage({
         </div>
 
         {(count ?? 0) > 0 && (
-          <p className="text-caption text-sepia">
-            Задание с отправками удалить нельзя — это разорвало бы историю начислений.
-            Используйте выключение.
+          <p className="text-caption text-muted">
+            Задание с отправками удалить нельзя — это разорвало бы историю начислений. Используйте
+            выключение.
           </p>
         )}
       </Card>

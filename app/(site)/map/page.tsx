@@ -31,7 +31,7 @@ const QuestMap = dynamicImport(
   () => import('@/components/game/quest-map').then((m) => m.QuestMap),
   {
     loading: () => (
-      <div className="h-[420px] w-full animate-pulse rounded-[16px] border border-hairline bg-canvas-deep" />
+      <div className="h-[420px] w-full animate-pulse border border-hairline bg-canvas-deep" />
     ),
   },
 );
@@ -76,7 +76,7 @@ export default async function MapPage() {
     return (
       <div className="page-well with-bottom-nav py-8 md:py-12">
         <Eyebrow>Команда «{session.team.name}»</Eyebrow>
-        <h1 className="mt-3 text-heading md:text-heading-lg">Карта</h1>
+        <h1 className="mt-3 text-headline md:text-headline">Карта</h1>
         <div className="mt-8">
           <EmptyState
             title="Карта пока пуста"
@@ -96,19 +96,15 @@ export default async function MapPage() {
     <div className="page-well with-bottom-nav py-8 md:py-12">
       <Eyebrow>Команда «{session.team.name}»</Eyebrow>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-heading md:text-heading-lg">Карта</h1>
-        {area && (
-          <Meta>
-            поле — {formatDistance(area.radiusMeters)} вокруг центра
-          </Meta>
-        )}
+        <h1 className="text-headline md:text-headline">Карта</h1>
+        {area && <Meta>поле — {formatDistance(area.radiusMeters)} вокруг центра</Meta>}
       </div>
 
       {area && session.event.area_enforced && (
         <div className="mt-6">
           <Notice tone="strong" icon="!">
-            Фотографии принимаются только внутри игрового поля. Отправка попросит
-            геопозицию — без неё принять снимок не получится.
+            Фотографии принимаются только внутри игрового поля. Отправка попросит геопозицию — без
+            неё принять снимок не получится.
           </Notice>
         </div>
       )}
@@ -119,8 +115,8 @@ export default async function MapPage() {
 
       {points.length > 0 ? (
         <section className="mt-8">
-          <h2 className="text-subheading">Задания на карте</h2>
-          <p className="mt-1 text-caption text-sand">
+          <h2 className="text-body-lg">Задания на карте</h2>
+          <p className="mt-1 text-caption text-faint">
             Здесь только задания с заданным местом. Остальные ищутся по описанию.
           </p>
 
@@ -129,18 +125,20 @@ export default async function MapPage() {
               <li key={point.id}>
                 <Link href={point.href ?? '#'} className="block">
                   <Card interactive className="flex items-center gap-4">
-                    <span className="poster-figure shrink-0 text-heading-sm text-brick">
+                    <span className="display-figure shrink-0 text-title text-signal">
                       {point.label}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-body">{point.title}</span>
                       {point.radiusMeters && (
-                        <span className="block text-caption text-sand">
+                        <span className="block text-caption text-faint">
                           зачёт в радиусе {formatDistance(point.radiusMeters)}
                         </span>
                       )}
                     </span>
-                    {point.done && <span className="shrink-0 text-caption text-sepia">принято</span>}
+                    {point.done && (
+                      <span className="shrink-0 text-caption text-muted">принято</span>
+                    )}
                   </Card>
                 </Link>
               </li>
@@ -148,7 +146,7 @@ export default async function MapPage() {
           </ul>
         </section>
       ) : (
-        <p className="mt-6 text-body text-sepia">
+        <p className="mt-6 text-body text-muted">
           {tasksOpen
             ? 'Ни одно задание не привязано к месту — всё ищется по описанию.'
             : 'Задания откроются в момент старта квеста. Пока на карте только границы поля.'}

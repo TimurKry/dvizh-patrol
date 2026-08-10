@@ -15,7 +15,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-2">
           <DotCluster size={20} />
           <p className="text-body font-medium">Движ-Патруль</p>
-          <p className="max-w-xs text-caption text-sepia">
+          <p className="max-w-xs text-caption text-muted">
             Городской фото-квест. Лейпциг, Германия.
           </p>
         </div>
@@ -24,7 +24,7 @@ export function SiteFooter() {
           <ul className="flex flex-col gap-2 md:items-end">
             {LINKS.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="text-caption text-sepia hover:text-ink">
+                <Link href={link.href} className="text-caption text-muted hover:text-ink">
                   {link.label}
                 </Link>
               </li>
@@ -34,7 +34,7 @@ export function SiteFooter() {
       </div>
 
       <div className="page-well border-t border-hairline py-5">
-        <p className="text-caption text-sand">
+        <p className="text-caption text-faint">
           Фотографии участников хранятся в закрытом хранилище и используются только для
           подтверждения заданий. Публикация в социальных сетях — по отдельному согласию.
         </p>

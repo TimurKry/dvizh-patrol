@@ -18,19 +18,19 @@ export default function OfflinePage() {
       <div className="flex max-w-md flex-col items-center gap-5 text-center">
         <DotCluster size={28} />
 
-        <h1 className="text-heading">Нет соединения</h1>
+        <h1 className="text-headline">Нет соединения</h1>
 
-        <p className="text-body text-sepia">
+        <p className="text-body text-muted">
           Похоже, интернет пропал. Это нормально: в центре города связь местами проседает.
         </p>
 
-        <ul className="flex flex-col gap-2 text-body text-sepia">
+        <ul className="flex flex-col gap-2 text-body text-muted">
           <li>Выбранная фотография сохранена и никуда не денется.</li>
           <li>Как только сеть вернётся, отправку можно повторить одной кнопкой.</li>
           <li>Баллы за это время не потеряются.</li>
         </ul>
 
-        <p className="text-caption text-sand">
+        <p className="text-caption text-faint">
           Попробуйте отойти на пару шагов или подождать минуту, затем обновите страницу.
         </p>
       </div>

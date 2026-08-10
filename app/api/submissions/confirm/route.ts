@@ -7,13 +7,7 @@ import { computePerceptualHash, findDuplicate } from '@/lib/image/phash';
 import { errorMessage } from '@/lib/messages';
 import { getTeamSession } from '@/lib/session/team-session';
 import { callRpc, supabaseAdmin } from '@/lib/supabase/admin';
-import {
-  BUCKETS,
-  downloadObject,
-  objectExists,
-  previewPath,
-  uploadObject,
-} from '@/lib/storage';
+import { BUCKETS, downloadObject, objectExists, previewPath, uploadObject } from '@/lib/storage';
 import { submissionConfirmSchema } from '@/lib/validation/schemas';
 import type { SubmissionRow, TaskRow } from '@/types/database';
 
@@ -188,10 +182,7 @@ export async function POST(request: Request) {
   // Файл действительно долетел?
   const exists = await objectExists(BUCKETS.submissions, storagePath);
   if (!exists) {
-    await db
-      .from('submissions')
-      .update({ status: 'upload_failed' })
-      .eq('id', submission.id);
+    await db.from('submissions').update({ status: 'upload_failed' }).eq('id', submission.id);
 
     return NextResponse.json(
       {

@@ -306,12 +306,7 @@ export function formatIssuesCsv(issues: ImportIssue[]): string {
   const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
   const lines = issues.map((issue) =>
-    [
-      issue.row,
-      issue.taskNumber ?? '',
-      escape(issue.field),
-      escape(issue.message),
-    ].join(','),
+    [issue.row, issue.taskNumber ?? '', escape(issue.field), escape(issue.message)].join(','),
   );
 
   return [header, ...lines].join('\n');

@@ -121,6 +121,10 @@ const CSV_ALIASES: Record<string, string> = {
   баллы: 'points',
   category: 'category',
   категория: 'category',
+  cardtype: 'cardType',
+  card_type: 'cardType',
+  тип: 'cardType',
+  типкарточки: 'cardType',
   difficulty: 'difficulty',
   сложность: 'difficulty',
   validationmode: 'validationMode',
@@ -176,6 +180,7 @@ function csvRowToObject(headers: Array<string | null>, cells: string[]): Record<
   if (raw.description !== undefined) out.description = raw.description;
   if (raw.points !== undefined) out.points = Number(raw.points);
   if (raw.category !== undefined) out.category = raw.category.trim();
+  if (raw.cardType) out.cardType = raw.cardType.trim();
   if (raw.difficulty) out.difficulty = raw.difficulty.trim();
   if (raw.validationMode) out.validationMode = raw.validationMode.trim();
   if (raw.criteria) out.criteria = parseCriteria(raw.criteria);
@@ -322,6 +327,7 @@ export function toTaskRow(item: TaskImportItem, eventId: string): Record<string,
     description: item.description,
     points: item.points,
     category: item.category,
+    card_type: item.cardType,
     difficulty: item.difficulty,
     validation_mode: item.validationMode,
     criteria: item.criteria,

@@ -6,6 +6,7 @@ import type { Circle, Map as LeafletMap, Marker } from 'leaflet';
 // позиционирование слоёв живёт именно в ней, а не в скрипте.
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
+import type { PlayArea } from '@/lib/geo';
 
 /**
  * Карта квеста.
@@ -47,7 +48,7 @@ export interface MapPoint {
 }
 
 export interface QuestMapProps {
-  area: { latitude: number; longitude: number; radiusMeters: number } | null;
+  area: PlayArea | null;
   points: MapPoint[];
   /** Высота карты. Отдельным пропом: на странице задания она ниже. */
   className?: string;
@@ -114,7 +115,25 @@ export function QuestMap({
 
       const bounds = L.latLngBounds([]);
 
-      if (area) {
+      if (area?.shape === 'polygon') {
+        // GeoJSON хранит пары [долгота, широта], Leaflet ждёт
+        // обратный порядок — перепутать их значит нарисовать поле
+        // где-то в Индийском океане.
+        const latLngs = area.polygon.coordinates[0].map(
+          ([lon, lat]) => [lat, lon] as [number, number],
+        );
+
+        const polygon = L.polygon(latLngs, {
+          color: SIGNAL,
+          weight: 2,
+          fillColor: SIGNAL,
+          fillOpacity: 0.06,
+        })
+          .addTo(map)
+          .bindPopup('Игровое поле');
+
+        bounds.extend(polygon.getBounds());
+      } else if (area) {
         L.circle([area.latitude, area.longitude], {
           radius: area.radiusMeters,
           color: SIGNAL,
@@ -258,7 +277,7 @@ export function QuestMap({
           подложки — метки, круги и подписи остаются как есть. */}
       <div
         ref={hostRef}
-        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-[0.92] [&_.leaflet-tile-pane]:contrast-[0.9] [&_.leaflet-tile-pane]:grayscale-[0.35]`}
+        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep [&_.leaflet-container]:bg-canvas-deep [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-[0.92] [&_.leaflet-tile-pane]:contrast-[0.9] [&_.leaflet-tile-pane]:grayscale-[0.35]`}
         // Карта — интерактивный виджет. Скринридеру от неё пользы
         // нет, весь смысл продублирован списком заданий рядом.
         role="presentation"

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   LEADERBOARD_MODES,
   SCORE_TRANSACTION_TYPES,
+  TASK_CARD_TYPES,
   TASK_CATEGORIES,
   TASK_DIFFICULTIES,
   VALIDATION_MODES,
@@ -153,6 +154,8 @@ export const taskSchema = z
     description: trimmed(10, 4000, 'Описание'),
     points: z.number().int().min(0, 'Баллы не могут быть отрицательными').max(1000),
     category: z.enum(TASK_CATEGORIES),
+    // Тип карточки определяет, в какую треть руки попадёт задание.
+    cardType: z.enum(TASK_CARD_TYPES),
     difficulty: z.enum(TASK_DIFFICULTIES),
     validationMode: z.enum(VALIDATION_MODES),
     criteria: z.array(trimmed(3, 300, 'Критерий')).max(12, 'Не больше двенадцати критериев'),
@@ -208,6 +211,9 @@ export const taskImportItemSchema = z
     description: trimmed(10, 4000, 'Описание'),
     points: z.number().int().min(0).max(1000),
     category: z.enum(TASK_CATEGORIES),
+    // В импорте тип необязателен: файлы организатора старше этой
+    // колонки, и падать из-за неё импорт не должен.
+    cardType: z.enum(TASK_CARD_TYPES).default('photo'),
     difficulty: z.enum(TASK_DIFFICULTIES).default('medium'),
     validationMode: z.enum(VALIDATION_MODES).default('manual'),
     criteria: z.array(z.string().trim().min(3).max(300)).max(12).default([]),

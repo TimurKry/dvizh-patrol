@@ -6,6 +6,7 @@ import { SectionHead } from '@/components/landing/section-head';
 import { TaskCardDemo } from '@/components/landing/task-card-demo';
 import { TicketCta } from '@/components/landing/ticket-cta';
 import { QuestMap } from '@/components/game/quest-map';
+import { toPlayArea } from '@/lib/geo';
 import { DotCluster } from '@/components/ui/logo';
 import {
   formatEventDate,
@@ -95,16 +96,7 @@ export default async function HomePage() {
   const time = formatEventTime(event);
   const tasksLabel = taskCount ? `${taskCount} ${tasksWord(taskCount)}` : '30–50 заданий';
 
-  const area =
-    event.area_latitude !== null &&
-    event.area_longitude !== null &&
-    event.area_radius_meters !== null
-      ? {
-          latitude: event.area_latitude,
-          longitude: event.area_longitude,
-          radiusMeters: event.area_radius_meters,
-        }
-      : null;
+  const area = toPlayArea(event);
 
   return (
     <>
@@ -180,7 +172,7 @@ export default async function HomePage() {
               }
               intro={
                 area
-                  ? 'Внутри круга — задания. Карту можно двигать и приближать.'
+                  ? 'Внутри границы — задания. Карту можно двигать и приближать.'
                   : 'Границу поля организатор объявит до старта. Карту можно двигать и приближать.'
               }
             />

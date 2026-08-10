@@ -134,6 +134,8 @@ export interface EventRow {
   area_radius_meters: number | null;
   /** Строгий режим: отправка вне поля не принимается. */
   area_enforced: boolean;
+  /** Граница поля как GeoJSON Polygon. NULL — используется круг. */
+  area_polygon: unknown;
   created_at: string;
   updated_at: string;
 }

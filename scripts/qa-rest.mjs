@@ -253,10 +253,80 @@ async function withRole(role, run) {
   }
 }
 
+/**
+ * Минимальный GoTrue для админки.
+ *
+ * Админка живёт за Supabase Auth, и без неё половину чек-листа
+ * нельзя посмотреть глазами. Здесь реализованы ровно два вызова,
+ * которыми пользуется приложение: вход по паролю и чтение
+ * текущего пользователя.
+ *
+ * Пароль не проверяется вообще, а «токен» — это id строки из
+ * `admin_users`. Ровно поэтому фасад слушает только 127.0.0.1 и
+ * никогда не попадает в сборку: это стенд для скриншотов, а не
+ * замена аутентификации.
+ */
+async function handleAuth(req, res, url) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const userByEmail = async (email) => {
+    const { rows } = await pool.query(
+      `SELECT user_id, email FROM public.admin_users WHERE lower(email) = lower($1)`,
+      [email],
+    );
+    return rows[0] ?? null;
+  };
+
+  if (url.pathname.endsWith('/token')) {
+    const body = (await readBody(req)) ?? {};
+    const admin = await userByEmail(body.email ?? '');
+    if (!admin) return send(res, 400, { error: 'invalid_grant', error_description: 'no such user' });
+
+    return send(res, 200, {
+      access_token: admin.user_id,
+      token_type: 'bearer',
+      expires_in: 3600,
+      expires_at: now + 3600,
+      refresh_token: admin.user_id,
+      user: { id: admin.user_id, email: admin.email, aud: 'authenticated', role: 'authenticated' },
+    });
+  }
+
+  if (url.pathname.endsWith('/user')) {
+    const token = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+    const { rows } = await pool.query(
+      `SELECT user_id, email FROM public.admin_users WHERE user_id::text = $1`,
+      [token],
+    );
+    if (!rows[0]) return send(res, 401, { message: 'invalid token' });
+    return send(res, 200, {
+      id: rows[0].user_id,
+      email: rows[0].email,
+      aud: 'authenticated',
+      role: 'authenticated',
+      app_metadata: {},
+      user_metadata: {},
+    });
+  }
+
+  if (url.pathname.endsWith('/logout')) return send(res, 204, undefined);
+
+  return send(res, 404, { message: 'not implemented in qa facade' });
+}
+
 const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, undefined);
 
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+
+  if (url.pathname.startsWith('/auth/v1/')) {
+    try {
+      return await handleAuth(req, res, url);
+    } catch (error) {
+      return send(res, 400, { message: error.message });
+    }
+  }
+
   const path = url.pathname.replace(/^\/rest\/v1/, '');
   const role = roleFromRequest(req);
   const prefer = String(req.headers.prefer ?? '');

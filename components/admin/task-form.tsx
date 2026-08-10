@@ -5,8 +5,13 @@ import { saveTaskAction, type AdminActionState } from '@/actions/admin';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Select, TextArea, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
-import { TASK_CATEGORY_TEXT, TASK_DIFFICULTY_TEXT } from '@/lib/messages';
-import { TASK_CATEGORIES, TASK_DIFFICULTIES, type TaskRow } from '@/types/database';
+import { TASK_CARD_TYPE_TEXT, TASK_CATEGORY_TEXT, TASK_DIFFICULTY_TEXT } from '@/lib/messages';
+import {
+  TASK_CARD_TYPES,
+  TASK_CATEGORIES,
+  TASK_DIFFICULTIES,
+  type TaskRow,
+} from '@/types/database';
 
 const INITIAL: AdminActionState = { ok: false };
 
@@ -100,6 +105,26 @@ export function TaskForm({
           required
           rows={6}
         />
+      </Field>
+
+      {/* Тип карточки стоит выше категории намеренно: он решает,
+          в какую треть руки попадёт задание, а категория — только
+          метка для фильтров и экспорта. */}
+      <Field
+        label="Тип карточки"
+        htmlFor="cardType"
+        required
+        hint="Рука команды собирается по два задания каждого типа"
+        error={fields.cardType}
+      >
+        <Select id="cardType" name="cardType" defaultValue={task?.card_type ?? 'photo'}>
+          {TASK_CARD_TYPES.map((cardType) => (
+            <option key={cardType} value={cardType}>
+              {TASK_CARD_TYPE_TEXT[cardType].icon} {TASK_CARD_TYPE_TEXT[cardType].label} —{' '}
+              {TASK_CARD_TYPE_TEXT[cardType].hint}
+            </option>
+          ))}
+        </Select>
       </Field>
 
       <div className="grid gap-5 sm:grid-cols-3">

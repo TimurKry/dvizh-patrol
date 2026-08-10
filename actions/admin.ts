@@ -3,6 +3,8 @@
 import { randomBytes } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { isTeamColor, teamColorLabel } from '@/lib/team-colors';
+import { asAreaPolygon } from '@/lib/geo';
 import { audit, requireAdmin } from '@/lib/auth/admin';
 import { runValidationWorker } from '@/lib/ai/worker';
 import { env } from '@/lib/env';
@@ -343,6 +345,17 @@ export async function updateTeamAction(
       message = 'Название изменено.';
       break;
     }
+    case 'set_color': {
+      const color = String(formData.get('color') ?? '');
+      if (!isTeamColor(color)) return { ok: false, message: 'Неизвестный цвет.' };
+      patch = { color };
+      message = `Цвет команды: ${teamColorLabel(color).toLowerCase()}.`;
+      break;
+    }
+    case 'clear_color':
+      patch = { color: null };
+      message = 'Цвет снят — команда осталась без рубашки.';
+      break;
     case 'regenerate_code': {
       const codes = generateJoinCodes(1);
       patch = { join_code: codes[0] };
@@ -386,9 +399,11 @@ export async function updateTeamAction(
     return {
       ok: false,
       message:
-        error.code === '23505'
-          ? 'Такое название команды уже занято.'
-          : 'Не удалось сохранить изменения.',
+        error.code !== '23505'
+          ? 'Не удалось сохранить изменения.'
+          : action === 'set_color'
+            ? 'Этот цвет уже занят другой командой.'
+            : 'Такое название команды уже занято.',
     };
   }
 
@@ -605,18 +620,16 @@ export async function reviewSubmissionAction(
         .update({ status: 'pending', review_reason: null })
         .eq('id', parsed.data.submissionId);
 
-      await db
-        .from('validation_jobs')
-        .upsert(
-          {
-            submission_id: parsed.data.submissionId,
-            status: 'queued',
-            available_at: new Date().toISOString(),
-            locked_at: null,
-            locked_by: null,
-          },
-          { onConflict: 'submission_id' },
-        );
+      await db.from('validation_jobs').upsert(
+        {
+          submission_id: parsed.data.submissionId,
+          status: 'queued',
+          available_at: new Date().toISOString(),
+          locked_at: null,
+          locked_by: null,
+        },
+        { onConflict: 'submission_id' },
+      );
 
       void runValidationWorker({ limit: 1 }).catch(() => undefined);
       message = 'Отправка возвращена на автоматическую проверку.';
@@ -785,6 +798,7 @@ export async function saveTaskAction(
     description: formData.get('description'),
     points: Number(formData.get('points') ?? 0),
     category: formData.get('category'),
+    cardType: formData.get('cardType'),
     difficulty: formData.get('difficulty'),
     validationMode: formData.get('validationMode'),
     criteria,
@@ -809,6 +823,7 @@ export async function saveTaskAction(
     description: parsed.data.description,
     points: parsed.data.points,
     category: parsed.data.category,
+    card_type: parsed.data.cardType,
     difficulty: parsed.data.difficulty,
     validation_mode: parsed.data.validationMode,
     criteria: parsed.data.criteria,
@@ -954,14 +969,18 @@ export async function purgePhotosAction(
     .lt('submitted_at', cutoff)
     .not('image_path', 'is', null);
 
-  const rows = (old as Array<{ id: string; image_path: string; preview_path: string | null }> | null) ?? [];
+  const rows =
+    (old as Array<{ id: string; image_path: string; preview_path: string | null }> | null) ?? [];
 
   if (rows.length === 0) {
     return { ok: true, message: 'Фотографий старше срока хранения нет.' };
   }
 
   const { removeObjects, BUCKETS } = await import('@/lib/storage');
-  await removeObjects(BUCKETS.submissions, rows.map((r) => r.image_path));
+  await removeObjects(
+    BUCKETS.submissions,
+    rows.map((r) => r.image_path),
+  );
   await removeObjects(
     BUCKETS.previews,
     rows.map((r) => r.preview_path).filter((p): p is string => Boolean(p)),
@@ -972,7 +991,10 @@ export async function purgePhotosAction(
   await db
     .from('submissions')
     .update({ image_path: null, preview_path: null })
-    .in('id', rows.map((r) => r.id));
+    .in(
+      'id',
+      rows.map((r) => r.id),
+    );
 
   await audit({
     admin,
@@ -984,4 +1006,102 @@ export async function purgePhotosAction(
 
   revalidatePath('/admin/settings');
   return { ok: true, message: `Удалено файлов: ${rows.length}.` };
+}
+
+// ═══ Игровое поле полигоном ════════════════════════════════════
+
+/**
+ * Сохранение границы поля.
+ *
+ * Отдельное действие, а не поле в общей форме настроек: границу
+ * рисуют мышью по карте, а не набирают числами, и сохранять её
+ * вместе с ценой и лимитом команд означало бы терять контур при
+ * каждой правке соседнего поля.
+ *
+ * Форма приходит строкой JSON и проверяется здесь же — тем же
+ * набором требований, что и ограничение в базе. Полагаться на
+ * клиентскую проверку нельзя: действие вызывается из браузера.
+ */
+export async function savePlayAreaAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get('eventId') ?? '');
+  const raw = String(formData.get('polygon') ?? '').trim();
+
+  const db = supabaseAdmin();
+  const { data: before } = await db.from('events').select('*').eq('id', eventId).maybeSingle();
+  if (!before) return { ok: false, message: 'Мероприятие не найдено.' };
+
+  // Пустое значение — осознанная очистка границы.
+  if (raw === '') {
+    if (before.area_enforced && before.area_latitude === null) {
+      return {
+        ok: false,
+        message:
+          'Строгий режим включён, а круга нет — сначала выключите строгий режим или задайте центр и радиус.',
+      };
+    }
+
+    const { error } = await db.from('events').update({ area_polygon: null }).eq('id', eventId);
+    if (error) return { ok: false, message: 'Не удалось очистить границу.' };
+
+    await audit({
+      admin,
+      action: 'play_area_cleared',
+      entityType: 'event',
+      entityId: eventId,
+      before: { area_polygon: before.area_polygon },
+      after: { area_polygon: null },
+    });
+
+    revalidatePath('/admin/event');
+    revalidatePath('/map');
+    revalidatePath('/');
+    return { ok: true, message: 'Граница очищена. Поле снова описывается кругом, если он задан.' };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ok: false, message: 'Граница пришла в нечитаемом виде. Нарисуйте её заново.' };
+  }
+
+  const polygon = asAreaPolygon(parsed);
+  if (!polygon) {
+    return {
+      ok: false,
+      message: 'Нужен замкнутый контур минимум из трёх точек и не больше пятисот.',
+    };
+  }
+
+  const { error } = await db.from('events').update({ area_polygon: polygon }).eq('id', eventId);
+  if (error) {
+    return {
+      ok: false,
+      message:
+        error.code === '23514'
+          ? 'База отклонила контур: проверьте, что он замкнут и без самопересечений.'
+          : 'Не удалось сохранить границу.',
+    };
+  }
+
+  await audit({
+    admin,
+    action: 'play_area_saved',
+    entityType: 'event',
+    entityId: eventId,
+    before: { area_polygon: before.area_polygon },
+    after: { points: polygon.coordinates[0].length - 1 },
+  });
+
+  revalidatePath('/admin/event');
+  revalidatePath('/map');
+  revalidatePath('/');
+  return {
+    ok: true,
+    message: `Граница сохранена: ${polygon.coordinates[0].length - 1} точек.`,
+  };
 }

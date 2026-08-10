@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { EventSettingsForm } from '@/components/admin/event-settings-form';
+import { PlayAreaEditor } from '@/components/admin/play-area-editor';
 import { ActionButton } from '@/components/admin/action-form';
 import { changeEventStatusAction } from '@/actions/admin';
 import { Card, Eyebrow } from '@/components/ui/surface';
@@ -58,7 +59,7 @@ export default async function AdminEventPage() {
   const stats = await getRegistrationStats(event);
 
   return (
-    <div className="page-well flex max-w-3xl flex-col gap-8 py-8">
+    <div className="page-well flex max-w-4xl flex-col gap-8 py-8">
       <header>
         <Eyebrow>Управление</Eyebrow>
         <h1 className="mt-2 text-headline">Мероприятие</h1>
@@ -86,12 +87,16 @@ export default async function AdminEventPage() {
               variant={transition.status === 'live' ? 'primary' : 'secondary'}
               confirm={
                 transition.status === 'live'
-                  ? 'Запустить квест? Задания станут видны всем командам.'
-                  : transition.status === 'finished'
-                    ? 'Завершить квест? Новые отправки будут заблокированы.'
-                    : transition.status === 'archived'
-                      ? 'Отправить в архив? Вернуть событие обратно будет нельзя.'
-                      : undefined
+                  ? 'Запустить квест? Задания станут видны всем командам, и раздача рук начнётся.'
+                  : transition.status === 'paused'
+                    ? 'Приостановить квест? Карточки останутся видны, но отправки перестанут приниматься.'
+                    : transition.status === 'finished'
+                      ? 'Завершить квест? Новые отправки будут заблокированы.'
+                      : transition.status === 'archived'
+                        ? 'Отправить в архив? Вернуть событие обратно будет нельзя.'
+                        : transition.status === 'registration'
+                          ? 'Вернуть квест в набор команд? Задания снова закроются у всех.'
+                          : undefined
               }
             >
               {transition.label}
@@ -114,6 +119,21 @@ export default async function AdminEventPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-body-lg">Настройки</h2>
         <EventSettingsForm event={event} teamsRegistered={stats.active} />
+      </section>
+
+      {/* ═══ Игровое поле ═══════════════════════════════════
+          Отдельно от настроек: контур рисуют мышью, и сохранять
+          его вместе с ценой означало бы терять его при каждой
+          правке соседнего поля. */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="text-body-lg">Игровое поле</h2>
+          <p className="mt-1 text-caption text-muted">
+            Полигон точнее круга и важнее его: пока контур задан, круг из настроек выше не
+            используется — он остаётся запасным вариантом.
+          </p>
+        </div>
+        <PlayAreaEditor eventId={event.id} polygon={event.area_polygon} />
       </section>
     </div>
   );

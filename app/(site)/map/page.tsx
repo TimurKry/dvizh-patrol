@@ -100,7 +100,13 @@ export default async function MapPage() {
       <Eyebrow>Команда «{session.team.name}»</Eyebrow>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-headline md:text-headline">Карта</h1>
-        {area && <Meta>поле — {formatDistance(area.radiusMeters)} вокруг центра</Meta>}
+        {area && (
+          <Meta>
+            {area.shape === 'polygon'
+              ? 'поле обведено по границе'
+              : `поле — ${formatDistance(area.radiusMeters)} вокруг центра`}
+          </Meta>
+        )}
       </div>
 
       {area && session.event.area_enforced && (

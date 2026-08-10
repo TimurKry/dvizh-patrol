@@ -10,6 +10,7 @@ import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { requireAdmin } from '@/lib/auth/admin';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { TEAM_STATUS_TEXT, pointsWord } from '@/lib/messages';
+import { TEAM_COLOR_OPTIONS, teamColorLabel } from '@/lib/team-colors';
 import type {
   ConsentRow,
   EventRow,
@@ -64,6 +65,19 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
       db.from('consents').select('*').eq('team_id', teamId),
     ]);
 
+  // Кто какой цвет уже занял: занятые показываем, но выбрать
+  // нельзя — уникальный индекс в базе всё равно не даст.
+  const { data: siblings } = await db
+    .from('teams')
+    .select('id, color')
+    .eq('event_id', team.event_id)
+    .neq('status', 'cancelled');
+
+  const colorOwners = new Map<string, string>();
+  for (const row of (siblings as Array<{ id: string; color: string | null }> | null) ?? []) {
+    if (row.color) colorOwners.set(row.color, row.id);
+  }
+
   const event = eventResult.data as EventRow | null;
   const members = (membersResult.data as TeamMemberRow[] | null) ?? [];
   const score = scoreResult.data as { total_points: number; accepted_count: number } | null;
@@ -90,6 +104,56 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
           {team.contact && ` · ${team.contact}`}
         </p>
       </div>
+
+      {/* ═══ Цвет команды ═══════════════════════════════════
+          Цвет виден участникам на рубашке карточек, поэтому он
+          не настройка «на потом», а часть карточки команды.
+          Занятые цвета показаны, но выбрать их нельзя: два
+          одинаковых цвета сделали бы рубашки неразличимыми. */}
+      <Card className="flex flex-col gap-4 p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-body-lg">Цвет команды</h2>
+          <p className="text-caption text-muted">
+            {team.color ? teamColorLabel(team.color) : 'не назначен'}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {TEAM_COLOR_OPTIONS.map((option) => {
+            const takenBy = colorOwners.get(option.value);
+            const mine = team.color === option.value;
+            return (
+              <ActionButton
+                key={option.value}
+                action={updateTeamAction}
+                values={{ teamId: team.id, action: 'set_color', color: option.value }}
+                disabled={mine || (Boolean(takenBy) && takenBy !== team.id)}
+                variant={mine ? 'primary' : 'secondary'}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="block h-4 w-4 border border-hairline"
+                    style={{ backgroundColor: option.hex }}
+                  />
+                  {option.label}
+                  {takenBy && takenBy !== team.id && ' · занят'}
+                </span>
+              </ActionButton>
+            );
+          })}
+
+          {team.color && (
+            <ActionButton
+              action={updateTeamAction}
+              values={{ teamId: team.id, action: 'clear_color' }}
+              variant="ghost"
+            >
+              Снять цвет
+            </ActionButton>
+          )}
+        </div>
+      </Card>
 
       {/* ═══ Быстрые действия ═══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">

@@ -65,3 +65,11 @@ BEGIN
   END IF;
 END
 $$;
+
+-- Администратор для локального стенда. На Supabase строка
+-- заводится скриптом scripts/create-admin.mjs после создания
+-- аккаунта в Auth; здесь Auth заменяет фасад, поэтому нужен
+-- только сам факт наличия строки.
+INSERT INTO public.admin_users (user_id, email, name)
+VALUES ('00000000-0000-4000-8000-000000000001', 'admin@example.test', 'Локальный организатор')
+ON CONFLICT (user_id) DO NOTHING;

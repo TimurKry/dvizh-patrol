@@ -120,8 +120,10 @@ export function TaskForm({
         <Select id="cardType" name="cardType" defaultValue={task?.card_type ?? 'photo'}>
           {TASK_CARD_TYPES.map((cardType) => (
             <option key={cardType} value={cardType}>
-              {TASK_CARD_TYPE_TEXT[cardType].icon} {TASK_CARD_TYPE_TEXT[cardType].label} —{' '}
-              {TASK_CARD_TYPE_TEXT[cardType].hint}
+              {/* Внутри <option> живёт только текст: рисунок туда
+                  не вставить, и подменять его псевдографикой ради
+                  выпадающего списка незачем. */}
+              {TASK_CARD_TYPE_TEXT[cardType].label} — {TASK_CARD_TYPE_TEXT[cardType].hint}
             </option>
           ))}
         </Select>

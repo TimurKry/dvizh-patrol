@@ -6,6 +6,7 @@ import { EmptyState, Notice } from '@/components/ui/feedback';
 import { getTeamHand } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
 import { TASK_CARD_TYPE_TEXT } from '@/lib/messages';
+import { TaskTypeIcon } from '@/components/game/task-type-icon';
 import { teamColorVars } from '@/lib/team-colors';
 import { TASK_CARD_TYPES } from '@/types/database';
 
@@ -79,9 +80,7 @@ export default async function TasksPage() {
         <ul className="flex items-center gap-4">
           {TASK_CARD_TYPES.map((type) => (
             <li key={type} className="signal-label flex items-center gap-1.5 text-micro">
-              <span aria-hidden="true" className="text-signal">
-                {TASK_CARD_TYPE_TEXT[type].icon}
-              </span>
+              <TaskTypeIcon type={type} size={16} className="text-signal" />
               <span className="sr-only">{TASK_CARD_TYPE_TEXT[type].label}:</span>
               <span className="text-muted">{counts[type]}</span>
             </li>

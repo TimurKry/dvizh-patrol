@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { CardBack } from '@/components/game/card-back';
+import { PlaceMark, TaskTypeIcon } from '@/components/game/task-type-icon';
 import { FlipCard } from '@/components/ui/flip-card';
 import { teamColorVars } from '@/lib/team-colors';
 
@@ -19,9 +20,9 @@ import { teamColorVars } from '@/lib/team-colors';
  */
 
 const TYPES = [
-  { icon: '?', label: 'Загадка', count: 2 },
-  { icon: '□', label: 'Фото-повтор', count: 2 },
-  { icon: '↗', label: 'Актив', count: 2 },
+  { type: 'riddle', label: 'Загадка', count: 2 },
+  { type: 'photo', label: 'Фото-повтор', count: 2 },
+  { type: 'active', label: 'Актив', count: 2 },
 ] as const;
 
 export function TaskCardDemo() {
@@ -33,9 +34,7 @@ export function TaskCardDemo() {
         <ul className="flex items-center gap-3">
           {TYPES.map((type) => (
             <li key={type.label} className="signal-label flex items-center gap-1 text-micro">
-              <span aria-hidden="true" className="text-signal">
-                {type.icon}
-              </span>
+              <TaskTypeIcon type={type.type} size={16} className="text-signal" />
               <span className="sr-only">{type.label}:</span>
               <span className="text-muted">{type.count}</span>
             </li>
@@ -50,11 +49,8 @@ export function TaskCardDemo() {
         front={
           <article className="flex h-full flex-col gap-4 rounded-[8px] border border-hairline bg-[#f5f5f1] p-5 text-[#060609]">
             <div className="flex items-start justify-between gap-3">
-              <span
-                aria-hidden="true"
-                className="flex h-11 w-11 items-center justify-center border border-[#060609] text-body-lg"
-              >
-                □
+              <span className="flex h-11 w-11 items-center justify-center border border-[#060609]">
+                <TaskTypeIcon type="photo" size={24} />
               </span>
               <span className="display-figure bg-[#060609] px-3 py-2 text-title text-[#f5f5f1]">
                 180 Б*
@@ -84,6 +80,11 @@ export function TaskCardDemo() {
 
             <p className="text-caption text-[#5c5c63]">
               Найдите объект и повторите позу как можно точнее.
+            </p>
+
+            <p className="signal-label flex items-center gap-1.5 text-micro text-[#5c5c63]">
+              <PlaceMark type="photo" />
+              Точка на карте
             </p>
 
             <p className="mt-auto flex items-center justify-center gap-2 border border-[#87877f] py-3">

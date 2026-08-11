@@ -120,13 +120,15 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
         )}
 
         {/* ═══ Где искать ═══════════════════════════════════
-            Карта только у заданий с заданной точкой. Там место и
-            так не загадка — оно проверяется радиусом, — а вот
-            дойти до него без карты в чужом городе трудно. */}
-        {task.latitude != null && task.longitude != null && (
+            Карта показывает разное в зависимости от типа. У фото —
+            крест: место известно точно, дойти до него в чужом
+            городе без карты трудно. У загадки — пунктирный район
+            без центра: точное место и есть ответ. У актива карты
+            нет вовсе, он к месту не привязан. */}
+        {task.card_type !== 'active' && task.latitude != null && task.longitude != null && (
           <div className="mt-6 flex flex-col gap-2">
             <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
-              Где искать
+              {task.card_type === 'riddle' ? 'Примерный район' : 'Где искать'}
             </h2>
             <QuestMap
               className="h-[260px]"
@@ -140,6 +142,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                   label: String(task.number),
                   title: task.title,
                   radiusMeters: task.radius_meters,
+                  kind: task.card_type === 'riddle' ? 'zone' : 'cross',
                   done: state === 'accepted',
                 },
               ]}

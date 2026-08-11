@@ -73,3 +73,41 @@ $$;
 INSERT INTO public.admin_users (user_id, email, name)
 VALUES ('00000000-0000-4000-8000-000000000001', 'admin@example.test', 'Локальный организатор')
 ON CONFLICT (user_id) DO NOTHING;
+
+-- ═══ Карта: граница поля и координаты заданий ════════════════
+--
+-- Без этого карта на локальном стенде пустая, и проверить
+-- глазами крест фото-задания и район загадки нечем. Значения
+-- вымышленные — центр Лейпцига в грубом четырёхугольнике.
+UPDATE public.events
+SET area_polygon = jsonb_build_object(
+      'type', 'Polygon',
+      'coordinates', jsonb_build_array(jsonb_build_array(
+        jsonb_build_array(12.3560, 51.3480),
+        jsonb_build_array(12.3900, 51.3480),
+        jsonb_build_array(12.3900, 51.3310),
+        jsonb_build_array(12.3560, 51.3310),
+        jsonb_build_array(12.3560, 51.3480)
+      ))
+    )
+WHERE slug = 'leipzig-2026';
+
+-- Фото-заданиям — точные точки, загадкам — центр района с широким
+-- радиусом. Активы координат не получают: они к месту не привязаны
+-- и на карту не выходят по построению.
+-- Раскладка по сетке, а не по одной формуле на оба типа: с общим
+-- счётчиком загадка и фото с одинаковым порядковым номером
+-- ложились в одну точку, и крест накрывал район.
+WITH numbered AS (
+  SELECT id, card_type,
+         row_number() OVER (ORDER BY card_type, number) - 1 AS n
+  FROM public.tasks
+  WHERE card_type IN ('riddle', 'photo')
+)
+UPDATE public.tasks t
+SET latitude       = 51.3345 + (numbered.n % 4) * 0.0032,
+    longitude      = 12.3600 + (numbered.n / 4) * 0.0058,
+    radius_meters  = CASE numbered.card_type WHEN 'riddle' THEN 260 ELSE 60 END,
+    require_location = (numbered.card_type = 'photo')
+FROM numbered
+WHERE t.id = numbered.id;

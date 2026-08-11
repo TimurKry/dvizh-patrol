@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { FlipButton, FlipCard } from '@/components/ui/flip-card';
 import { CardBack } from './card-back';
+import { PlaceMark, TaskTypeIcon } from './task-type-icon';
 import { TASK_CARD_TYPE_TEXT, attemptsWord, pointsWord } from '@/lib/messages';
 import type { TaskWithState } from '@/lib/data/tasks';
 import { cn } from '@/lib/cn';
@@ -67,11 +68,8 @@ export function TaskCard({ item }: { item: TaskWithState }) {
           )}
         >
           <div className="flex items-start justify-between gap-3">
-            <span
-              className="flex h-11 w-11 shrink-0 items-center justify-center border border-[#060609] text-body-lg"
-              aria-hidden="true"
-            >
-              {type.icon}
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-[#060609]">
+              <TaskTypeIcon type={task.card_type} size={24} />
             </span>
             <span className="display-figure bg-[#060609] px-3 py-2 text-title text-[#f5f5f1]">
               {task.points}
@@ -116,6 +114,14 @@ export function TaskCard({ item }: { item: TaskWithState }) {
           {task.short_description && (
             <p className="clamp-3 text-caption text-[#5c5c63]">{task.short_description}</p>
           )}
+
+          {/* Что тип обещает про место. Строка нужна до того, как
+              команда решит брать карточку: «точка на карте» и
+              «где угодно» — это разные решения о том, куда идти. */}
+          <p className="signal-label flex items-center gap-1.5 text-micro text-[#5c5c63]">
+            <PlaceMark type={task.card_type} />
+            {type.place}
+          </p>
 
           <div className="mt-auto flex flex-col gap-2">
             {state !== 'accepted' && !gone && attemptsLeft > 0 && (

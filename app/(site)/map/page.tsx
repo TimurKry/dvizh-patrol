@@ -62,6 +62,14 @@ export default async function MapPage() {
     for (const item of items) {
       const { task } = item;
       if (task.latitude == null || task.longitude == null) continue;
+
+      // Актив к месту не привязан по определению: «найти пять
+      // жёлтых предметов» делается где угодно внутри поля. Если
+      // организатор всё же проставил ему координаты, на карту он
+      // всё равно не идёт — иначе точка соврала бы, что идти надо
+      // именно туда.
+      if (task.card_type === 'active') continue;
+
       points.push({
         id: task.id,
         latitude: task.latitude,
@@ -70,6 +78,10 @@ export default async function MapPage() {
         title: task.title,
         href: `/tasks/${task.id}`,
         radiusMeters: task.radius_meters,
+        // Загадка показывает район, фото — крест. Разница не
+        // косметическая: у загадки точное место и есть ответ, и
+        // выдать его на карте значит решить задание за команду.
+        kind: task.card_type === 'riddle' ? 'zone' : 'cross',
         done: item.state === 'accepted',
       });
     }

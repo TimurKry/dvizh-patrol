@@ -34,16 +34,27 @@ import type { PlayArea } from '@/lib/geo';
  * сохраняется, на сервер не уходит.
  */
 
+/**
+ * Как точка показана на карте.
+ *
+ * `cross` — крест, как на пиратской карте: место известно точно,
+ * к нему и надо дойти. `zone` — примерный район: центр не
+ * показывается вовсе, только пунктирный круг с номером, потому
+ * что у загадки точное место и есть ответ.
+ */
+export type MapPointKind = 'cross' | 'zone';
+
 export interface MapPoint {
   id: string;
   latitude: number;
   longitude: number;
-  /** Номер задания — он и рисуется в кружке. */
+  /** Номер задания — он и рисуется рядом со знаком. */
   label: string;
   title: string;
   href?: string;
   /** Радиус зачёта задания: видно, насколько близко надо подойти. */
   radiusMeters?: number | null;
+  kind?: MapPointKind;
   done?: boolean;
 }
 
@@ -153,14 +164,21 @@ export function QuestMap({
       }
 
       for (const point of points) {
-        if (point.radiusMeters) {
+        const zone = point.kind === 'zone';
+
+        // У района круг обязателен: без него от загадки на карте
+        // остался бы номер в пустоте, а «примерно здесь» — это и
+        // есть весь ответ, который она даёт.
+        const radius = point.radiusMeters ?? (zone ? 220 : null);
+
+        if (radius) {
           L.circle([point.latitude, point.longitude], {
-            radius: point.radiusMeters,
-            color: INK,
-            weight: 1,
-            dashArray: '4 4',
-            fillColor: INK,
-            fillOpacity: 0.04,
+            radius,
+            color: point.done ? INK : zone ? SIGNAL : INK,
+            weight: zone ? 2 : 1,
+            dashArray: zone ? '7 7' : '4 4',
+            fillColor: zone ? SIGNAL : INK,
+            fillOpacity: zone ? 0.07 : 0.04,
           }).addTo(map);
         }
 
@@ -168,14 +186,18 @@ export function QuestMap({
           title: point.title,
           icon: L.divIcon({
             className: '',
-            html: pinHtml(point),
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
+            html: zone ? zoneHtml(point) : crossHtml(point),
+            iconSize: [34, 34],
+            iconAnchor: [17, 17],
           }),
         }).addTo(map);
 
         marker.bindPopup(popupHtml(point));
         bounds.extend(marker.getLatLng());
+
+        if (radius) {
+          bounds.extend(L.latLng(point.latitude, point.longitude).toBounds(radius * 2));
+        }
       }
 
       if (bounds.isValid()) {
@@ -313,12 +335,40 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function pinHtml(point: MapPoint): string {
-  const background = point.done ? INK : SIGNAL;
+/**
+ * Крест на карте сокровищ — точное место фото-задания.
+ *
+ * Обводка креста цветом холста нужна поверх тайлов: на светлой
+ * брусчатке маджента сама по себе теряется, а обводка держит знак
+ * читаемым на любом фоне. Номер висит подписью снизу, чтобы не
+ * закрывать перекрестие — именно оно и указывает точку.
+ */
+function crossHtml(point: MapPoint): string {
+  const color = point.done ? INK : SIGNAL;
+  return (
+    `<span style="position:relative;display:block;width:34px;height:34px">` +
+    `<svg width="34" height="34" viewBox="0 0 34 34" fill="none">` +
+    `<path d="M9 9 25 25M25 9 9 25" stroke="${CANVAS}" stroke-width="7" stroke-linecap="round"/>` +
+    `<path d="M9 9 25 25M25 9 9 25" stroke="${color}" stroke-width="3.4" stroke-linecap="round"/>` +
+    `</svg>` +
+    `<span style="position:absolute;left:50%;top:30px;transform:translateX(-50%);` +
+    `padding:1px 5px;border-radius:2px;background:${CANVAS};color:${INK};` +
+    `font:600 11px/1.3 Onest,sans-serif">${escapeHtml(point.label)}</span>` +
+    `</span>`
+  );
+}
+
+/**
+ * Район загадки. Точки нет намеренно: показать центр — значит
+ * выдать ответ. Виден только номер, вокруг которого нарисован
+ * пунктирный круг.
+ */
+function zoneHtml(point: MapPoint): string {
+  const color = point.done ? INK : SIGNAL;
   return (
     `<span style="display:flex;align-items:center;justify-content:center;` +
-    `width:30px;height:30px;border-radius:9999px;background:${background};` +
-    `color:${CANVAS};border:2px solid ${CANVAS};font:600 13px/1 Onest,sans-serif">` +
+    `width:34px;height:34px;border-radius:9999px;background:${CANVAS};` +
+    `color:${color};border:2px dashed ${color};font:600 13px/1 Onest,sans-serif">` +
     `${escapeHtml(point.label)}</span>`
   );
 }

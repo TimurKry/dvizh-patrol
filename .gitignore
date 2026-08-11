@@ -42,3 +42,7 @@ next-env.d.ts
 
 # образец переменных окружения коммитится
 !.env.example
+
+# артефакты прогонов Playwright: трассы, снимки, cookie сессии
+/e2e-results/
+/playwright-report/

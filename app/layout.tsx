@@ -1,4 +1,10 @@
 import type { Metadata, Viewport } from 'next';
+import {
+  formatEventDateShort,
+  formatEventTime,
+  formatPrice,
+  getCurrentEvent,
+} from '@/lib/data/event';
 import { Onest, Unbounded } from 'next/font/google';
 import { ServiceWorkerRegistration } from '@/components/pwa/service-worker';
 import './globals.css';
@@ -33,59 +39,79 @@ const onest = Onest({
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
-  title: {
-    default: 'Движ-Патруль — городской фото-квест',
-    template: '%s · Движ-Патруль',
-  },
-  description:
-    'Городской фото-квест по центру Лейпцига: команды до четырёх человек, ' +
-    'десятки фото-заданий, автоматическая проверка и рейтинг в реальном времени.',
-  applicationName: 'Движ-Патруль',
-  manifest: '/manifest.webmanifest',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Движ-Патруль',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  icons: {
-    // Только растр: кисточный знак вектором не бывает, а рисовать
-    // ради вкладки второй, «упрощённый» логотип — это заводить
-    // второй логотип.
-    icon: [
-      { url: '/icons/favicon-48.png', sizes: '48x48', type: 'image/png' },
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-    ],
-    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
-  },
-  // Ссылку на квест рассылают в мессенджерах, а не набирают
-  // руками. Без картинки превью там показывают пустую карточку —
-  // приглашение выглядит как спам.
-  //
-  // Саму картинку рисует app/opengraph-image.tsx: 1200×630 в
-  // Mono Signal, без файла-постера. Next подставляет её в
-  // openGraph и twitter автоматически, поэтому здесь только текст.
-  openGraph: {
-    type: 'website',
-    locale: 'ru_RU',
-    siteName: 'Движ-Патруль',
-    title: 'Движ-Патруль — городской фото-квест',
-    description: 'Городской фото-квест по центру Лейпцига. 29.08, 14:00, 15 €.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Движ-Патруль — городской фото-квест',
-    description: 'Городской фото-квест по центру Лейпцига. 29.08, 14:00, 15 €.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+/**
+ * Метаданные считаются на запросе, а не лежат константой.
+ *
+ * В превью для мессенджеров стоит дата и цена, а они живут в
+ * `events` и меняются. Константа тут уже один раз соврала: после
+ * переноса на 5 сентября в og:description ещё неделю висело
+ * «29.08», и ссылка, разосланная в чат, приглашала не на то
+ * число.
+ *
+ * Если база недоступна, дата из описания просто исчезает — текст
+ * без даты честнее текста с неверной датой.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const event = await getCurrentEvent().catch(() => null);
+
+  const social = event
+    ? `Городской фото-квест по центру Лейпцига. ${formatEventDateShort(event)}, ${formatEventTime(event)}, ${formatPrice(event)}.`
+    : 'Городской фото-квест по центру Лейпцига.';
+
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+    title: {
+      default: 'Движ-Патруль — городской фото-квест',
+      template: '%s · Движ-Патруль',
+    },
+    description:
+      'Городской фото-квест по центру Лейпцига: команды до четырёх человек, ' +
+      'десятки фото-заданий, автоматическая проверка и рейтинг в реальном времени.',
+    applicationName: 'Движ-Патруль',
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'Движ-Патруль',
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    icons: {
+      // Только растр: кисточный знак вектором не бывает, а рисовать
+      // ради вкладки второй, «упрощённый» логотип — это заводить
+      // второй логотип.
+      icon: [
+        { url: '/icons/favicon-48.png', sizes: '48x48', type: 'image/png' },
+        { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      ],
+      apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+    },
+    // Ссылку на квест рассылают в мессенджерах, а не набирают
+    // руками. Без картинки превью там показывают пустую карточку —
+    // приглашение выглядит как спам.
+    //
+    // Саму картинку рисует app/opengraph-image.tsx: 1200×630 в
+    // Mono Signal, без файла-постера. Next подставляет её в
+    // openGraph и twitter автоматически, поэтому здесь только текст.
+    openGraph: {
+      type: 'website',
+      locale: 'ru_RU',
+      siteName: 'Движ-Патруль',
+      title: 'Движ-Патруль — городской фото-квест',
+      description: social,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Движ-Патруль — городской фото-квест',
+      description: social,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',

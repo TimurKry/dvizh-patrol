@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Select, TextArea, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
 import { PolygonDraw, toRing, type DrawPoint } from '@/components/admin/polygon-draw';
+import { PointPick } from '@/components/admin/point-pick';
 import { TaskFace } from '@/components/game/task-face';
 import { Icon } from '@/components/ui/icon';
 import {
@@ -14,18 +15,32 @@ import {
   TASK_DIFFICULTY_TEXT,
   TASK_MAP_MODE_TEXT,
 } from '@/lib/messages';
-import { asAreaPolygon, type PolygonRing } from '@/lib/geo';
+import { asAreaPolygon, pointInPolygon, type PolygonRing } from '@/lib/geo';
 import {
   TASK_CARD_TYPES,
   TASK_CATEGORIES,
   TASK_DIFFICULTIES,
   TASK_MAP_MODES,
+  type ImageFraming,
   type TaskCardType,
   type TaskMapMode,
   type TaskRow,
 } from '@/types/database';
 
 const INITIAL: AdminActionState = { ok: false };
+
+/**
+ * Точка внутри поля?
+ *
+ * Предупреждение, а не запрет: поле может быть не нарисовано, а
+ * задание — стоять на самой границе намеренно. Но опечатка в
+ * координатах чаще всего выкидывает точку за тысячи километров, и
+ * тогда это видно сразу.
+ */
+function insideGuide(guide: PolygonRing | null | undefined, point: { lat: number; lon: number }) {
+  if (!guide || guide.length < 4) return true;
+  return pointInPolygon(guide, point.lat, point.lon);
+}
 
 /**
  * Редактор задания.
@@ -46,6 +61,7 @@ export function TaskForm({
   nextNumber,
   areaGuide,
   referenceImageUrl,
+  referenceFraming,
 }: {
   eventId: string;
   task?: TaskRow;
@@ -54,6 +70,8 @@ export function TaskForm({
   areaGuide?: PolygonRing | null;
   /** Первый эталон — чтобы превью показывало настоящую картинку. */
   referenceImageUrl?: string | null;
+  /** И в той же рамке, в какой его увидит команда. */
+  referenceFraming?: ImageFraming | null;
 }) {
   const [state, formAction, pending] = useActionState(saveTaskAction, INITIAL);
   const fields = state.fields ?? {};
@@ -61,6 +79,15 @@ export function TaskForm({
   const [mode, setMode] = useState(task?.validation_mode ?? 'manual');
   const [needsLocation, setNeedsLocation] = useState(task?.require_location ?? false);
   const [mapMode, setMapMode] = useState<TaskMapMode>(task?.map_mode ?? 'none');
+
+  // Точка задания. Живёт в состоянии, потому что её ставят кликом
+  // по карте: числовые поля остаются рядом только для копирования
+  // готовых координат.
+  const [point, setPoint] = useState<{ lat: number; lon: number } | null>(() =>
+    task?.latitude != null && task?.longitude != null
+      ? { lat: task.latitude, lon: task.longitude }
+      : null,
+  );
 
   const [area, setArea] = useState<DrawPoint[]>(() => {
     const parsed = asAreaPolygon(task?.area_polygon);
@@ -223,25 +250,51 @@ export function TaskForm({
           </Field>
 
           {mapMode === 'point' && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Широта" htmlFor="latitude" required error={fields.latitude}>
-                <TextInput
-                  id="latitude"
-                  name="latitude"
-                  type="number"
-                  step="0.000001"
-                  defaultValue={task?.latitude ?? ''}
-                />
-              </Field>
-              <Field label="Долгота" htmlFor="longitude" required error={fields.longitude}>
-                <TextInput
-                  id="longitude"
-                  name="longitude"
-                  type="number"
-                  step="0.000001"
-                  defaultValue={task?.longitude ?? ''}
-                />
-              </Field>
+            <div className="flex flex-col gap-3">
+              <PointPick value={point} onChange={setPoint} guide={areaGuide ?? null} />
+
+              {/* Числа остаются видны: их копируют из карт, и
+                  запрещать вставку было бы вредно. Но набирать их
+                  вслепую больше не нужно — карта выше показывает,
+                  куда именно они указывают. */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Широта" htmlFor="latitude" required error={fields.latitude}>
+                  <TextInput
+                    id="latitude"
+                    name="latitude"
+                    type="number"
+                    step="0.000001"
+                    value={point?.lat ?? ''}
+                    onChange={(e) =>
+                      setPoint((current) => ({
+                        lat: Number(e.target.value),
+                        lon: current?.lon ?? 0,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="Долгота" htmlFor="longitude" required error={fields.longitude}>
+                  <TextInput
+                    id="longitude"
+                    name="longitude"
+                    type="number"
+                    step="0.000001"
+                    value={point?.lon ?? ''}
+                    onChange={(e) =>
+                      setPoint((current) => ({
+                        lat: current?.lat ?? 0,
+                        lon: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+
+              {point && !insideGuide(areaGuide, point) && (
+                <Notice icon="upload-failed">
+                  Точка стоит за границей игрового поля. Проверьте — команда до неё не дойдёт.
+                </Notice>
+              )}
             </div>
           )}
 
@@ -507,7 +560,11 @@ export function TaskForm({
           place={TASK_MAP_MODE_TEXT[mapMode].place}
           image={
             referenceImageUrl
-              ? { src: referenceImageUrl, badge: imageCaption || undefined }
+              ? {
+                  src: referenceImageUrl,
+                  badge: imageCaption || undefined,
+                  framing: referenceFraming,
+                }
               : null
           }
           placeholder={number || '—'}

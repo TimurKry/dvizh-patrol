@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { BUCKETS, createSignedUrls } from '@/lib/storage';
 import type {
   HandCard,
+  ImageFraming,
   SubmissionRow,
   SubmissionStatus,
   TaskReferenceImageRow,
@@ -41,6 +42,8 @@ export interface TaskWithState {
   attemptsLeft: number;
   canSubmit: boolean;
   referenceImageUrl: string | null;
+  /** Как первая картинка ложится в кадр карточки. */
+  referenceFraming: ImageFraming | null;
 }
 
 /** Статусы, которые тратят попытку (совпадает с логикой в SQL). */
@@ -116,15 +119,17 @@ export async function getTasksForTeam(
   const submissions = (submissionsResult.data as SubmissionRow[] | null) ?? [];
   const references = (referencesResult.data as TaskReferenceImageRow[] | null) ?? [];
 
-  // Первое эталонное изображение на задание.
-  const referenceByTask = new Map<string, string>();
+  // Первое эталонное изображение на задание — оно и попадает на
+  // карточку, вместе со своей рамкой.
+  const referenceByTask = new Map<string, TaskReferenceImageRow>();
   for (const ref of references) {
-    if (!referenceByTask.has(ref.task_id)) referenceByTask.set(ref.task_id, ref.image_path);
+    if (!referenceByTask.has(ref.task_id)) referenceByTask.set(ref.task_id, ref);
   }
 
-  const signedReferences = await createSignedUrls(BUCKETS.references, [
-    ...referenceByTask.values(),
-  ]);
+  const signedReferences = await createSignedUrls(
+    BUCKETS.references,
+    [...referenceByTask.values()].map((ref) => ref.image_path),
+  );
 
   const byTask = new Map<string, SubmissionRow[]>();
   for (const submission of submissions) {
@@ -161,7 +166,7 @@ export async function getTasksForTeam(
     else if (attemptsLeft === 0) state = 'attempts_exhausted';
     else if (rejected) state = 'rejected';
 
-    const referencePath = referenceByTask.get(task.id);
+    const reference = referenceByTask.get(task.id);
 
     return {
       task,
@@ -176,7 +181,10 @@ export async function getTasksForTeam(
         !accepted &&
         !inReview &&
         attemptsLeft > 0,
-      referenceImageUrl: referencePath ? (signedReferences.get(referencePath) ?? null) : null,
+      referenceImageUrl: reference ? (signedReferences.get(reference.image_path) ?? null) : null,
+      referenceFraming: reference
+        ? { fit: reference.fit, focusX: Number(reference.focus_x), focusY: Number(reference.focus_y) }
+        : null,
     };
   });
 }
@@ -212,7 +220,7 @@ export async function getTaskForTeam(
 /** Все эталонные изображения задания — для его страницы. */
 export async function getTaskReferences(
   taskId: string,
-): Promise<Array<{ id: string; url: string; caption: string | null }>> {
+): Promise<Array<{ id: string; url: string; caption: string | null; framing: ImageFraming }>> {
   const { data } = await supabaseAdmin()
     .from('task_reference_images')
     .select('*')
@@ -232,6 +240,11 @@ export async function getTaskReferences(
       id: row.id,
       url: signed.get(row.image_path) ?? '',
       caption: row.caption,
+      framing: {
+        fit: row.fit,
+        focusX: Number(row.focus_x),
+        focusY: Number(row.focus_y),
+      } satisfies ImageFraming,
     }))
     .filter((r) => r.url !== '');
 }

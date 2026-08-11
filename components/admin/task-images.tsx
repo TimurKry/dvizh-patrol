@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Field, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
 import { Icon } from '@/components/ui/icon';
+import { ImageFramingEditor } from '@/components/admin/image-framing';
+import type { ImageFraming } from '@/types/database';
 
 /**
  * Картинки задания.
@@ -31,6 +33,7 @@ export interface TaskImage {
   id: string;
   url: string;
   caption: string | null;
+  framing: ImageFraming;
 }
 
 export function TaskImages({ taskId, images }: { taskId: string; images: TaskImage[] }) {
@@ -58,20 +61,9 @@ export function TaskImages({ taskId, images }: { taskId: string; images: TaskIma
       )}
 
       {images.length > 0 && (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="flex flex-col gap-4">
           {images.map((image, index) => (
-            <li key={image.id} className="flex flex-col gap-2 border border-hairline p-2">
-              {/* Пропорцию держит обёртка, а не сам снимок:
-                  aspect-ratio на <img> с собственными размерами
-                  браузер применяет не так, как ожидаешь, и
-                  вертикальная картинка растягивает карточку. */}
-              <div className="aspect-4/3 w-full overflow-hidden bg-canvas-deep">
-                {/* Ссылка подписанная и живёт недолго — оптимизатору
-                    next/image её кэшировать нечего. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image.url} alt="" className="h-full w-full object-cover" />
-              </div>
-
+            <li key={image.id} className="flex flex-col gap-3 border border-hairline p-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-caption text-muted">
                   {index === 0 ? 'На карточке' : `№${index + 1}`}
@@ -89,6 +81,8 @@ export function TaskImages({ taskId, images }: { taskId: string; images: TaskIma
                   </button>
                 </form>
               </div>
+
+              <ImageFramingEditor imageId={image.id} url={image.url} framing={image.framing} />
             </li>
           ))}
         </ul>

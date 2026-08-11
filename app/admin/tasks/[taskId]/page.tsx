@@ -62,11 +62,12 @@ export default async function EditTaskPage({ params }: { params: Promise<{ taskI
         nextNumber={task.number}
         areaGuide={guide}
         referenceImageUrl={references[0]?.url ?? null}
+        referenceFraming={references[0]?.framing ?? null}
       />
 
       <TaskImages
         taskId={task.id}
-        images={references.map((r) => ({ id: r.id, url: r.url, caption: r.caption }))}
+        images={references.map((r) => ({ id: r.id, url: r.url, caption: r.caption, framing: r.framing }))}
       />
 
       {/* ═══ Массовые действия ══════════════════════════════ */}

@@ -39,7 +39,7 @@ const STATE: Record<TaskWithState['state'], { text: string; icon: IconName; tone
 
 export function TaskHand({ items }: { items: TaskWithState[] }) {
   const cards: TableCard[] = items.map((item) => {
-    const { task, state, attemptsLeft, referenceImageUrl } = item;
+    const { task, state, attemptsLeft, referenceImageUrl, referenceFraming } = item;
     const type = TASK_CARD_TYPE_TEXT[task.card_type];
     const gone = state === 'claimed_by_other';
 
@@ -63,7 +63,15 @@ export function TaskHand({ items }: { items: TaskWithState[] }) {
           text={task.short_description}
           mapMode={task.map_mode}
           place={TASK_MAP_MODE_TEXT[task.map_mode].place}
-          image={referenceImageUrl ? { src: referenceImageUrl, badge: 'Фото-эталон' } : null}
+          image={
+            referenceImageUrl
+              ? {
+                  src: referenceImageUrl,
+                  badge: task.image_caption ?? undefined,
+                  framing: referenceFraming,
+                }
+              : null
+          }
           placeholder={String(task.number)}
           attemptsLine={
             state !== 'accepted' && !gone && attemptsLeft > 0

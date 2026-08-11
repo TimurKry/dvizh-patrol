@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/surface';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { Icon } from '@/components/ui/icon';
+import { framingStyle } from '@/lib/framing';
 import { env } from '@/lib/env';
 import { getTaskForTeam, getTaskReferences } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
@@ -117,12 +118,17 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
           <div className="mt-6 flex flex-col gap-3">
             {references.map((reference) => (
               <figure key={reference.id} className="flex flex-col gap-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={reference.url}
-                  alt={reference.caption ?? `Пример к заданию ${task.number}`}
-                  className="w-full border border-hairline"
-                />
+                {/* Рамка та же, что на карточке: организатор
+                    выбрал её один раз и видит здесь тот же кадр. */}
+                <div className="aspect-4/3 w-full overflow-hidden border border-hairline bg-canvas-deep">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={reference.url}
+                    alt={reference.caption ?? `Пример к заданию ${task.number}`}
+                    className="h-full w-full"
+                    style={framingStyle(reference.framing)}
+                  />
+                </div>
                 {(reference.caption ?? task.image_caption) && (
                   <figcaption className="text-caption text-muted">
                     {reference.caption ?? task.image_caption}

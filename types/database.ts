@@ -255,12 +255,34 @@ export interface HandCard {
   lastStatus: SubmissionStatus | null;
 }
 
+/** Как картинка ложится в кадр 4:3. */
+export const IMAGE_FITS = ['cover', 'contain'] as const;
+export type ImageFit = (typeof IMAGE_FITS)[number];
+
+/**
+ * Рамка картинки.
+ *
+ * Кадр карточки — 4:3, а картинки приходят разные. `cover`
+ * заполняет кадр и обрезает лишнее, `contain` вписывает целиком с
+ * полями. Точка фокуса говорит, что оставить в кадре при обрезке:
+ * у вертикального рисунка это обычно верх, иначе из кадра уезжают
+ * головы.
+ */
+export interface ImageFraming {
+  fit: ImageFit;
+  focusX: number;
+  focusY: number;
+}
+
 export interface TaskReferenceImageRow {
   id: string;
   task_id: string;
   image_path: string;
   caption: string | null;
   sort_order: number;
+  fit: ImageFit;
+  focus_x: number;
+  focus_y: number;
   created_at: string;
 }
 

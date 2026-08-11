@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { PlaceMark, TaskTypeIcon } from './task-type-icon';
 import { Icon, type IconName } from '@/components/ui/icon';
-import type { TaskCardType, TaskMapMode } from '@/types/database';
+import { framingStyle } from '@/lib/framing';
+import type { ImageFraming, TaskCardType, TaskMapMode } from '@/types/database';
 import { cn } from '@/lib/cn';
 
 /**
@@ -53,8 +54,12 @@ export function TaskFace({
   points: string;
   text?: string | null;
   place: string;
-  /** Фото-эталон. Приходит по подписанной ссылке — не оптимизируем. */
-  image?: { src: string; badge?: string } | null;
+  /**
+   * Картинка карточки. Приходит по подписанной ссылке — не
+   * оптимизируем. `framing` решает, как она ложится в кадр 4:3:
+   * заполнить с обрезкой или вписать целиком.
+   */
+  image?: { src: string; badge?: string; framing?: ImageFraming | null } | null;
   /** Что показать вместо фото: обычно номер задания. */
   placeholder?: string;
   attemptsLine?: string | null;
@@ -106,7 +111,13 @@ export function TaskFace({
           {/* Эталон приходит по подписанной ссылке с ограниченным
               сроком, оптимизатор next/image её кэшировать не должен. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image.src} alt="" loading="lazy" className="h-full w-full object-cover" />
+          <img
+            src={image.src}
+            alt=""
+            loading="lazy"
+            className="h-full w-full"
+            style={framingStyle(image.framing)}
+          />
           {image.badge && (
             <span className="signal-label absolute top-2 left-2 bg-[#060609] px-2 py-1 text-micro text-[#f5f5f1]">
               {image.badge}

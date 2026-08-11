@@ -1058,6 +1058,63 @@ export async function uploadTaskImageAction(
   return { ok: true, message: 'Картинка загружена.' };
 }
 
+/**
+ * Рамка картинки: как вписать и куда смотреть.
+ *
+ * Кадр карточки 4:3, а картинки приходят разные. Вертикальный
+ * рисунок при обрезке по центру теряет головы — ровно то, ради
+ * чего его и загружали. Файл при этом не трогаем: обрезать
+ * оригинал значило бы терять данные при каждой правке рамки.
+ */
+export async function updateTaskImageFramingAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const imageId = String(formData.get('imageId') ?? '');
+  const fit = String(formData.get('fit') ?? 'cover');
+  const focusX = Number(formData.get('focusX') ?? 0.5);
+  const focusY = Number(formData.get('focusY') ?? 0.5);
+
+  if (fit !== 'cover' && fit !== 'contain') {
+    return { ok: false, message: 'Неизвестный способ вписывания.' };
+  }
+  if (![focusX, focusY].every((v) => Number.isFinite(v) && v >= 0 && v <= 1)) {
+    return { ok: false, message: 'Точка фокуса вышла за пределы картинки.' };
+  }
+
+  const db = supabaseAdmin();
+  const { data } = await db
+    .from('task_reference_images')
+    .select('*')
+    .eq('id', imageId)
+    .maybeSingle();
+
+  const image = data as TaskReferenceImageRow | null;
+  if (!image) return { ok: false, message: 'Картинка не найдена.' };
+
+  const { error } = await db
+    .from('task_reference_images')
+    .update({ fit, focus_x: focusX, focus_y: focusY })
+    .eq('id', imageId);
+
+  if (error) return { ok: false, message: 'Не удалось сохранить рамку.' };
+
+  await audit({
+    admin,
+    action: 'task_image_framed',
+    entityType: 'task',
+    entityId: image.task_id,
+    before: { fit: image.fit, focus_x: image.focus_x, focus_y: image.focus_y },
+    after: { fit, focus_x: focusX, focus_y: focusY },
+  });
+
+  revalidatePath(`/admin/tasks/${image.task_id}`);
+  revalidatePath(`/tasks/${image.task_id}`);
+  revalidatePath('/tasks');
+  return { ok: true, message: 'Рамка сохранена.' };
+}
+
 /** Удаление картинки: строка и файл уходят вместе. */
 export async function deleteTaskImageAction(
   _prev: AdminActionState,

@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Circle, Map as LeafletMap, Marker } from 'leaflet';
+import type { Circle, Map as LeafletMapInstance, Marker } from 'leaflet';
 // Без своей таблицы стилей Leaflet раскладывает тайлы лесенкой:
 // позиционирование слоёв живёт именно в ней, а не в скрипте.
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
+import { MapboxMap } from './mapbox-map';
 import type { PlayArea } from '@/lib/geo';
 
 /**
@@ -77,14 +78,33 @@ const CANVAS = '#060609';
 /** Центр Лейпцига — куда смотреть, пока не известно ничего лучше. */
 const FALLBACK = { latitude: 51.3397, longitude: 12.3731 };
 
-export function QuestMap({
+/**
+ * Карта квеста — точка входа.
+ *
+ * Есть токен Mapbox — рисуем на нём: тёмная подложка, объёмные
+ * дома, наклон камеры. Нет токена — остаётся Leaflet на тайлах
+ * OpenStreetMap.
+ *
+ * Запасной вариант не задел прошлого, а осознанная страховка.
+ * Токен может кончиться по квоте, его могут отозвать, его может
+ * не быть на превью — и во всех трёх случаях карта на квесте
+ * нужнее красивой карты. Переключение по переменной, а не по
+ * ошибке загрузки: так поведение предсказуемо и проверяемо.
+ */
+export function QuestMap(props: QuestMapProps) {
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  if (token) return <MapboxMap token={token} {...props} />;
+  return <LeafletMap {...props} />;
+}
+
+function LeafletMap({
   area,
   points,
   className = 'h-[420px]',
   showLocateButton = true,
 }: QuestMapProps) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<LeafletMap | null>(null);
+  const mapRef = useRef<LeafletMapInstance | null>(null);
   const meRef = useRef<{ marker: Marker; halo: Circle } | null>(null);
 
   const [locating, setLocating] = useState(false);

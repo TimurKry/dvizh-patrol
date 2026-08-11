@@ -4,7 +4,7 @@ import { Notice } from '@/components/ui/feedback';
 import { Reveal } from '@/components/ui/reveal';
 import { Hero } from '@/components/landing/hero';
 import { SectionHead } from '@/components/landing/section-head';
-import { TaskCardDemo } from '@/components/landing/task-card-demo';
+import { TaskDeck } from '@/components/landing/task-deck';
 import { TicketCta } from '@/components/landing/ticket-cta';
 import { TrailLink, TrailRule } from '@/components/landing/route-trail';
 import { QuestMap } from '@/components/game/quest-map';
@@ -149,12 +149,12 @@ export default async function HomePage() {
                   движения
                 </>
               }
-              intro="Загадка, фото-повтор или городской актив. Карточка показывает главное сразу, детали — по перевороту."
+              intro="Загадка, фото-повтор или городской актив — и одно золотое задание на всех. Карточка показывает главное сразу, детали — по перевороту."
             />
           </Reveal>
 
           <Reveal delay={90}>
-            <TaskCardDemo />
+            <TaskDeck />
           </Reveal>
         </div>
       </section>

@@ -131,14 +131,14 @@ export function EventSettingsForm({
           htmlFor="teamSize"
           required
           error={fields.teamSize}
-          hint="От 1 до 4."
+          hint="От 1 до 6."
         >
           <TextInput
             id="teamSize"
             name="teamSize"
             type="number"
             min="1"
-            max="4"
+            max="6"
             defaultValue={event.team_size}
             required
           />

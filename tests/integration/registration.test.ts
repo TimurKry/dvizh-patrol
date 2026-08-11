@@ -197,6 +197,22 @@ describe('лимит участников', () => {
     expect(Number(rows[0]!.count)).toBe(4);
   });
 
+  // Состав менялся с четырёх на пять уже после запуска, и держало
+  // его не приложение, а CHECK-ограничение в схеме: правка
+  // team_size в админке просто падала бы с ошибкой базы. Тест
+  // сторожит именно диапазон, а не текущее значение.
+  it('пускает пятого участника, когда состав пять', async () => {
+    const eventId = await createEvent({ teamSize: 5 });
+    const team = await registerTeam(eventId, 'Пятеро');
+
+    for (let i = 2; i <= 5; i += 1) {
+      const result = await joinTeam(eventId, team.joinCode!, `Участник ${i}`);
+      expect(result.ok, `участник ${i}`).toBe(true);
+    }
+
+    expect((await joinTeam(eventId, team.joinCode!, 'Шестой')).error).toBe('team_full');
+  });
+
   it('пятого участника не пускает', async () => {
     const eventId = await createEvent({ teamSize: 4 });
     const team = await registerTeam(eventId, 'Команда');

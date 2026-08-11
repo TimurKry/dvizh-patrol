@@ -99,7 +99,7 @@ export const eventSettingsSchema = z
     startsAt: z.string().min(1, 'Укажите дату и время начала'),
     priceCents: z.number().int().min(0, 'Цена не может быть отрицательной'),
     maxTeams: z.number().int().min(1, 'Минимум одна команда').max(10, 'Максимум десять команд'),
-    teamSize: z.number().int().min(1, 'Минимум один участник').max(4, 'Максимум четыре участника'),
+    teamSize: z.number().int().min(1, 'Минимум один участник').max(6, 'Максимум шесть участников'),
     registrationOpen: z.boolean(),
     leaderboardMode: z.enum(LEADERBOARD_MODES),
     aiValidationEnabled: z.boolean(),

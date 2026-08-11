@@ -307,7 +307,7 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
         <div className="flex items-baseline justify-between">
           <h2 className="text-body-lg">Состав</h2>
           <p className="text-caption text-muted">
-            {members.length} из {event?.team_size ?? 4}
+            {members.length} из {event?.team_size ?? 5}
           </p>
         </div>
         <ul className="flex flex-col gap-2">

@@ -124,7 +124,7 @@ export async function updateEventAction(
     startsAt: formData.get('startsAt'),
     priceCents: Math.round(Number(formData.get('price') ?? 0) * 100),
     maxTeams: Number(formData.get('maxTeams') ?? 10),
-    teamSize: Number(formData.get('teamSize') ?? 4),
+    teamSize: Number(formData.get('teamSize') ?? 5),
     registrationOpen: formData.get('registrationOpen') === 'on',
     leaderboardMode: formData.get('leaderboardMode'),
     aiValidationEnabled: formData.get('aiValidationEnabled') === 'on',

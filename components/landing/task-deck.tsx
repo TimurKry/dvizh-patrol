@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CardBack } from '@/components/game/card-back';
-import { PlaceMark, TaskTypeIcon } from '@/components/game/task-type-icon';
+import { TaskTypeIcon } from '@/components/game/task-type-icon';
+import { TaskFace } from '@/components/game/task-face';
 import { teamColorVars } from '@/lib/team-colors';
 import type { TaskCardType } from '@/types/database';
 import { cn } from '@/lib/cn';
@@ -44,6 +46,8 @@ type Example = {
   text: string;
   place: string;
   points: string;
+  number: string;
+  image?: string;
   golden?: boolean;
 };
 
@@ -56,6 +60,7 @@ const EXAMPLES: Example[] = [
     text: 'Стикер «Движ Лейпциг» — на что-нибудь ценнее. Потом это — на следующее. Меняйтесь весь вечер: чем дальше уйдёте от стикера, тем больше баллов. Что у кого вышло, узнаем на BBQ.',
     place: 'Где угодно в поле',
     points: '???',
+    number: '00',
     golden: true,
   },
   {
@@ -65,7 +70,8 @@ const EXAMPLES: Example[] = [
     title: 'Самая старая дата',
     text: 'Найдите самую старую дату, выбитую на здании. Где искать — не сказано, но район на карте обведён.',
     place: 'Примерный район',
-    points: '70 Б*',
+    points: '70',
+    number: '10',
   },
   {
     id: 'photo',
@@ -74,7 +80,9 @@ const EXAMPLES: Example[] = [
     title: 'Повторите скульптуру',
     text: 'Дойдите до креста на карте и повторите позу как можно точнее — всей командой.',
     place: 'Точка на карте',
-    points: '180 Б*',
+    points: '180',
+    number: '04',
+    image: '/assets/task-example-1.webp',
   },
   {
     id: 'active',
@@ -83,7 +91,9 @@ const EXAMPLES: Example[] = [
     title: 'Пять жёлтых',
     text: 'Найдите пять жёлтых предметов и снимите их одним кадром. Ничего покупать не нужно.',
     place: 'Где угодно в поле',
-    points: '120 Б*',
+    points: '120',
+    number: '07',
+    image: '/assets/task-example-2.webp',
   },
 ];
 
@@ -131,7 +141,10 @@ export function TaskDeck() {
       return;
     }
 
-    node.style.transform = deltaTransform(slot.getBoundingClientRect(), node.getBoundingClientRect());
+    node.style.transform = deltaTransform(
+      slot.getBoundingClientRect(),
+      node.getBoundingClientRect(),
+    );
     const id = requestAnimationFrame(() => {
       node.style.transform = '';
       setSettled(true);
@@ -187,50 +200,74 @@ export function TaskDeck() {
         </div>
       </div>
 
-      {/* ═══ Открытая карточка ════════════════════════════ */}
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={open.title}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        >
-          <button
-            type="button"
-            aria-label="Закрыть карточку"
-            onClick={close}
-            className="absolute inset-0 bg-canvas/85"
-          />
-
+      {/* ═══ Открытая карточка ════════════════════════════
+          Через портал в body, а не на месте. Модальное окно не
+          должно зависеть от стилей предков: у секции лендинга
+          есть `will-change`, а он делает элемент содержащим
+          блоком для `position: fixed` — окно оказывалось заперто
+          в габаритах секции вместо экрана. `will-change` мы
+          заодно сняли, но полагаться на то, что его не вернут,
+          нельзя. */}
+      {/* Проверки «мы уже в браузере» не нужно: `open` выставляет
+          только нажатие, а на сервере нажимать некому. */}
+      {open &&
+        createPortal(
           <div
-            ref={cardRef}
-            className={cn(
-              'relative w-full max-w-[330px] origin-center',
-              settled && 'transition-transform duration-[420ms] ease-out motion-reduce:transition-none',
-            )}
+            role="dialog"
+            aria-modal="true"
+            aria-label={open.title}
+            className="fixed inset-0 z-50"
           >
-            <div className="flip-scene">
-              <div className="flip-body" data-flipped={settled ? 'false' : 'true'}>
-                <div className="flip-face">
-                  <OpenCard example={open} />
-                </div>
-                <div className="flip-face flip-face-back" aria-hidden="true">
-                  <CardBack caption="Движ-Патруль" hint="Рубашка красится в цвет команды" />
+            {/* Затемнение отдельным слоем поверх всего экрана, а не
+              внутри прокручиваемой обёртки: внутри оно закончилось
+              бы на первом экране, и низ длинной карточки лежал бы
+              на самой странице. */}
+            <button
+              type="button"
+              aria-label="Закрыть карточку"
+              onClick={close}
+              className="fixed inset-0 bg-canvas/85"
+            />
+
+            {/* Карточка с фото-эталоном выше экрана телефона.
+              Прокручиваемая обёртка с центрированием по min-h-full:
+              короткая карточка стоит по центру, длинная листается
+              целиком вместе с кнопкой. */}
+            <div className="absolute inset-0 overflow-y-auto overscroll-contain">
+              <div className="flex min-h-full items-center justify-center p-4">
+                <div
+                  ref={cardRef}
+                  className={cn(
+                    'relative w-full max-w-[330px] origin-center',
+                    settled &&
+                      'transition-transform duration-[420ms] ease-out motion-reduce:transition-none',
+                  )}
+                >
+                  <div className="flip-scene">
+                    <div className="flip-body" data-flipped={settled ? 'false' : 'true'}>
+                      <div className="flip-face">
+                        <OpenCard example={open} />
+                      </div>
+                      <div className="flip-face flip-face-back" aria-hidden="true">
+                        <CardBack caption="Движ-Патруль" hint="Рубашка красится в цвет команды" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    ref={closeRef}
+                    type="button"
+                    onClick={close}
+                    className="lift mt-3 inline-flex min-h-[44px] w-full items-center justify-center border border-ink bg-canvas px-4 text-caption uppercase text-ink hover:border-signal hover:text-signal"
+                  >
+                    Закрыть
+                  </button>
                 </div>
               </div>
             </div>
-
-            <button
-              ref={closeRef}
-              type="button"
-              onClick={close}
-              className="lift mt-3 inline-flex min-h-[44px] w-full items-center justify-center border border-ink bg-canvas px-4 text-caption uppercase text-ink hover:border-signal hover:text-signal"
-            >
-              Закрыть
-            </button>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -254,7 +291,7 @@ function DeckSlot({
       onClick={(e) => onOpen(e.currentTarget)}
       className={cn(
         'lift relative block w-full overflow-hidden rounded-[8px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal',
-        tall ? 'h-[168px]' : 'h-[132px]',
+        tall ? 'h-[172px]' : 'h-[148px]',
         example.golden && 'ring-2 ring-[#c9a227]',
       )}
     >
@@ -271,8 +308,9 @@ function DeckSlot({
         }
       >
         <CardBack
-          caption={example.golden ? 'Золотая' : 'Движ'}
+          caption={example.golden ? 'Золотая' : undefined}
           hint={example.golden ? 'Одна на всех' : undefined}
+          mark={example.golden ? undefined : <TaskTypeIcon type={example.type} size={34} />}
           className={cn('h-full', example.golden && 'border-[#8a6f14]')}
         />
       </span>
@@ -281,53 +319,25 @@ function DeckSlot({
   );
 }
 
-/** Лицевая сторона открытой карточки. */
+/**
+ * Лицевая сторона открытой карточки — тот же `TaskFace`, что и в
+ * бою. Своей разметки здесь нет намеренно: витрина, нарисованная
+ * «в общих чертах», расходится с продуктом за две недели, и
+ * человек видит на лендинге не то, что получит на квесте.
+ */
 function OpenCard({ example }: { example: Example }) {
   return (
-    <article
-      className={cn(
-        'flex h-full flex-col gap-3 rounded-[8px] border p-5',
-        example.golden
-          ? 'border-[#c9a227] bg-[#f7f2e2] text-[#060609]'
-          : 'border-hairline bg-[#f5f5f1] text-[#060609]',
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <span
-          className={cn(
-            'flex h-11 w-11 items-center justify-center border',
-            example.golden ? 'border-[#8a6f14] text-[#8a6f14]' : 'border-[#060609]',
-          )}
-        >
-          <TaskTypeIcon type={example.type} size={24} />
-        </span>
-        <span
-          className={cn(
-            'display-figure px-3 py-2 text-title',
-            example.golden ? 'bg-[#8a6f14] text-[#f7f2e2]' : 'bg-[#060609] text-[#f5f5f1]',
-          )}
-        >
-          {example.points}
-        </span>
-      </div>
-
-      <p
-        className={cn(
-          'signal-label text-micro',
-          example.golden ? 'text-[#8a6f14]' : 'text-[#5c5c63]',
-        )}
-      >
-        {example.kicker}
-      </p>
-
-      <h3 className="font-display text-title font-bold uppercase">{example.title}</h3>
-
-      <p className="text-caption text-[#5c5c63]">{example.text}</p>
-
-      <p className="signal-label mt-auto flex items-center gap-1.5 text-micro text-[#5c5c63]">
-        <PlaceMark type={example.type} />
-        {example.place}
-      </p>
-    </article>
+    <TaskFace
+      type={example.type}
+      kicker={example.kicker}
+      title={example.title}
+      points={example.points}
+      text={example.text}
+      place={example.place}
+      image={example.image ? { src: example.image, badge: 'Фото-эталон' } : null}
+      placeholder={example.number}
+      status={{ icon: '◇', text: 'Пример', tone: 'available' }}
+      golden={example.golden}
+    />
   );
 }

@@ -22,11 +22,14 @@ export function CardBack({
   /** Крупная надпись поперёк рубашки: тип задания или название команды. */
   caption,
   hint,
+  /** Знак вместо надписи — например, тип задания в витрине. */
+  mark,
   className,
   children,
 }: {
-  caption: string;
+  caption?: string;
   hint?: string;
+  mark?: React.ReactNode;
   className?: string;
   /** Действия поверх рубашки — обычно кнопка «вернуть лицом». */
   children?: React.ReactNode;
@@ -48,9 +51,13 @@ export function CardBack({
           backgroundSize: '88px auto',
         }}
       />
-      <span className="relative font-display text-title font-bold uppercase tracking-[-0.03em]">
-        {caption}
-      </span>
+      {mark && <span className="relative">{mark}</span>}
+
+      {caption && (
+        <span className="relative font-display text-title font-bold uppercase tracking-[-0.03em]">
+          {caption}
+        </span>
+      )}
       {hint && (
         <span className="signal-label relative max-w-[24ch] text-micro opacity-80">{hint}</span>
       )}

@@ -1,4 +1,5 @@
 import { taskImportItemSchema, type TaskImportItem } from '@/lib/validation/schemas';
+import { asAreaPolygon } from '@/lib/geo';
 
 /**
  * Импорт заданий из JSON и CSV.
@@ -146,6 +147,23 @@ const CSV_ALIASES: Record<string, string> = {
   radius_meters: 'radiusMeters',
   active: 'active',
   активно: 'active',
+  mapmode: 'mapMode',
+  map_mode: 'mapMode',
+  карта: 'mapMode',
+  areapolygon: 'areaPolygon',
+  area_polygon: 'areaPolygon',
+  область: 'areaPolygon',
+  imagecaption: 'imageCaption',
+  image_caption: 'imageCaption',
+  подписькартинки: 'imageCaption',
+  afterword: 'afterword',
+  послесловие: 'afterword',
+  afterwordurl: 'afterwordUrl',
+  afterword_url: 'afterwordUrl',
+  ссылка: 'afterwordUrl',
+  afterwordurllabel: 'afterwordUrlLabel',
+  afterword_url_label: 'afterwordUrlLabel',
+  подписьссылки: 'afterwordUrlLabel',
 };
 
 function normalizeHeader(header: string): string | null {
@@ -191,8 +209,38 @@ function csvRowToObject(headers: Array<string | null>, cells: string[]): Record<
   if (raw.longitude) out.longitude = Number(raw.longitude);
   if (raw.radiusMeters) out.radiusMeters = Number(raw.radiusMeters);
   if (raw.active) out.active = parseBoolean(raw.active);
+  if (raw.mapMode) out.mapMode = raw.mapMode.trim();
+  if (raw.imageCaption) out.imageCaption = raw.imageCaption;
+  if (raw.afterword) out.afterword = raw.afterword;
+  if (raw.afterwordUrl) out.afterwordUrl = raw.afterwordUrl.trim();
+  if (raw.afterwordUrlLabel) out.afterwordUrlLabel = raw.afterwordUrlLabel;
+
+  // Контур в CSV — та же строка JSON, что уходит из редактора
+  // области. Рисовать полигон в таблице никто не станет, но
+  // перенести уже нарисованный между мероприятиями — станет.
+  if (raw.areaPolygon) {
+    try {
+      out.areaPolygon = JSON.parse(raw.areaPolygon);
+    } catch {
+      out.areaPolygon = raw.areaPolygon;
+    }
+  }
 
   return out;
+}
+
+/**
+ * Режим карты для файлов, где его нет.
+ *
+ * Колонка появилась в 0014, а файлы организатора старше её. Без
+ * этого каждое импортированное задание приезжало бы с пустой
+ * картой, хотя координаты в файле есть. Правило то же, что в
+ * бэкофилле миграции.
+ */
+function inferMapMode(item: Record<string, unknown>): void {
+  if (item.mapMode !== undefined) return;
+  const hasPoint = item.latitude != null && item.longitude != null;
+  item.mapMode = item.cardType !== 'active' && hasPoint ? 'point' : 'none';
 }
 
 // ═══ Общий разбор ══════════════════════════════════════════════
@@ -261,6 +309,8 @@ export function parseTaskImport(content: string, format: 'json' | 'csv'): Import
   const seenNumbers = new Map<number, number>();
 
   for (const { row, value } of rawItems) {
+    if (value && typeof value === 'object') inferMapMode(value as Record<string, unknown>);
+
     const parsed = taskImportItemSchema.safeParse(value);
 
     if (!parsed.success) {
@@ -334,9 +384,20 @@ export function toTaskRow(item: TaskImportItem, eventId: string): Record<string,
     minimum_people: item.minimumPeople,
     max_attempts: item.maxAttempts,
     require_location: item.requireLocation,
-    latitude: item.requireLocation ? (item.latitude ?? null) : null,
-    longitude: item.requireLocation ? (item.longitude ?? null) : null,
-    radius_meters: item.requireLocation ? (item.radiusMeters ?? null) : null,
+    // Координаты сохраняются независимо от требования геопозиции.
+    // Это разные вещи: крест на карте показывает, куда идти, а
+    // require_location проверяет, что телефон действительно там.
+    // Раньше они были связаны, и точка на карте существовала
+    // только у заданий с включённой проверкой.
+    latitude: item.latitude ?? null,
+    longitude: item.longitude ?? null,
+    radius_meters: item.radiusMeters ?? null,
+    map_mode: item.mapMode,
+    area_polygon: asAreaPolygon(item.areaPolygon),
+    image_caption: item.imageCaption || null,
+    afterword: item.afterword || null,
+    afterword_url: item.afterwordUrl || null,
+    afterword_url_label: item.afterwordUrlLabel || null,
     active: item.active,
     sort_order: item.number,
   };

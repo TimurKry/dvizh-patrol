@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/feedback';
 import { requireAdmin } from '@/lib/auth/admin';
 import { getCurrentEvent } from '@/lib/data/event';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { asAreaPolygon } from '@/lib/geo';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,9 +34,10 @@ export default async function NewTaskPage() {
     .maybeSingle();
 
   const nextNumber = ((data as { number: number } | null)?.number ?? 0) + 1;
+  const guide = asAreaPolygon(event.area_polygon)?.coordinates[0] ?? null;
 
   return (
-    <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
+    <div className="page-well flex max-w-6xl flex-col gap-6 py-8">
       <div>
         <Link href="/admin/tasks" className="text-caption text-muted hover:text-ink">
           ← Все задания
@@ -44,7 +46,7 @@ export default async function NewTaskPage() {
         <h1 className="mt-2 text-headline">Новое задание</h1>
       </div>
 
-      <TaskForm eventId={event.id} nextNumber={nextNumber} />
+      <TaskForm eventId={event.id} nextNumber={nextNumber} areaGuide={guide} />
     </div>
   );
 }

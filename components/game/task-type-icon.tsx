@@ -1,5 +1,5 @@
 import { cn } from '@/lib/cn';
-import type { TaskCardType } from '@/types/database';
+import type { TaskCardType, TaskMapMode } from '@/types/database';
 
 /**
  * Знаки трёх типов заданий.
@@ -82,8 +82,12 @@ export function TaskTypeIcon({
  * Крест — тот же, что и на карте. Повторение намеренное: человек
  * читает «точка на карте», видит крест и потом находит его же
  * среди тайлов, не гадая, что из значков относится к его заданию.
+ *
+ * Смотрит на режим карты, а не на тип карточки. До 0014 это было
+ * одно и то же, теперь нет: загадка бывает и с точкой, и без
+ * карты вовсе, и значок обязан говорить правду про карту.
  */
-export function PlaceMark({ type, className }: { type: TaskCardType; className?: string }) {
+export function PlaceMark({ mode, className }: { mode: TaskMapMode; className?: string }) {
   const common = {
     width: 13,
     height: 13,
@@ -94,7 +98,7 @@ export function PlaceMark({ type, className }: { type: TaskCardType; className?:
     focusable: false,
   } as const;
 
-  if (type === 'photo') {
+  if (mode === 'point') {
     return (
       <svg {...common}>
         <path
@@ -107,7 +111,7 @@ export function PlaceMark({ type, className }: { type: TaskCardType; className?:
     );
   }
 
-  if (type === 'riddle') {
+  if (mode === 'area') {
     return (
       <svg {...common}>
         <circle
@@ -122,8 +126,8 @@ export function PlaceMark({ type, className }: { type: TaskCardType; className?:
     );
   }
 
-  // Актив к месту не привязан — рисовать нечего, но пустое место
-  // в ряду сохраняем, чтобы строки не прыгали по вертикали.
+  // Карты нет — рисовать нечего, но пустое место в ряду
+  // сохраняем, чтобы строки не прыгали по вертикали.
   return (
     <svg {...common}>
       <path d="M2.5 7h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />

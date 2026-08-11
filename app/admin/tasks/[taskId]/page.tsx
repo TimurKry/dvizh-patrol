@@ -4,9 +4,13 @@ import { notFound } from 'next/navigation';
 import { ActionButton } from '@/components/admin/action-form';
 import { acceptAllForTaskAction, deleteTaskAction } from '@/actions/admin';
 import { TaskForm } from '@/components/admin/task-form';
+import { TaskImages } from '@/components/admin/task-images';
 import { Card, Eyebrow } from '@/components/ui/surface';
 import { requireAdmin } from '@/lib/auth/admin';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getTaskReferences } from '@/lib/data/tasks';
+import { getCurrentEvent } from '@/lib/data/event';
+import { asAreaPolygon } from '@/lib/geo';
 import type { TaskRow } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -27,6 +31,15 @@ export default async function EditTaskPage({ params }: { params: Promise<{ taskI
     .select('id', { count: 'exact', head: true })
     .eq('task_id', taskId);
 
+  // Граница поля — пунктиром под областью задания, чтобы контур
+  // рисовался внутри поля, а не на глаз рядом с ним.
+  const event = await getCurrentEvent();
+  const guide = asAreaPolygon(event?.area_polygon)?.coordinates[0] ?? null;
+
+  // Первый эталон идёт в превью: карточка должна выглядеть так же,
+  // как у команды, а не как её схема.
+  const references = await getTaskReferences(taskId);
+
   const { count: waiting } = await db
     .from('submissions')
     .select('id', { count: 'exact', head: true })
@@ -34,7 +47,7 @@ export default async function EditTaskPage({ params }: { params: Promise<{ taskI
     .in('status', ['pending', 'checking', 'manual_review']);
 
   return (
-    <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
+    <div className="page-well flex max-w-6xl flex-col gap-6 py-8">
       <div>
         <Link href="/admin/tasks" className="text-caption text-muted hover:text-ink">
           ← Все задания
@@ -43,7 +56,18 @@ export default async function EditTaskPage({ params }: { params: Promise<{ taskI
         <h1 className="mt-2 text-headline">{task.title}</h1>
       </div>
 
-      <TaskForm eventId={task.event_id} task={task} nextNumber={task.number} />
+      <TaskForm
+        eventId={task.event_id}
+        task={task}
+        nextNumber={task.number}
+        areaGuide={guide}
+        referenceImageUrl={references[0]?.url ?? null}
+      />
+
+      <TaskImages
+        taskId={task.id}
+        images={references.map((r) => ({ id: r.id, url: r.url, caption: r.caption }))}
+      />
 
       {/* ═══ Массовые действия ══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">

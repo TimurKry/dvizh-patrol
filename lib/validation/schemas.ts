@@ -5,8 +5,10 @@ import {
   TASK_CARD_TYPES,
   TASK_CATEGORIES,
   TASK_DIFFICULTIES,
+  TASK_MAP_MODES,
   VALIDATION_MODES,
 } from '@/types/database';
+import { asAreaPolygon } from '@/lib/geo';
 
 /**
  * Схемы валидации.
@@ -146,6 +148,77 @@ export const eventSettingsSchema = z
 
 // ═══ Задание ═══════════════════════════════════════════════════
 
+/**
+ * Поля, общие для формы и импорта.
+ *
+ * Держатся вместе, потому что расходятся они молча: поле,
+ * добавленное только в форму, приезжает из файла пустым, и
+ * организатор узнаёт об этом, когда половина заданий уже залита.
+ */
+const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
+
+const taskExtrasShape = {
+  mapMode: z.enum(TASK_MAP_MODES),
+  /** Приходит разобранным JSON; форма шлёт строкой, импорт — объектом. */
+  areaPolygon: z.unknown().optional(),
+  imageCaption: optionalText(60),
+  afterword: optionalText(2000),
+  afterwordUrl: optionalText(500),
+  afterwordUrlLabel: optionalText(80),
+};
+
+/**
+ * Проверки, которые нельзя выразить формой поля.
+ *
+ * Режим карты обязан быть обеспечен данными: точка без координат
+ * и область без контура рисуют пустоту, и узнаёт об этом
+ * организатор от команды посреди квеста. В базе стоят такие же
+ * ограничения — здесь они ради внятного сообщения, а не вместо.
+ */
+function checkTaskExtras(
+  value: {
+    mapMode: string;
+    areaPolygon?: unknown;
+    latitude?: number | null;
+    longitude?: number | null;
+    afterwordUrl?: string;
+    afterwordUrlLabel?: string;
+  },
+  ctx: z.RefinementCtx,
+): void {
+  if (value.mapMode === 'point' && (value.latitude == null || value.longitude == null)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['latitude'],
+      message: 'Для точки на карте нужны координаты',
+    });
+  }
+
+  if (value.mapMode === 'area' && !asAreaPolygon(value.areaPolygon)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['areaPolygon'],
+      message: 'Нарисуйте область: замкнутый контур минимум из трёх точек',
+    });
+  }
+
+  if (value.afterwordUrl && !value.afterwordUrl.startsWith('https://')) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['afterwordUrl'],
+      message: 'Ссылка должна начинаться с https://',
+    });
+  }
+
+  if (value.afterwordUrlLabel && !value.afterwordUrl) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['afterwordUrl'],
+      message: 'Подпись есть, а ссылки нет',
+    });
+  }
+}
+
 export const taskSchema = z
   .object({
     number: z.number().int().positive('Номер задания начинается с единицы'),
@@ -167,8 +240,10 @@ export const taskSchema = z
     radiusMeters: z.number().int().min(10).max(20000).nullable().optional(),
     active: z.boolean(),
     sortOrder: z.number().int().optional(),
+    ...taskExtrasShape,
   })
   .superRefine((value, ctx) => {
+    checkTaskExtras(value, ctx);
     if (value.validationMode === 'ai' && value.criteria.length === 0) {
       ctx.addIssue({
         code: 'custom',
@@ -224,8 +299,13 @@ export const taskImportItemSchema = z
     longitude: z.number().min(-180).max(180).nullable().optional(),
     radiusMeters: z.number().int().min(10).max(20000).nullable().optional(),
     active: z.boolean().default(true),
+    ...taskExtrasShape,
+    // В импорте режим карты необязателен: файлы организатора
+    // старше этой колонки. По умолчанию — как было до 0014.
+    mapMode: z.enum(TASK_MAP_MODES).default('none'),
   })
   .superRefine((value, ctx) => {
+    checkTaskExtras(value, ctx);
     if (value.validationMode === 'ai' && value.criteria.length === 0) {
       ctx.addIssue({
         code: 'custom',

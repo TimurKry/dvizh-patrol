@@ -20,7 +20,12 @@ import {
   scoreAdjustmentSchema,
   taskSchema,
 } from '@/lib/validation/schemas';
-import type { EventStatus, LeaderboardMode } from '@/types/database';
+import { BUCKETS, extensionFor, referencePath } from '@/lib/storage';
+import type {
+  EventStatus,
+  LeaderboardMode,
+  TaskReferenceImageRow,
+} from '@/types/database';
 
 /**
  * Действия администратора.
@@ -800,6 +805,23 @@ export async function saveTaskAction(
 
   const requireLocation = formData.get('requireLocation') === 'on';
 
+  // Контур приезжает из редактора области строкой JSON. Разбор
+  // здесь, а не в схеме: сломанную строку надо показать как
+  // ошибку поля, а не уронить весь разбор формы.
+  const rawPolygon = String(formData.get('areaPolygon') ?? '').trim();
+  let areaPolygon: unknown = null;
+  if (rawPolygon) {
+    try {
+      areaPolygon = JSON.parse(rawPolygon);
+    } catch {
+      return {
+        ok: false,
+        error: 'validation_failed',
+        fields: { areaPolygon: 'Область пришла в нечитаемом виде. Нарисуйте её заново.' },
+      };
+    }
+  }
+
   const parsed = taskSchema.safeParse({
     number: Number(formData.get('number') ?? 0),
     title: formData.get('title'),
@@ -818,6 +840,12 @@ export async function saveTaskAction(
     longitude: formData.get('longitude') ? Number(formData.get('longitude')) : null,
     radiusMeters: formData.get('radiusMeters') ? Number(formData.get('radiusMeters')) : null,
     active: formData.get('active') === 'on',
+    mapMode: formData.get('mapMode') ?? 'none',
+    areaPolygon,
+    imageCaption: formData.get('imageCaption') ?? '',
+    afterword: formData.get('afterword') ?? '',
+    afterwordUrl: formData.get('afterwordUrl') ?? '',
+    afterwordUrlLabel: formData.get('afterwordUrlLabel') ?? '',
   });
 
   if (!parsed.success) {
@@ -839,9 +867,20 @@ export async function saveTaskAction(
     minimum_people: parsed.data.minimumPeople,
     max_attempts: parsed.data.maxAttempts,
     require_location: parsed.data.requireLocation,
-    latitude: parsed.data.requireLocation ? parsed.data.latitude : null,
-    longitude: parsed.data.requireLocation ? parsed.data.longitude : null,
-    radius_meters: parsed.data.requireLocation ? parsed.data.radiusMeters : null,
+    // Координаты живут независимо от проверки геопозиции: крест на
+    // карте говорит, куда идти, а require_location проверяет, что
+    // телефон действительно там. Раньше первое существовало только
+    // вместе со вторым, и точку нельзя было показать, не включив
+    // проверку.
+    latitude: parsed.data.latitude ?? null,
+    longitude: parsed.data.longitude ?? null,
+    radius_meters: parsed.data.radiusMeters ?? null,
+    map_mode: parsed.data.mapMode,
+    area_polygon: parsed.data.mapMode === 'area' ? asAreaPolygon(parsed.data.areaPolygon) : null,
+    image_caption: parsed.data.imageCaption || null,
+    afterword: parsed.data.afterword || null,
+    afterword_url: parsed.data.afterwordUrl || null,
+    afterword_url_label: parsed.data.afterwordUrlLabel || null,
     active: parsed.data.active,
     sort_order: parsed.data.number,
   };
@@ -917,6 +956,144 @@ export async function toggleTaskAction(
 
   revalidatePath('/admin/tasks');
   return { ok: true, message: active ? 'Задание включено.' : 'Задание выключено.' };
+}
+
+/**
+ * Загрузка картинки к заданию.
+ *
+ * Интерфейса для этого не было вовсе: бакет `task-reference-images`
+ * и таблица существовали с самого начала, а положить туда файл
+ * можно было только руками через панель Supabase. Для фото-повтора
+ * эталон обязателен, а для загадки картинка — это гравюра или
+ * картина по теме, так что без загрузки не обойтись ни тому, ни
+ * другому.
+ *
+ * Файл идёт через серверное действие, а не подписанной ссылкой из
+ * браузера, как отправки команд. Разница в объёме: команда за
+ * вечер шлёт сотни снимков с телефона на мобильном интернете, а
+ * организатор загружает полсотни картинок один раз с ноутбука.
+ * Ради второго заводить обмен токенами незачем.
+ */
+export async function uploadTaskImageAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const taskId = String(formData.get('taskId') ?? '');
+  const caption = String(formData.get('caption') ?? '').trim();
+  const file = formData.get('file');
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: 'Выберите файл с картинкой.' };
+  }
+
+  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!ALLOWED.includes(file.type)) {
+    return { ok: false, message: 'Годятся JPEG, PNG и WebP.' };
+  }
+
+  // Десять мегабайт с запасом: организатор грузит с ноутбука, но
+  // фотография с зеркалки на сорок мегабайт всё равно ни к чему —
+  // её потом раздавать команде по мобильному интернету.
+  const MAX_BYTES = 10 * 1024 * 1024;
+  if (file.size > MAX_BYTES) {
+    return { ok: false, message: 'Картинка больше 10 МБ. Сожмите её.' };
+  }
+
+  const db = supabaseAdmin();
+  const { data: task } = await db
+    .from('tasks')
+    .select('id, event_id')
+    .eq('id', taskId)
+    .maybeSingle();
+
+  if (!task) return { ok: false, message: 'Задание не найдено.' };
+
+  const imageId = randomBytes(8).toString('hex');
+  const path = referencePath({
+    eventId: (task as { event_id: string }).event_id,
+    taskId,
+    imageId,
+    extension: extensionFor(file.type),
+  });
+
+  const { error: uploadError } = await db.storage
+    .from(BUCKETS.references)
+    .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    return { ok: false, message: 'Не удалось загрузить файл в хранилище.' };
+  }
+
+  // Порядок — по количеству уже загруженных: первая картинка и
+  // попадает на карточку, остальные видно на странице задания.
+  const { count } = await db
+    .from('task_reference_images')
+    .select('id', { count: 'exact', head: true })
+    .eq('task_id', taskId);
+
+  const { error } = await db.from('task_reference_images').insert({
+    task_id: taskId,
+    image_path: path,
+    caption: caption || null,
+    sort_order: count ?? 0,
+  });
+
+  if (error) {
+    // Строки нет — файл в хранилище стал мусором, убираем сразу.
+    await db.storage.from(BUCKETS.references).remove([path]);
+    return { ok: false, message: 'Не удалось сохранить картинку.' };
+  }
+
+  await audit({
+    admin,
+    action: 'task_image_added',
+    entityType: 'task',
+    entityId: taskId,
+    after: { image_path: path, caption: caption || null },
+  });
+
+  revalidatePath(`/admin/tasks/${taskId}`);
+  revalidatePath(`/tasks/${taskId}`);
+  return { ok: true, message: 'Картинка загружена.' };
+}
+
+/** Удаление картинки: строка и файл уходят вместе. */
+export async function deleteTaskImageAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const imageId = String(formData.get('imageId') ?? '');
+
+  const db = supabaseAdmin();
+  const { data } = await db
+    .from('task_reference_images')
+    .select('*')
+    .eq('id', imageId)
+    .maybeSingle();
+
+  const image = data as TaskReferenceImageRow | null;
+  if (!image) return { ok: false, message: 'Картинка не найдена.' };
+
+  const { error } = await db.from('task_reference_images').delete().eq('id', imageId);
+  if (error) return { ok: false, message: 'Не удалось удалить картинку.' };
+
+  // Файл после строки: если удаление строки не прошло, картинка
+  // осталась на месте и целой.
+  await db.storage.from(BUCKETS.references).remove([image.image_path]);
+
+  await audit({
+    admin,
+    action: 'task_image_removed',
+    entityType: 'task',
+    entityId: image.task_id,
+    before: { image_path: image.image_path },
+  });
+
+  revalidatePath(`/admin/tasks/${image.task_id}`);
+  revalidatePath(`/tasks/${image.task_id}`);
+  return { ok: true, message: 'Картинка удалена.' };
 }
 
 export async function deleteTaskAction(

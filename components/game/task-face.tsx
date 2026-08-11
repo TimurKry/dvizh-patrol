@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { PlaceMark, TaskTypeIcon } from './task-type-icon';
 import { Icon, type IconName } from '@/components/ui/icon';
-import type { TaskCardType } from '@/types/database';
+import type { TaskCardType, TaskMapMode } from '@/types/database';
 import { cn } from '@/lib/cn';
 
 /**
@@ -29,6 +29,7 @@ const TONE_FOOTER: Record<FaceTone, string> = {
 
 export function TaskFace({
   type,
+  mapMode = 'none',
   kicker,
   title,
   points,
@@ -43,6 +44,8 @@ export function TaskFace({
   accepted = false,
 }: {
   type: TaskCardType;
+  /** Что задание обещает про карту. Отдельно от типа — см. 0014. */
+  mapMode?: TaskMapMode;
   /** «Загадка / №10» — тип и номер одной строкой. */
   kicker: string;
   title: string;
@@ -135,7 +138,7 @@ export function TaskFace({
           команда решит брать карточку: «точка на карте» и «где
           угодно» — это разные решения о том, куда идти. */}
       <p className="signal-label flex items-center gap-1.5 text-micro text-[#5c5c63]">
-        <PlaceMark type={type} />
+        <PlaceMark mode={mapMode} />
         {place}
       </p>
 

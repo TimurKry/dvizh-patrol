@@ -7,7 +7,7 @@ import type { Circle, Map as LeafletMapInstance, Marker } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from './mapbox-map';
-import type { PlayArea } from '@/lib/geo';
+import type { PlayArea, PolygonRing } from '@/lib/geo';
 
 /**
  * Карта квеста.
@@ -40,7 +40,7 @@ import type { PlayArea } from '@/lib/geo';
  *
  * `cross` — крест, как на пиратской карте: место известно точно,
  * к нему и надо дойти. `zone` — примерный район: центр не
- * показывается вовсе, только пунктирный круг с номером, потому
+ * показывается вовсе, только пунктирный контур с номером, потому
  * что у загадки точное место и есть ответ.
  */
 export type MapPointKind = 'cross' | 'zone';
@@ -55,6 +55,16 @@ export interface MapPoint {
   href?: string;
   /** Радиус зачёта задания: видно, насколько близко надо подойти. */
   radiusMeters?: number | null;
+  /**
+   * Контур района вместо круга.
+   *
+   * Круг оказался плохой формой для загадки: у дома, который видно
+   * с двух улиц, честная область — это квартал, а не окружность.
+   * Уменьшать радиус до квартала значит почти выдать адрес,
+   * увеличивать — сделать подсказку бесполезной. Контур решает
+   * обе беды сразу, а `ringCenter` даёт куда поставить номер.
+   */
+  ring?: PolygonRing | null;
   kind?: MapPointKind;
   done?: boolean;
 }
@@ -186,10 +196,26 @@ function LeafletMap({
       for (const point of points) {
         const zone = point.kind === 'zone';
 
-        // У района круг обязателен: без него от загадки на карте
-        // остался бы номер в пустоте, а «примерно здесь» — это и
-        // есть весь ответ, который она даёт.
-        const radius = point.radiusMeters ?? (zone ? 220 : null);
+        // Нарисованный контур важнее круга: организатор обвёл
+        // именно то, что имел в виду.
+        if (point.ring && point.ring.length >= 4) {
+          const shape = L.polygon(
+            point.ring.map(([lon, lat]) => [lat, lon] as [number, number]),
+            {
+              color: point.done ? INK : SIGNAL,
+              weight: 2,
+              dashArray: '7 7',
+              fillColor: SIGNAL,
+              fillOpacity: 0.07,
+            },
+          ).addTo(map);
+          bounds.extend(shape.getBounds());
+        }
+
+        // У района без контура круг обязателен: без него от загадки
+        // на карте остался бы номер в пустоте, а «примерно здесь» —
+        // это и есть весь ответ, который она даёт.
+        const radius = point.ring ? null : (point.radiusMeters ?? (zone ? 220 : null));
 
         if (radius) {
           L.circle([point.latitude, point.longitude], {

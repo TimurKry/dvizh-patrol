@@ -88,6 +88,17 @@ export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number];
 export const TASK_CARD_TYPES = ['riddle', 'photo', 'active'] as const;
 export type TaskCardType = (typeof TASK_CARD_TYPES)[number];
 
+/**
+ * Что задание рисует на карте.
+ *
+ * Отдельно от типа карточки намеренно. Раньше «загадка» означала
+ * круг, а «фото» — крест, и выбора не было: круг у загадки либо
+ * настолько мелкий, что выдаёт ответ, либо настолько крупный, что
+ * бесполезен. Тип решает состав руки, режим карты — карту.
+ */
+export const TASK_MAP_MODES = ['none', 'point', 'area'] as const;
+export type TaskMapMode = (typeof TASK_MAP_MODES)[number];
+
 /** Почему отправка ушла в ручную проверку. */
 export const REVIEW_REASONS = [
   'possible_duplicate',
@@ -194,6 +205,15 @@ export interface TaskRow {
   latitude: number | null;
   longitude: number | null;
   radius_meters: number | null;
+  /** Что рисуется на карте. Не выводится из card_type: см. 0014. */
+  map_mode: TaskMapMode;
+  area_polygon: unknown;
+  /** Плашка над картинкой карточки. NULL — плашки нет. */
+  image_caption: string | null;
+  /** Показывается только после отправки, подсказкой быть не может. */
+  afterword: string | null;
+  afterword_url: string | null;
+  afterword_url_label: string | null;
   active: boolean;
   sort_order: number;
   available_from: string | null;

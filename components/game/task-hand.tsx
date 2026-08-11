@@ -5,7 +5,7 @@ import { CardBack } from './card-back';
 import { CardTable, type TableCard } from './card-table';
 import { TaskFace, type FaceTone } from './task-face';
 import { TaskTypeIcon } from './task-type-icon';
-import { TASK_CARD_TYPE_TEXT, attemptsWord } from '@/lib/messages';
+import { TASK_CARD_TYPE_TEXT, TASK_MAP_MODE_TEXT, attemptsWord } from '@/lib/messages';
 import type { IconName } from '@/components/ui/icon';
 import type { TaskWithState } from '@/lib/data/tasks';
 import { cn } from '@/lib/cn';
@@ -61,7 +61,8 @@ export function TaskHand({ items }: { items: TaskWithState[] }) {
           title={task.title}
           points={String(task.points)}
           text={task.short_description}
-          place={type.place}
+          mapMode={task.map_mode}
+          place={TASK_MAP_MODE_TEXT[task.map_mode].place}
           image={referenceImageUrl ? { src: referenceImageUrl, badge: 'Фото-эталон' } : null}
           placeholder={String(task.number)}
           attemptsLine={

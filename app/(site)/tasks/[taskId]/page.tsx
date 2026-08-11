@@ -9,6 +9,7 @@ import { ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/surface';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { StatusBadge, Tag } from '@/components/ui/status-badge';
+import { Icon } from '@/components/ui/icon';
 import { env } from '@/lib/env';
 import { getTaskForTeam, getTaskReferences } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
@@ -21,7 +22,7 @@ import {
   membersWord,
   pointsWord,
 } from '@/lib/messages';
-import { toPlayArea } from '@/lib/geo';
+import { asAreaPolygon, ringCenter, toPlayArea } from '@/lib/geo';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +72,17 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
   const references = await getTaskReferences(task.id);
   const config = env();
 
+  // Центр карточки: у области — центр нарисованного контура, у
+  // точки — её координаты. Без центра карту рисовать не на чем,
+  // и блок «где искать» просто не появляется.
+  const taskRing = asAreaPolygon(task.area_polygon)?.coordinates[0] ?? null;
+  const mapCenter =
+    task.map_mode === 'area' && taskRing
+      ? ringCenter(taskRing)
+      : task.map_mode === 'point' && task.latitude != null && task.longitude != null
+        ? { latitude: task.latitude, longitude: task.longitude }
+        : null;
+
   return (
     <div className="page-well with-bottom-nav py-8 md:py-12">
       <div className="mx-auto max-w-2xl">
@@ -111,8 +123,10 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
                   alt={reference.caption ?? `Пример к заданию ${task.number}`}
                   className="w-full border border-hairline"
                 />
-                {reference.caption && (
-                  <figcaption className="text-caption text-muted">{reference.caption}</figcaption>
+                {(reference.caption ?? task.image_caption) && (
+                  <figcaption className="text-caption text-muted">
+                    {reference.caption ?? task.image_caption}
+                  </figcaption>
                 )}
               </figure>
             ))}
@@ -120,15 +134,15 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
         )}
 
         {/* ═══ Где искать ═══════════════════════════════════
-            Карта показывает разное в зависимости от типа. У фото —
-            крест: место известно точно, дойти до него в чужом
-            городе без карты трудно. У загадки — пунктирный район
-            без центра: точное место и есть ответ. У актива карты
-            нет вовсе, он к месту не привязан. */}
-        {task.card_type !== 'active' && task.latitude != null && task.longitude != null && (
+            Что показать, решает организатор в поле «Карта», а не
+            тип карточки. У точки — крест: место известно, дойти до
+            него в чужом городе без карты трудно. У области —
+            пунктирный контур без центра: точное место и есть
+            ответ. «Без карты» — карты нет вовсе. */}
+        {mapCenter && (
           <div className="mt-6 flex flex-col gap-2">
             <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
-              {task.card_type === 'riddle' ? 'Примерный район' : 'Где искать'}
+              {task.map_mode === 'area' ? 'Где-то здесь' : 'Где искать'}
             </h2>
             <QuestMap
               className="h-[260px]"
@@ -137,12 +151,13 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
               points={[
                 {
                   id: task.id,
-                  latitude: task.latitude,
-                  longitude: task.longitude,
+                  latitude: mapCenter.latitude,
+                  longitude: mapCenter.longitude,
                   label: String(task.number),
                   title: task.title,
                   radiusMeters: task.radius_meters,
-                  kind: task.card_type === 'riddle' ? 'zone' : 'cross',
+                  ring: taskRing,
+                  kind: task.map_mode === 'area' ? 'zone' : 'cross',
                   done: state === 'accepted',
                 },
               ]}
@@ -244,6 +259,36 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             </Card>
           )}
         </div>
+
+        {/* ═══ После отправки ═══════════════════════════════
+            Открывается только когда отправка уже сделана, поэтому
+            подсказкой служить не может. Ради этого блок и есть:
+            квест заканчивается не кнопкой «отправить», а тем, что
+            человек узнал место, мимо которого ходил год. */}
+        {latestSubmission && (task.afterword || task.afterword_url) && (
+          <Card className="mt-8 flex flex-col gap-3 p-5">
+            <h2 className="signal-label flex items-center gap-2 text-micro text-signal">
+              <Icon name="info" size={14} />
+              Что это было
+            </h2>
+
+            {task.afterword && (
+              <p className="whitespace-pre-line text-body text-muted">{task.afterword}</p>
+            )}
+
+            {task.afterword_url && (
+              <a
+                href={task.afterword_url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="underline-slide inline-flex items-center gap-2 self-start text-body"
+              >
+                {task.afterword_url_label || 'Читать дальше'}
+                <Icon name="open" size={14} />
+              </a>
+            )}
+          </Card>
+        )}
       </div>
 
       <LiveRefresh

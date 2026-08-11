@@ -180,6 +180,35 @@ export function MapboxMap({
           });
         }
 
+        // Контуры районов — до маркеров: так номер задания
+        // ложится поверх заливки, а не под неё.
+        for (const [index, point] of points.entries()) {
+          if (!point.ring || point.ring.length < 4) continue;
+          const sourceId = `task-area-${index}`;
+          map.addSource(sourceId, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: { type: 'Polygon', coordinates: [point.ring.map(([a, b]) => [a, b])] },
+            },
+          });
+          map.addLayer({
+            id: `${sourceId}-fill`,
+            type: 'fill',
+            source: sourceId,
+            slot: AREA_FILL_SLOT,
+            paint: { 'fill-color': SIGNAL, 'fill-opacity': 0.12 },
+          });
+          map.addLayer({
+            id: `${sourceId}-line`,
+            type: 'line',
+            source: sourceId,
+            slot: AREA_LINE_SLOT,
+            paint: { 'line-color': SIGNAL, 'line-width': 2, 'line-dasharray': [2, 2] },
+          });
+        }
+
         for (const point of points) {
           const el = document.createElement('div');
           el.innerHTML = point.kind === 'zone' ? zoneHtml(point) : crossHtml(point);
@@ -296,7 +325,12 @@ function boundsOf(area: PlayArea | null, points: MapPoint[]): [[number, number],
       for (const [lng, lat] of area.polygon.coordinates[0]) coords.push([lng, lat]);
     }
   }
-  for (const p of points) coords.push([p.longitude, p.latitude]);
+  for (const p of points) {
+    coords.push([p.longitude, p.latitude]);
+    // Контур района шире своего центра: без его углов кадр
+    // обрезал бы половину нарисованной области.
+    if (p.ring) for (const [lng, lat] of p.ring) coords.push([lng, lat]);
+  }
   if (coords.length === 0) return null;
 
   const lngs = coords.map((c) => c[0]);

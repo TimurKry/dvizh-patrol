@@ -13,6 +13,7 @@ import type {
   TaskCardType,
   TaskCategory,
   TaskDifficulty,
+  TaskMapMode,
 } from '@/types/database';
 
 export const ERROR_MESSAGES: Record<string, string> = {
@@ -177,18 +178,46 @@ export const TASK_CARD_TYPE_TEXT: Record<
 > = {
   riddle: {
     label: 'Загадка',
-    hint: 'Найти объект по описанию. На карте — примерный район.',
+    hint: 'Найти объект по описанию.',
     place: 'Примерный район',
   },
   photo: {
     label: 'Фото-повтор',
-    hint: 'Повторить то, что видно. На карте — точный крест.',
+    hint: 'Повторить то, что видно.',
     place: 'Точка на карте',
   },
   active: {
     label: 'Актив',
-    hint: 'Сделать что-то в городе. Место не привязано.',
+    hint: 'Сделать что-то в городе.',
     place: 'Где угодно в поле',
+  },
+};
+
+/**
+ * Что задание обещает про карту.
+ *
+ * До 0014 это выводилось из типа карточки, и выбора не было.
+ * Теперь режим отдельный, а `place` из `TASK_CARD_TYPE_TEXT`
+ * остаётся только для витрины лендинга, где карты нет вовсе.
+ */
+export const TASK_MAP_MODE_TEXT: Record<
+  TaskMapMode,
+  { label: string; place: string; hint: string }
+> = {
+  none: {
+    label: 'Без карты',
+    place: 'Где угодно в поле',
+    hint: 'Задание не привязано к месту и на карте не появится.',
+  },
+  point: {
+    label: 'Точка',
+    place: 'Точка на карте',
+    hint: 'Крест по координатам: команда знает, куда идти.',
+  },
+  area: {
+    label: 'Область',
+    place: 'Обведённый район',
+    hint: 'Контур без центра: точное место остаётся ответом.',
   },
 };
 

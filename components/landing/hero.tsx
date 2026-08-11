@@ -1,5 +1,6 @@
+import Image from 'next/image';
+
 import { Countdown } from '@/components/game/countdown';
-import { DotCluster } from '@/components/ui/logo';
 import { TicketCta } from './ticket-cta';
 import { Polaroid } from './polaroid';
 import { TELEGRAM_MANAGER_URL } from '@/lib/links';
@@ -26,25 +27,25 @@ const POLAROIDS = [
     src: '/assets/polaroid-station.webp',
     caption: 'ВОКЗАЛ / 14:42',
     tilt: '8deg',
-    className: 'left-[-12px] top-[178px] w-[124px] lg:left-[2%] lg:top-[16%] lg:w-[186px]',
+    className: 'left-[-12px] top-[278px] w-[124px] lg:left-[2%] lg:top-[16%] lg:w-[186px]',
   },
   {
     src: '/assets/polaroid-center.webp',
     caption: 'ЦЕНТР / 15:06',
     tilt: '-9deg',
-    className: 'right-[-14px] top-[170px] w-[122px] lg:right-[3%] lg:top-[10%] lg:w-[178px]',
+    className: 'right-[-14px] top-[270px] w-[122px] lg:right-[3%] lg:top-[10%] lg:w-[178px]',
   },
   {
     src: '/assets/polaroid-tunnel.webp',
     caption: 'СЛЕД № 07',
     tilt: '-7deg',
-    className: 'left-[-10px] top-[336px] w-[130px] lg:left-[6%] lg:top-[58%] lg:w-[196px]',
+    className: 'left-[-10px] top-[436px] w-[130px] lg:left-[6%] lg:top-[58%] lg:w-[196px]',
   },
   {
     src: '/assets/polaroid-markt.webp',
     caption: 'НАВЕДЕНИЕ ●',
     tilt: '7deg',
-    className: 'right-[-16px] top-[330px] w-[134px] lg:right-[5%] lg:top-[54%] lg:w-[200px]',
+    className: 'right-[-16px] top-[430px] w-[134px] lg:right-[5%] lg:top-[54%] lg:w-[200px]',
     signal: true,
   },
 ] as const;
@@ -97,7 +98,18 @@ export function Hero({
       </div>
 
       <div className="page-well relative z-10 flex flex-col items-center gap-6">
-        <DotCluster size={44} className="anim-fade text-ink" />
+        {/* Кисточный знак из Figma 80:6. Он и есть логотип
+            мероприятия, поэтому стоит над титулом, а не рядом с
+            ним. priority: знак попадает в первый экран и без
+            него герой полсекунды выглядит обрезанным. */}
+        <Image
+          src="/brand/dvizh-leipzig.png"
+          alt="Dvizh Leipzig"
+          width={1200}
+          height={973}
+          priority
+          className="anim-fade h-auto w-[176px] lg:w-[228px]"
+        />
 
         {/* Заголовок тянется по ширине экрана, а не по фиксированному
             кеглю: «ПАТРУЛЬ» в Unbounded на 45px не помещается в 390px

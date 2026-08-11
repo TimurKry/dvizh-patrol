@@ -1,5 +1,5 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { DotCluster } from '@/components/ui/logo';
 import { TELEGRAM_MANAGER, TELEGRAM_MANAGER_URL } from '@/lib/links';
 
 /**
@@ -21,7 +21,13 @@ export function SiteFooter() {
     <footer className="border-t border-hairline">
       <div className="page-well flex flex-col gap-8 py-10 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-3">
-          <DotCluster size={32} />
+          <Image
+            src="/brand/dvizh-leipzig.png"
+            alt="Dvizh Leipzig"
+            width={1200}
+            height={973}
+            className="h-auto w-[112px]"
+          />
           <p className="font-display text-caption font-semibold uppercase">Движ-Патруль</p>
           <a
             href={TELEGRAM_MANAGER_URL}

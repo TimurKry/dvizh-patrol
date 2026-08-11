@@ -1,24 +1,27 @@
-# Миграции 0008–0013: накатывание и откат
+# Миграции 0008–0014: накатывание и откат
 
-Шесть миграций, добавленных при доводке до V3 Mono Signal. Здесь
+Семь миграций, добавленных при доводке до V3 Mono Signal. Здесь
 описано, что каждая делает, чем рискует, как её накатить и как
 откатить.
 
-Порядок отката — обратный порядку накатывания: `0013`, `0012`, `0011`,
-`0010`, `0009`, `0008`. Пропускать шаги нельзя: `0009` создаёт тип, на
+Порядок отката — обратный порядку накатывания: `0014`, `0013`, `0012`,
+`0011`, `0010`, `0009`, `0008`. Пропускать шаги нельзя: `0009` создаёт тип, на
 который ссылается колонка, `0010` — ограничение, которое проверяет
 колонку из той же миграции, а `0011` правит права функций из
 `0009`.
 
 ## Накатывание на production
 
-Миграции `0008`–`0012` применены к `mnoytybnurzsbvhyuuxb` 11.08.2026.
-`0013` в бою ещё нет — она ждёт подтверждения владельца. Ниже — порядок на случай второго контура: тестового
-проекта, восстановления из резервной копии, переезда.
+Все семь применены к `mnoytybnurzsbvhyuuxb`: `0008`–`0012` 11.08.2026,
+`0013` и `0014` — тогда же, с подтверждения владельца. Ниже — порядок
+на случай второго контура: тестового проекта, восстановления из
+резервной копии, переезда.
 
-На момент наката боевых данных не было вовсе — ноль команд, ноль
-отправок, ноль начислений, — поэтому накатывание ничего не
-разрушило. В базе с данными читайте предупреждения ниже.
+На момент наката `0008`–`0012` боевых данных не было вовсе. К
+`0013` и `0014` в базе уже лежали две тестовые команды владельца,
+восемь отправок и сорок семь заданий — ни одна из двух миграций их
+не трогает: `0013` правит только `events.team_size`, `0014`
+добавляет колонки со значением по умолчанию. Проверено до наката.
 
 Порядок и проверки одинаковы: цвета
 команд раздаст триггер при первой регистрации, `card_type`
@@ -34,6 +37,7 @@ supabase/migrations/0010_play_area_polygon.sql
 supabase/migrations/0011_lock_hand_functions.sql
 supabase/migrations/0012_move_event_to_september.sql
 supabase/migrations/0013_team_size_five.sql
+supabase/migrations/0014_task_map_and_afterword.sql
 ```
 
 `supabase db push` из корня репозитория применит их сам. Через MCP —
@@ -226,6 +230,43 @@ COMMIT;
 **Если индекс не создаётся,** значит в базе уже есть две принятые
 отправки одной команды по одному заданию. Такого быть не должно;
 разберитесь с данными до отката.
+
+---
+
+## 0014 — карта задания и материал после отправки
+
+**Делает:** добавляет `tasks.map_mode` (`none`/`point`/`area`),
+`tasks.area_polygon`, `image_caption`, `afterword`, `afterword_url`,
+`afterword_url_label` и шесть проверок к ним. Бэкофиллом проставляет
+`map_mode` по прежнему правилу (точка там, где есть координаты и тип
+не «актив») и плашку «Фото-эталон» тем заданиям, у которых эталон
+загружен.
+
+```sql
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_afterword_label_needs_url;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_afterword_url_shape;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_map_area_has_polygon;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_map_mode_has_data;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_area_polygon_valid;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_map_mode_valid;
+
+ALTER TABLE public.tasks
+  DROP COLUMN IF EXISTS afterword_url_label,
+  DROP COLUMN IF EXISTS afterword_url,
+  DROP COLUMN IF EXISTS afterword,
+  DROP COLUMN IF EXISTS image_caption,
+  DROP COLUMN IF EXISTS area_polygon,
+  DROP COLUMN IF EXISTS map_mode;
+```
+
+**Осторожно:** откат теряет нарисованные области и тексты
+послесловий безвозвратно. Если нужен только откат кода, колонки
+можно оставить: прежняя версия приложения их просто не читает, а
+карту рисует по типу карточки, как раньше.
+
+Зависит от `0010`: проверка `tasks_area_polygon_valid` вызывает
+`is_valid_area_polygon`, созданную там. Откатывать `0010` раньше
+`0014` нельзя.
 
 ---
 

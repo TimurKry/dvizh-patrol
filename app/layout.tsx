@@ -53,8 +53,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
+    // Только растр: кисточный знак вектором не бывает, а рисовать
+    // ради вкладки второй, «упрощённый» логотип — это заводить
+    // второй логотип.
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/favicon-48.png', sizes: '48x48', type: 'image/png' },
       { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],

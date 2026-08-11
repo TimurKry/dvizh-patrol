@@ -300,25 +300,25 @@
      Именно они превращают прямоугольник в билет, не добавляя ни
      одной картинки. Хост обязан иметь position: relative и
      overflow: hidden. */
-  .ticket-notch::before,
-  .ticket-notch::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 12px;
-    height: 12px;
-    border-radius: 9999px;
-    background: var(--color-canvas);
-    transform: translateY(-50%);
-    pointer-events: none;
-  }
-
-  .ticket-notch::before {
-    left: -7px;
-  }
-
-  .ticket-notch::after {
-    right: -7px;
+  /* Вырезы билета.
+     Раньше это были два кружка цвета холста поверх кнопки. На
+     заливке они и читались как кружки: `overflow: hidden` срезал
+     половину, что выходила за край, а рамка кнопки продолжала
+     идти прямой линией сквозь них. Получался прямоугольник с
+     нарисованными дырками, а не оторванный билет.
+     Маска режет силуэт целиком — вместе с фоном и рамкой, — и
+     половинки честно откусываются от краёв. Кружкам на псевдо-
+     элементах так не сделать: они рисуются поверх, а не вырезают. */
+  .ticket-notch {
+    --notch: 11px;
+    -webkit-mask-image:
+      radial-gradient(var(--notch) at left center, transparent 99%, #000 100%),
+      radial-gradient(var(--notch) at right center, transparent 99%, #000 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      radial-gradient(var(--notch) at left center, transparent 99%, #000 100%),
+      radial-gradient(var(--notch) at right center, transparent 99%, #000 100%);
+    mask-composite: intersect;
   }
 
   /* Минимальная зона нажатия на мобильном — 44×44. */
@@ -466,6 +466,39 @@
     }
   }
 
+  /* Стрелка «листайте вниз»: сползает и гаснет, как капля. */
+  @keyframes dp-scroll-hint {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, -6px, 0);
+    }
+    35% {
+      opacity: 1;
+    }
+    75% {
+      opacity: 1;
+      transform: translate3d(0, 6px, 0);
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+  }
+
+  /* Маршрут прочерчивается, как на пиратской карте: штрих бежит
+     от точки к точке. Анимируется stroke-dashoffset — свойство не
+     из пары transform/opacity, и это второе задокументированное
+     исключение (см. DESIGN_SYSTEM). Композитор его не ускоряет,
+     но линия одна и рисуется однократно. */
+  @keyframes dp-trail {
+    from {
+      stroke-dashoffset: var(--trail-length, 1200);
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
   /* Пульс секунд в обратном отсчёте и статусов «в работе». */
   @keyframes dp-tick {
     0%,
@@ -496,6 +529,23 @@
   .anim-draw {
     transform-origin: left center;
     animation: dp-draw 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+
+  .scroll-hint {
+    display: inline-flex;
+    animation: dp-scroll-hint 2.1s cubic-bezier(0.4, 0, 0.5, 1) infinite;
+  }
+
+  /* Штрих рисуется, когда секция попала в кадр. Триггер — тот же
+     `is-visible`, что Reveal и так вешает по IntersectionObserver:
+     заводить ради линии второй наблюдатель незачем. */
+  .trail-path {
+    stroke-dasharray: var(--trail-length, 1200);
+    stroke-dashoffset: var(--trail-length, 1200);
+  }
+
+  .reveal.is-visible .trail-path {
+    animation: dp-trail 2.4s cubic-bezier(0.3, 0.5, 0.2, 1) forwards;
   }
 
   .anim-tick {
@@ -715,6 +765,22 @@
   .anim-tick,
   .anim-marquee {
     animation: none !important;
+  }
+
+  /* Стрелка остаётся видимой и неподвижной. Общего правила мало:
+     её цикл кончается на opacity 0, и «проиграть один кадр» тут
+     означало бы стереть стрелку насовсем. */
+  .scroll-hint {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Маршрут показываем нарисованным целиком, а не пустым. */
+  .trail-path,
+  .reveal.is-visible .trail-path {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
   }
 
   .reveal {

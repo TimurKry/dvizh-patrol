@@ -19,7 +19,10 @@
  * страница со статусом всегда сначала идёт в сеть.
  */
 
-const VERSION = 'v1';
+// Версию поднимаем при смене состава SHELL_ASSETS: старый кэш
+// держит уже удалённый /icon.svg, и `cache.addAll` на нём падает
+// целиком — установка воркера срывается, а вместе с ней офлайн.
+const VERSION = 'v2';
 const SHELL_CACHE = `dvizh-shell-${VERSION}`;
 const PAGE_CACHE = `dvizh-pages-${VERSION}`;
 const IMAGE_CACHE = `dvizh-images-${VERSION}`;
@@ -27,7 +30,7 @@ const IMAGE_CACHE = `dvizh-images-${VERSION}`;
 const SHELL_ASSETS = [
   '/offline',
   '/manifest.webmanifest',
-  '/icon.svg',
+  '/icons/favicon-48.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];

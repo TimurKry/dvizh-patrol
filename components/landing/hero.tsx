@@ -55,6 +55,7 @@ export function Hero({
   subtitle,
   city,
   date,
+  dateShort,
   time,
   price,
   startsAt,
@@ -65,7 +66,10 @@ export function Hero({
   title: string;
   subtitle: string;
   city: string;
+  /** Полная дата с годом — для десктопа. */
   date: string;
+  /** День и месяц — на телефоне полная дата давит соседние колонки. */
+  dateShort: string;
   time: string;
   price: string;
   startsAt: string;
@@ -127,11 +131,30 @@ export function Hero({
           </span>
         </p>
 
-        <p className="anim-fade delay-2 text-center">
-          <span className="signal-label bg-canvas px-2 py-1 text-micro whitespace-nowrap text-muted">
-            Наведите на фото — вернётся цвет
+        {/* Стрелка вниз вместо подсказки про наведение. Подсказка
+            была вредной вдвойне: на телефоне наводить нечем, а
+            место она занимала ровно там, где нужен толчок листать
+            дальше. Стрелка декоративная — от скринридера скрыта,
+            под «меньше движения» замирает. */}
+        <div aria-hidden="true" className="anim-fade delay-2 flex justify-center">
+          <span className="scroll-hint text-signal">
+            <svg width="22" height="34" viewBox="0 0 22 34" fill="none">
+              <path
+                d="M11 1v28"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M2 22l9 9 9-9"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </span>
-        </p>
+        </div>
 
         {/* Воздух под нижнюю пару полароидов. Без него факты и
             отсчёт наезжают на снимки: в Figma между подсказкой
@@ -142,9 +165,9 @@ export function Hero({
         {/* ═══ Факты · Figma 79:2 ═══════════════════════════ */}
         <dl className="anim-rise delay-2 mt-2 grid w-full max-w-[560px] grid-cols-3 border border-hairline bg-panel">
           {[
-            { term: 'Дата', value: date, signal: false },
-            { term: 'Старт', value: time, signal: false },
-            { term: 'Участник', value: price, signal: true },
+            { term: 'Дата', value: date, short: dateShort, signal: false },
+            { term: 'Старт', value: time, short: time, signal: false },
+            { term: 'Участник', value: price, short: price, signal: true },
           ].map((fact, index) => (
             <div
               key={fact.term}
@@ -152,7 +175,14 @@ export function Hero({
                 index > 0 ? 'border-l border-hairline' : ''
               }`}
             >
-              <dd className="display-figure text-title">{fact.value}</dd>
+              {/* Полная дата в 390px не помещается в треть полосы
+                  и наезжает на разделитель. Короткая живёт на
+                  телефоне, полная — с планшета и выше; обе в
+                  разметке, чтобы не гадать про ширину на сервере. */}
+              <dd className="display-figure text-title">
+                <span className="sm:hidden">{fact.short}</span>
+                <span className="hidden sm:inline">{fact.value}</span>
+              </dd>
               <dt
                 className={`signal-label text-micro ${fact.signal ? 'text-signal' : 'text-muted'}`}
               >

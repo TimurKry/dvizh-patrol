@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { Notice } from '@/components/ui/feedback';
 import { Reveal } from '@/components/ui/reveal';
@@ -5,18 +6,19 @@ import { Hero } from '@/components/landing/hero';
 import { SectionHead } from '@/components/landing/section-head';
 import { TaskCardDemo } from '@/components/landing/task-card-demo';
 import { TicketCta } from '@/components/landing/ticket-cta';
+import { TrailLink, TrailRule } from '@/components/landing/route-trail';
 import { QuestMap } from '@/components/game/quest-map';
 import { toPlayArea } from '@/lib/geo';
-import { DotCluster } from '@/components/ui/logo';
 import {
   formatEventDate,
+  formatEventDateShort,
   formatEventTime,
   formatPrice,
   getActiveTaskCount,
   getCurrentEvent,
   getRegistrationStats,
 } from '@/lib/data/event';
-import { EVENT_STATUS_TEXT, tasksWord } from '@/lib/messages';
+import { EVENT_STATUS_TEXT } from '@/lib/messages';
 import { TELEGRAM_MANAGER, TELEGRAM_MANAGER_URL } from '@/lib/links';
 
 /**
@@ -94,7 +96,6 @@ export default async function HomePage() {
 
   const showCountdown = event.status === 'registration' || event.status === 'live';
   const time = formatEventTime(event);
-  const tasksLabel = taskCount ? `${taskCount} ${tasksWord(taskCount)}` : '30–50 заданий';
 
   const area = toPlayArea(event);
 
@@ -105,6 +106,7 @@ export default async function HomePage() {
         subtitle={event.subtitle ?? 'Городской фото-квест'}
         city={event.city}
         date={formatEventDate(event)}
+        dateShort={formatEventDateShort(event)}
         time={time}
         price={formatPrice(event)}
         startsAt={event.starts_at}
@@ -234,11 +236,27 @@ export default async function HomePage() {
             />
           </Reveal>
 
-          <ol className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
+          {/* Тропа собрана из звеньев между карточками, а не
+              нарисована одной линией поверх секции: растянутая
+              линия теряет пунктир (подробности в route-trail).
+              Reveal на каждом звене нужен не ради появления, а
+              ради класса `is-visible` — по нему CSS запускает
+              прочерк, ровно когда звено доехало до кадра. */}
+          <div>
+            <ol className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-4">
             {routeStops(time).map((stop, index) => (
+              <Fragment key={stop.n}>
+              {index > 0 && (
+                <Reveal
+                  aria-hidden="true"
+                  className="flex justify-center lg:hidden"
+                  delay={index * 80}
+                >
+                  <TrailLink id={stop.n} />
+                </Reveal>
+              )}
               <Reveal
                 as="li"
-                key={stop.n}
                 delay={index * 80}
                 className={`flex flex-col gap-2 border p-4 ${
                   stop.accent ? 'border-[#060609] bg-[#060609]' : 'border-[#87877f] bg-[#f5f5f1]'
@@ -267,8 +285,17 @@ export default async function HomePage() {
                   {stop.text}
                 </p>
               </Reveal>
+              </Fragment>
             ))}
-          </ol>
+            </ol>
+
+            {/* На десктопе карточки стоят сеткой 2×2, и звенья
+                между ними легли бы поперёк колонок. Там маршрут
+                уводит вниз, к углям, одним прочерком со стрелкой. */}
+            <Reveal aria-hidden="true" delay={320} className="mt-6 hidden lg:block">
+              <TrailRule />
+            </Reveal>
+          </div>
 
           {/* Цена BBQ для гостей — Figma 84:37. Значение ждёт
               подтверждения организатора (content/10-bbq-info),
@@ -344,16 +371,10 @@ export default async function HomePage() {
             </p>
           </Reveal>
 
-          <Reveal delay={230}>
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-hairline pt-6">
-              <DotCluster size={28} />
-              <p className="signal-label text-micro text-ink">Менеджер · @{TELEGRAM_MANAGER}</p>
-              <p className="signal-label text-micro text-muted">
-                {event.city} · {formatEventDate(event)}
-              </p>
-              <p className="signal-label text-micro text-muted">{tasksLabel}</p>
-            </div>
-          </Reveal>
+          {/* Полоса «знак · менеджер · город · задания» отсюда
+              убрана: настоящий подвал идёт сразу под секцией и
+              повторял её слово в слово. Два подвала подряд
+              читаются как ошибка вёрстки, а не как акцент. */}
         </div>
       </section>
     </>

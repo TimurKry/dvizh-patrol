@@ -120,6 +120,20 @@ export function formatEventDate(event: EventRow): string {
   }).format(new Date(event.starts_at));
 }
 
+/**
+ * День и месяц без года — для узких мест вроде полосы фактов на
+ * телефоне, где полная дата съедает соседнюю колонку. Год там не
+ * нужен: рядом стоит отсчёт, из которого и так ясно, что это
+ * ближайшее событие.
+ */
+export function formatEventDateShort(event: EventRow): string {
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: event.timezone,
+  }).format(new Date(event.starts_at));
+}
+
 export function formatEventTime(event: EventRow): string {
   return new Intl.DateTimeFormat('ru-RU', {
     hour: '2-digit',

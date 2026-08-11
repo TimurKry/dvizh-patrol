@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 import { cn } from '@/lib/cn';
 
 /**
@@ -7,7 +9,9 @@ import { cn } from '@/lib/cn';
  * пиксель в чёрно-белом знаке — тот же приём, что и во всей
  * системе: сигнал ровно один, и он всегда в одном месте.
  *
- * Из этого же знака сделаны иконки PWA (public/icon.svg).
+ * Остался как компактный маркер внутри интерфейса — в сайдбаре
+ * админки, на офлайн-странице, на входе. В шапке, в подвале и в
+ * иконках PWA теперь кисточный знак `public/brand/`.
  */
 export function DotCluster({ size = 18, className }: { size?: number; className?: string }) {
   const positions = [
@@ -43,10 +47,26 @@ export function DotCluster({ size = 18, className }: { size?: number; className?
   );
 }
 
+/**
+ * Знак в шапке — кисточный логотип, а не точки.
+ *
+ * Высота 30px выбрана по нижней строке: «LEIPZIG» в ней должна
+ * оставаться словом, а не серым штрихом. Меньше — и надпись
+ * рассыпается; больше — шапка перестаёт быть тонкой полосой.
+ * Рядом стоит «Движ-Патруль» текстом: знак латиницей, а название
+ * мероприятия кириллицей, и одно другое не заменяет.
+ */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn('inline-flex items-center gap-2 text-ink', className)}>
-      <DotCluster />
+      <Image
+        src="/brand/dvizh-leipzig.png"
+        alt=""
+        width={1200}
+        height={973}
+        priority
+        className="h-[30px] w-auto shrink-0"
+      />
       <span className="font-display text-caption font-semibold uppercase tracking-[-0.01em]">
         Движ-Патруль
       </span>

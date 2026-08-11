@@ -36,8 +36,26 @@ const CANVAS = '#060609';
 
 const FALLBACK = { latitude: 51.3397, longitude: 12.3731 };
 
-/** Слой поля кладётся под дома: иначе заливка накроет город. */
-const AREA_SLOT = 'bottom';
+/**
+ * Слои игрового поля разведены по двум уровням.
+ *
+ * Заливка — в `bottom`, под дома: тогда дома стоят внутри зоны, а
+ * не под цветной плёнкой, и это как раз то, ради чего затевался
+ * объём. Контур — в `top`, поверх всего: граница поля должна
+ * читаться всегда, иначе её съедают дороги и сами дома. В первой
+ * версии оба слоя лежали в `bottom`, и границу было не разглядеть.
+ */
+const AREA_FILL_SLOT = 'bottom';
+const AREA_LINE_SLOT = 'top';
+
+/**
+ * Ниже этого зума Standard рисует дома плоскими пятнами, и весь
+ * смысл наклона пропадает. Кадр по игровому полю обычно даёт
+ * 13–14, поэтому зум поднимается принудительно даже ценой того,
+ * что поле не влезет целиком: объём важнее обзора — обзор человек
+ * получит, отодвинув карту пальцами.
+ */
+const MIN_3D_ZOOM = 15.2;
 
 export function MapboxMap({
   token,
@@ -104,6 +122,18 @@ export function MapboxMap({
         // однотонной кашей. Пресет — часть стиля Standard, своих
         // слоёв освещения заводить не нужно.
         map.setConfigProperty('basemap', 'lightPreset', 'night');
+
+        // Монохромная подложка вместо цветной. Дело не во вкусе:
+        // на цветной карте маджента — один из многих цветов и
+        // теряется среди зелени парков и синевы воды. На серой она
+        // единственная цветная вещь в кадре, и граница поля видна
+        // сразу. Это ровно правило системы — сигнал ровно один.
+        map.setConfigProperty('basemap', 'theme', 'monochrome');
+
+        // Объём включаем явно: без него наклон камеры показывает
+        // плоские пятна вместо домов.
+        map.setConfigProperty('basemap', 'show3dObjects', true);
+
         map.setConfigProperty('basemap', 'showPointOfInterestLabels', false);
         map.setConfigProperty('basemap', 'showTransitLabels', false);
 
@@ -126,16 +156,27 @@ export function MapboxMap({
             id: 'play-area-fill',
             type: 'fill',
             source: 'play-area',
-            slot: AREA_SLOT,
-            paint: { 'fill-color': SIGNAL, 'fill-opacity': 0.16 },
+            slot: AREA_FILL_SLOT,
+            paint: { 'fill-color': SIGNAL, 'fill-opacity': 0.22 },
+          });
+
+          // Широкая полупрозрачная подложка под контуром: на ночной
+          // подложке тонкая линия сливается с тенями между домами, а
+          // свечение читается и краем глаза.
+          map.addLayer({
+            id: 'play-area-glow',
+            type: 'line',
+            source: 'play-area',
+            slot: AREA_LINE_SLOT,
+            paint: { 'line-color': SIGNAL, 'line-width': 12, 'line-opacity': 0.22, 'line-blur': 8 },
           });
 
           map.addLayer({
             id: 'play-area-line',
             type: 'line',
             source: 'play-area',
-            slot: AREA_SLOT,
-            paint: { 'line-color': SIGNAL, 'line-width': 2, 'line-opacity': 0.9 },
+            slot: AREA_LINE_SLOT,
+            paint: { 'line-color': SIGNAL, 'line-width': 3 },
           });
         }
 
@@ -150,10 +191,23 @@ export function MapboxMap({
 
         // Кадр по содержимому: поле важнее заданий, оно и задаёт
         // границы. Точки без поля — тоже повод подвинуть камеру.
+        //
+        // Наклон в fitBounds не передаём намеренно. Mapbox считает
+        // рамку для камеры, смотрящей сверху, а потом наклоняет её —
+        // и дальний край кадра уезжает за горизонт вместе с теми
+        // точками, что там оказались. Отсюда и было «точки видно не
+        // везде». Сначала кадр без наклона, потом наклон отдельно.
         const box = boundsOf(area, points);
         if (box) {
-          map.fitBounds(box, { padding: 48, pitch: 55, bearing: -18, duration: 0 });
+          map.fitBounds(box, { padding: 64, pitch: 0, bearing: 0, duration: 0 });
         }
+
+        map.easeTo({
+          zoom: Math.max(map.getZoom(), MIN_3D_ZOOM),
+          pitch: 55,
+          bearing: -18,
+          duration: 0,
+        });
       });
     })();
 

@@ -436,6 +436,36 @@ export function TaskForm({
           />
         </Field>
 
+        {/* ═══ По дороге ══════════════════════════════════════
+            Видно сразу, вместе с условием. До точки идти десять
+            минут, и это единственное, что человек успевает
+            прочитать по пути. */}
+        <fieldset className="flex flex-col gap-4 border border-hairline bg-panel p-4">
+          <legend className="signal-label px-2 text-micro text-signal">По дороге</legend>
+
+          <Field
+            label="Справка о месте"
+            htmlFor="backstory"
+            error={fields.backstory}
+            hint="Кому памятник, чем известен дом. Видно сразу, вместе с условием — команда читает это, пока идёт."
+          >
+            <TextArea
+              id="backstory"
+              name="backstory"
+              defaultValue={task?.backstory ?? ''}
+              rows={5}
+              maxLength={2000}
+            />
+          </Field>
+
+          {cardType === 'riddle' && (
+            <Notice icon="upload-failed">
+              У загадки справка почти всегда выдаёт ответ: биография рядом с «тот, кто вписал
+              город в свою книгу» решает её за команду. Если всё же пишете — не называйте объект.
+            </Notice>
+          )}
+        </fieldset>
+
         {/* ═══ После отправки ═════════════════════════════════
             Показывается только после того, как команда отправила
             снимок, поэтому подсказкой служить не может. Ради

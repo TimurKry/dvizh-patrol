@@ -76,6 +76,23 @@ export interface QuestMapProps {
   className?: string;
   /** Показывать кнопку «Где я». На странице задания не нужна. */
   showLocateButton?: boolean;
+  /**
+   * Плоская карта без наклона и объёма.
+   *
+   * Объём хорош на обзорной карте: город узнаётся по силуэтам
+   * домов. На странице одного задания он мешает — крыши закрывают
+   * то, что обведено, а наклон делает контур трапецией, по которой
+   * непонятно, где кончается район. Там нужен план, а не вид.
+   */
+  flat?: boolean;
+  /**
+   * Всплывающие подписи у знаков.
+   *
+   * На обзорной карте они объясняют, что за номер под пальцем. На
+   * странице задания подпись повторяет заголовок страницы и
+   * закрывает собой ровно то место, на которое человек смотрит.
+   */
+  showPopups?: boolean;
 }
 
 // Цвета Mono Signal. Leaflet рисует слои императивно и не видит
@@ -112,6 +129,7 @@ function LeafletMap({
   points,
   className = 'h-[420px]',
   showLocateButton = true,
+  showPopups = true,
 }: QuestMapProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMapInstance | null>(null);
@@ -238,7 +256,7 @@ function LeafletMap({
           }),
         }).addTo(map);
 
-        marker.bindPopup(popupHtml(point));
+        if (showPopups) marker.bindPopup(popupHtml(point));
         bounds.extend(marker.getLatLng());
 
         if (radius) {
@@ -247,7 +265,10 @@ function LeafletMap({
       }
 
       if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [28, 28] });
+        // maxZoom обязателен: у одной точки без контура рамка
+        // вырождается в ноль, и fitBounds уводит карту на
+        // предельный зум — в кадре остаётся кусок крыши.
+        map.fitBounds(bounds, { padding: [28, 28], maxZoom: 17 });
       } else {
         // Ни поля, ни точек — остаёмся на запасном виде,
         // выставленном выше: серый прямоугольник хуже, чем
@@ -263,7 +284,9 @@ function LeafletMap({
       mapRef.current = null;
       meRef.current = null;
     };
-  }, [area, points]);
+    // Режим попапов в зависимостях: он решает, чем обвешан
+    // каждый маркер, а маркеры создаются здесь же.
+  }, [area, points, showPopups]);
 
   async function locate() {
     const map = mapRef.current;

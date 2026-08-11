@@ -63,12 +63,16 @@ export function MapboxMap({
   points,
   className,
   showLocateButton = true,
+  flat = false,
+  showPopups = true,
 }: {
   token: string;
   area: PlayArea | null;
   points: MapPoint[];
   className?: string;
   showLocateButton?: boolean;
+  flat?: boolean;
+  showPopups?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxGlMap | null>(null);
@@ -103,8 +107,13 @@ export function MapboxMap({
         zoom: 14.2,
         // Наклон и поворот — то, ради чего всё и затевалось.
         // Строго сверху карта выглядит плоской при любом стиле.
-        pitch: 55,
-        bearing: -18,
+        //
+        // Но на странице одного задания объём мешает: крыши
+        // закрывают обведённое место, а наклон превращает контур в
+        // трапецию, по которой не понять, где кончается район.
+        // Там нужен план, а не вид, — отсюда `flat`.
+        pitch: flat ? 0 : 55,
+        bearing: flat ? 0 : -18,
         attributionControl: true,
         // Клавиатурное управление оставляем: карта — не картинка,
         // и стрелками по ней должно двигаться.
@@ -132,7 +141,7 @@ export function MapboxMap({
 
         // Объём включаем явно: без него наклон камеры показывает
         // плоские пятна вместо домов.
-        map.setConfigProperty('basemap', 'show3dObjects', true);
+        map.setConfigProperty('basemap', 'show3dObjects', !flat);
 
         map.setConfigProperty('basemap', 'showPointOfInterestLabels', false);
         map.setConfigProperty('basemap', 'showTransitLabels', false);
@@ -212,10 +221,14 @@ export function MapboxMap({
         for (const point of points) {
           const el = document.createElement('div');
           el.innerHTML = point.kind === 'zone' ? zoneHtml(point) : crossHtml(point);
-          new mapboxgl.Marker({ element: el, anchor: 'center' })
-            .setLngLat([point.longitude, point.latitude])
-            .setPopup(new mapboxgl.Popup({ offset: 22 }).setHTML(popupHtml(point)))
-            .addTo(map);
+          const marker = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([
+            point.longitude,
+            point.latitude,
+          ]);
+          if (showPopups) {
+            marker.setPopup(new mapboxgl.Popup({ offset: 22 }).setHTML(popupHtml(point)));
+          }
+          marker.addTo(map);
         }
 
         // Кадр по содержимому: поле важнее заданий, оно и задаёт
@@ -228,8 +241,22 @@ export function MapboxMap({
         // везде». Сначала кадр без наклона, потом наклон отдельно.
         const box = boundsOf(area, points);
         if (box) {
-          map.fitBounds(box, { padding: 64, pitch: 0, bearing: 0, duration: 0 });
+          // maxZoom обязателен: у одной точки без контура рамка
+          // вырождается в ноль, и fitBounds уводит камеру на
+          // предельный зум — в кадре остаётся кусок крыши.
+          map.fitBounds(box, {
+            padding: 64,
+            maxZoom: 16.5,
+            pitch: 0,
+            bearing: 0,
+            duration: 0,
+          });
         }
+
+        // Плоской карте доводить зум и наклон незачем: кадр уже
+        // построен fitBounds, и трогать его — значит уехать от того,
+        // что как раз хотели показать.
+        if (flat) return;
 
         map.easeTo({
           zoom: Math.max(map.getZoom(), MIN_3D_ZOOM),
@@ -247,7 +274,10 @@ export function MapboxMap({
       map?.remove();
       mapRef.current = null;
     };
-  }, [token, area, points]);
+    // Режим и попапы в зависимостях: первый задаётся при
+    // создании карты, второй — при создании маркеров. Менять их
+    // на живом экземпляре сложнее, чем пересобрать его целиком.
+  }, [token, area, points, flat, showPopups]);
 
   async function locate() {
     const map = mapRef.current;

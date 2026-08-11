@@ -23,7 +23,7 @@ import {
   membersWord,
   pointsWord,
 } from '@/lib/messages';
-import { asAreaPolygon, ringCenter, toPlayArea } from '@/lib/geo';
+import { asAreaPolygon, ringCenter } from '@/lib/geo';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,10 +150,18 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
               {task.map_mode === 'area' ? 'Где-то здесь' : 'Где искать'}
             </h2>
+            {/* Игровое поле здесь не рисуется намеренно. Оно
+                заливается тем же сигнальным цветом, что и область
+                задания, и обведённый квартал внутри поля просто
+                переставал читаться. Границы поля команда видит на
+                общей карте; на странице задания важно одно — куда
+                идти. */}
             <QuestMap
               className="h-[260px]"
               showLocateButton={false}
-              area={toPlayArea(session.event)}
+              flat
+              showPopups={false}
+              area={null}
               points={[
                 {
                   id: task.id,
@@ -193,6 +201,21 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             </Card>
           )}
         </div>
+
+        {/* ═══ По дороге ════════════════════════════════════
+            Справка видна сразу, вместе с условием: до точки идти
+            десять минут, и это единственное, что человек успевает
+            прочитать по пути. Ради этого квест и затевался — чтобы
+            команда пришла к памятнику, уже зная, на что смотрит. */}
+        {task.backstory && (
+          <Card className="mt-6 flex flex-col gap-3 p-5">
+            <h2 className="signal-label flex items-center gap-2 text-micro text-signal">
+              <Icon name="info" size={14} />
+              Пока идёте
+            </h2>
+            <p className="whitespace-pre-line text-body text-muted">{task.backstory}</p>
+          </Card>
+        )}
 
         {/* ═══ Текущее состояние ════════════════════════════ */}
         <div className="mt-8 flex flex-col gap-4">

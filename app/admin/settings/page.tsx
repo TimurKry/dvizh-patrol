@@ -111,7 +111,7 @@ export default async function AdminSettingsPage() {
           Удалить просроченные фотографии
         </ActionButton>
 
-        <Notice icon="•">
+        <Notice icon="info">
           Срок хранения указан на странице конфиденциальности и виден участникам. Меняется он в
           настройках мероприятия.
         </Notice>

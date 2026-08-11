@@ -229,7 +229,7 @@ export function PhotoUpload({
   if (phase === 'done') {
     return (
       <div className="flex flex-col gap-4">
-        <Notice tone="strong" icon="✓" role="status">
+        <Notice tone="strong" icon="accepted" role="status">
           Фото загружено и отправлено на проверку. Можно продолжать квест.
         </Notice>
         <Button variant="secondary" onClick={() => router.push('/tasks')}>
@@ -260,7 +260,7 @@ export function PhotoUpload({
       />
 
       {restored && phase === 'ready' && (
-        <Notice icon="◍">
+        <Notice icon="uploading">
           Эта фотография осталась с прошлой попытки — отправка не завершилась. Можно отправить её
           снова или выбрать другую.
         </Notice>

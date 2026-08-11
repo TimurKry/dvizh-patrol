@@ -42,7 +42,7 @@ export default async function JoinPage({
             <JoinForm defaultCode={params.code?.toUpperCase().slice(0, 6)} />
           ) : (
             <div className="flex flex-col gap-6">
-              <Notice tone="strong" icon="•">
+              <Notice tone="strong" icon="info">
                 К этому мероприятию сейчас нельзя присоединиться.
               </Notice>
               <ButtonLink href="/" variant="secondary">

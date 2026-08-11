@@ -102,7 +102,7 @@ export default async function AdminDashboardPage() {
       </header>
 
       {!aiReady && (
-        <Notice tone="strong" icon="•">
+        <Notice tone="strong" icon="info">
           Автоматическая проверка выключена{' '}
           {isAiConfigured() ? 'настройкой мероприятия' : '— не задан GEMINI_API_KEY'}. Все
           фотографии уходят в ручную проверку. Это штатный режим: мероприятие можно провести
@@ -111,7 +111,7 @@ export default async function AdminDashboardPage() {
       )}
 
       {needsAttention > 0 && (
-        <Notice tone="strong" icon="⁂">
+        <Notice tone="strong" icon="manual-review">
           Ждут вашего решения: {needsAttention}.{' '}
           <Link href="/admin/submissions" className="underline underline-offset-2">
             Открыть очередь
@@ -180,7 +180,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {(stats?.ai_failed_jobs ?? 0) > 0 && (
-          <Notice icon="!">
+          <Notice icon="upload-failed">
             Задач с ошибкой проверки: {stats?.ai_failed_jobs}. Все они уже переведены в ручную
             проверку — квест не остановился.
           </Notice>

@@ -56,7 +56,7 @@ export default async function RegisterPage() {
             </>
           ) : (
             <div className="flex flex-col gap-6">
-              <Notice tone="strong" icon="•">
+              <Notice tone="strong" icon="info">
                 {stats.isFull && event.status === 'registration'
                   ? 'Регистрация команд завершена — все доступные места заняты.'
                   : event.status === 'registration'

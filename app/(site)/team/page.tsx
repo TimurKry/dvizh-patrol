@@ -72,7 +72,7 @@ export default async function TeamPage({
     <div className="page-well with-bottom-nav py-8 md:py-12">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         {params.welcome === '1' && (
-          <Notice tone="strong" icon="✓" role="status">
+          <Notice tone="strong" icon="accepted" role="status">
             Команда создана. Передайте код остальным участникам — до {session.event.team_size}{' '}
             человек, включая вас.
           </Notice>

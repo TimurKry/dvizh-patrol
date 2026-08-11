@@ -92,7 +92,11 @@ export function ActionForm({
   return (
     <form action={formAction} className={className}>
       {state.message && (
-        <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? '✓' : '!'} role="status">
+        <Notice
+          tone={state.ok ? 'neutral' : 'strong'}
+          icon={state.ok ? 'accepted' : 'upload-failed'}
+          role="status"
+        >
           {state.message}
         </Notice>
       )}

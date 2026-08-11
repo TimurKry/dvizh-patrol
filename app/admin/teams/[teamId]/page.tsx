@@ -322,7 +322,7 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
           ))}
         </ul>
 
-        <Notice icon="•" className="mt-2">
+        <Notice icon="info" className="mt-2">
           Согласие на публикацию в социальных сетях дали {socialAllowed} из {consents.length}.
           Фотографии остальных публиковать нельзя.
         </Notice>

@@ -3,6 +3,7 @@
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { useFieldError } from '@/components/ui/field-errors';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Поля ввода.
@@ -55,8 +56,10 @@ export function Field({
       </label>
       {children}
       {shownError ? (
-        <p className="text-caption text-ink" role="alert">
-          <span aria-hidden="true">! </span>
+        <p className="flex items-start gap-1.5 text-caption text-ink" role="alert">
+          <span className="mt-0.5">
+            <Icon name="upload-failed" size={14} />
+          </span>
           {shownError}
         </p>
       ) : hint ? (

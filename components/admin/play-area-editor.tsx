@@ -7,6 +7,7 @@ import { savePlayAreaAction, type AdminActionState } from '@/actions/admin';
 import { Button } from '@/components/ui/button';
 import { Notice } from '@/components/ui/feedback';
 import { asAreaPolygon, type PolygonRing } from '@/lib/geo';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Редактор игрового поля · Figma 155:404.
@@ -191,7 +192,10 @@ export function PlayAreaEditor({
   return (
     <div className="flex flex-col gap-4">
       {state.message && (
-        <Notice tone={state.ok ? 'strong' : undefined} icon={state.ok ? '✓' : '!'}>
+        <Notice
+          tone={state.ok ? 'strong' : undefined}
+          icon={state.ok ? 'accepted' : 'upload-failed'}
+        >
           {state.message}
         </Notice>
       )}
@@ -225,7 +229,7 @@ export function PlayAreaEditor({
                 className="tap-target px-3 text-caption text-muted hover:text-signal"
               >
                 <span className="sr-only">Удалить точку {index + 1}</span>
-                <span aria-hidden="true">×</span>
+                <Icon name="remove" size={16} />
               </button>
             </li>
           ))}

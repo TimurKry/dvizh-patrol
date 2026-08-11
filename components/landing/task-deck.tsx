@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { CardBack } from '@/components/game/card-back';
+import { CardTable, type TableCard } from '@/components/game/card-table';
 import { TaskTypeIcon } from '@/components/game/task-type-icon';
 import { TaskFace } from '@/components/game/task-face';
 import { teamColorVars } from '@/lib/team-colors';
@@ -17,25 +16,15 @@ import { cn } from '@/lib/cn';
  * зрителю и переворачивается лицом; «Закрыть» возвращает её на
  * место.
  *
- * Три вещи, которые стоит объяснить.
+ * Сама механика раскладки живёт в `CardTable`: она же раздаёт руку
+ * команды в бою. Здесь остаются только содержимое сторон и
+ * раскладка гнёзд. Раньше тот же перелёт был написан здесь второй
+ * раз — две копии одного поведения расходятся ровно в тот день,
+ * когда одну из них чинят.
  *
- * **Карточка не «раздувается на месте», а летит из своего гнезда.**
- * Приём известный (FLIP): открытая карточка рисуется поверх
- * страницы сразу в конечном размере, но первым кадром ей
- * подставляется трансформация, совмещающая её с исходным
- * гнездом. Со следующего кадра трансформация снимается, и
- * браузер сам доводит карточку до места. Только `transform`,
- * никакой анимации ширины и высоты.
- *
- * **Перелёт и переворот — одно движение.** Внешний слой везёт
- * карточку, внутренний крутит `rotateY`. Разложить их по двум
- * элементам пришлось потому, что смешивать в одной трансформации
- * `scale` и `rotateY` — значит получить перспективу, гуляющую по
- * ходу полёта.
- *
- * **Гнездо не пустеет.** Карточка в колоде остаётся лежать
- * рубашкой: колода — часть картинки, и дыра в ней читалась бы как
- * поломка, а не как «карту достали».
+ * Гнездо не пустеет: карточка в колоде остаётся лежать рубашкой.
+ * Колода — часть картинки, и дыра в ней читалась бы как поломка,
+ * а не как «карту достали».
  */
 
 type Example = {
@@ -97,216 +86,23 @@ const EXAMPLES: Example[] = [
   },
 ];
 
-/** Совмещение открытой карточки с её гнездом первым кадром. */
-function deltaTransform(from: DOMRect, to: DOMRect): string {
-  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
-  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-  const scale = from.width / to.width;
-  return `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
-}
+/** Золотая рубашка золотая, а не командная: назвать карточку
+    золотой и покрасить в общий цвет — значит сказать одно, а
+    показать другое. Переменные подменяются точечно, палитра
+    команд не трогается. */
+const GOLD_VARS = {
+  '--team-color': '#c9a227',
+  '--team-on-color': '#1c1503',
+} as React.CSSProperties;
 
 export function TaskDeck() {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [settled, setSettled] = useState(false);
-
-  const slots = useRef(new Map<string, HTMLButtonElement | null>());
-  const cardRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const returnFocus = useRef<HTMLButtonElement | null>(null);
-
-  const open = EXAMPLES.find((e) => e.id === openId) ?? null;
-
-  const close = useCallback(() => {
-    setOpenId(null);
-    setSettled(false);
-    // Фокус возвращается на ту карточку, с которой ушёл: иначе
-    // после закрытия он падает в начало страницы, и человек с
-    // клавиатуры теряет место в колоде.
-    returnFocus.current?.focus();
-  }, []);
-
-  // Первый кадр открытой карточки — в гнезде, дальше сама доедет.
-  useLayoutEffect(() => {
-    if (!open || !cardRef.current) return;
-
-    const slot = slots.current.get(open.id);
-    const node = cardRef.current;
-
-    const reduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (!slot || reduced) {
-      setSettled(true);
-      return;
-    }
-
-    node.style.transform = deltaTransform(
-      slot.getBoundingClientRect(),
-      node.getBoundingClientRect(),
-    );
-    const id = requestAnimationFrame(() => {
-      node.style.transform = '';
-      setSettled(true);
-    });
-    return () => cancelAnimationFrame(id);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, close]);
-
-  return (
-    <div className="flex flex-col gap-4" style={teamColorVars('pink')}>
-      <p className="signal-label text-micro text-muted">
-        Четыре примера. Нажмите карточку — она перевернётся.
-      </p>
-
-      {/* ═══ Колода ═══════════════════════════════════════ */}
-      <div className="flex flex-col gap-3">
-        {EXAMPLES.map((example) =>
-          example.golden ? (
-            <DeckSlot
-              key={example.id}
-              example={example}
-              tall
-              onOpen={(node) => {
-                returnFocus.current = node;
-                setOpenId(example.id);
-              }}
-              register={(node) => slots.current.set(example.id, node)}
-            />
-          ) : null,
-        )}
-
-        <div className="grid grid-cols-3 gap-3">
-          {EXAMPLES.filter((e) => !e.golden).map((example) => (
-            <DeckSlot
-              key={example.id}
-              example={example}
-              onOpen={(node) => {
-                returnFocus.current = node;
-                setOpenId(example.id);
-              }}
-              register={(node) => slots.current.set(example.id, node)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* ═══ Открытая карточка ════════════════════════════
-          Через портал в body, а не на месте. Модальное окно не
-          должно зависеть от стилей предков: у секции лендинга
-          есть `will-change`, а он делает элемент содержащим
-          блоком для `position: fixed` — окно оказывалось заперто
-          в габаритах секции вместо экрана. `will-change` мы
-          заодно сняли, но полагаться на то, что его не вернут,
-          нельзя. */}
-      {/* Проверки «мы уже в браузере» не нужно: `open` выставляет
-          только нажатие, а на сервере нажимать некому. */}
-      {open &&
-        createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={open.title}
-            className="fixed inset-0 z-50"
-          >
-            {/* Затемнение отдельным слоем поверх всего экрана, а не
-              внутри прокручиваемой обёртки: внутри оно закончилось
-              бы на первом экране, и низ длинной карточки лежал бы
-              на самой странице. */}
-            <button
-              type="button"
-              aria-label="Закрыть карточку"
-              onClick={close}
-              className="fixed inset-0 bg-canvas/85"
-            />
-
-            {/* Карточка с фото-эталоном выше экрана телефона.
-              Прокручиваемая обёртка с центрированием по min-h-full:
-              короткая карточка стоит по центру, длинная листается
-              целиком вместе с кнопкой. */}
-            <div className="absolute inset-0 overflow-y-auto overscroll-contain">
-              <div className="flex min-h-full items-center justify-center p-4">
-                <div
-                  ref={cardRef}
-                  className={cn(
-                    'relative w-full max-w-[330px] origin-center',
-                    settled &&
-                      'transition-transform duration-[420ms] ease-out motion-reduce:transition-none',
-                  )}
-                >
-                  <div className="flip-scene">
-                    <div className="flip-body" data-flipped={settled ? 'false' : 'true'}>
-                      <div className="flip-face">
-                        <OpenCard example={open} />
-                      </div>
-                      <div className="flip-face flip-face-back" aria-hidden="true">
-                        <CardBack caption="Движ-Патруль" hint="Рубашка красится в цвет команды" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    ref={closeRef}
-                    type="button"
-                    onClick={close}
-                    className="lift mt-3 inline-flex min-h-[44px] w-full items-center justify-center border border-ink bg-canvas px-4 text-caption uppercase text-ink hover:border-signal hover:text-signal"
-                  >
-                    Закрыть
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-    </div>
-  );
-}
-
-/** Гнездо в колоде: рубашка, по которой нажимают. */
-function DeckSlot({
-  example,
-  tall,
-  onOpen,
-  register,
-}: {
-  example: Example;
-  tall?: boolean;
-  onOpen: (node: HTMLButtonElement) => void;
-  register: (node: HTMLButtonElement | null) => void;
-}) {
-  return (
-    <button
-      ref={register}
-      type="button"
-      onClick={(e) => onOpen(e.currentTarget)}
-      className={cn(
-        'lift relative block w-full overflow-hidden rounded-[8px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal',
-        tall ? 'h-[172px]' : 'h-[148px]',
-        example.golden && 'ring-2 ring-[#c9a227]',
-      )}
-    >
-      {/* Рубашка золотой карточки золотая, а не командная: назвать
-          её золотой и покрасить в тот же цвет, что и остальные, —
-          значит сказать одно, а показать другое. Переменные
-          подменяются точечно, палитра команд не трогается. */}
-      <span
-        className="block h-full"
-        style={
-          example.golden
-            ? ({ '--team-color': '#c9a227', '--team-on-color': '#1c1503' } as React.CSSProperties)
-            : undefined
-        }
-      >
+  const cards: TableCard[] = EXAMPLES.map((example) => ({
+    id: example.id,
+    label: `Открыть пример: ${example.title}`,
+    title: example.title,
+    wide: example.golden,
+    back: (
+      <span className="block h-full" style={example.golden ? GOLD_VARS : undefined}>
         <CardBack
           caption={example.golden ? 'Золотая' : undefined}
           hint={example.golden ? 'Одна на всех' : undefined}
@@ -314,30 +110,40 @@ function DeckSlot({
           className={cn('h-full', example.golden && 'border-[#8a6f14]')}
         />
       </span>
-      <span className="sr-only">Открыть пример: {example.title}</span>
-    </button>
-  );
-}
+    ),
+    openBack: <CardBack caption="Движ-Патруль" hint="Рубашка красится в цвет команды" />,
+    front: (
+      <TaskFace
+        type={example.type}
+        kicker={example.kicker}
+        title={example.title}
+        points={example.points}
+        text={example.text}
+        place={example.place}
+        image={example.image ? { src: example.image, badge: 'Фото-эталон' } : null}
+        placeholder={example.number}
+        status={{ icon: 'available', text: 'Пример', tone: 'available' }}
+        golden={example.golden}
+      />
+    ),
+  }));
 
-/**
- * Лицевая сторона открытой карточки — тот же `TaskFace`, что и в
- * бою. Своей разметки здесь нет намеренно: витрина, нарисованная
- * «в общих чертах», расходится с продуктом за две недели, и
- * человек видит на лендинге не то, что получит на квесте.
- */
-function OpenCard({ example }: { example: Example }) {
   return (
-    <TaskFace
-      type={example.type}
-      kicker={example.kicker}
-      title={example.title}
-      points={example.points}
-      text={example.text}
-      place={example.place}
-      image={example.image ? { src: example.image, badge: 'Фото-эталон' } : null}
-      placeholder={example.number}
-      status={{ icon: '◇', text: 'Пример', tone: 'available' }}
-      golden={example.golden}
-    />
+    <div className="flex flex-col gap-4" style={teamColorVars('pink')}>
+      <p className="signal-label text-micro text-muted">
+        Четыре примера. Нажмите карточку — она перевернётся.
+      </p>
+
+      {/* Золотая занимает всю ширину строкой выше остальных: она
+          одна на всех, и в ряду с примерами читалась бы как
+          четвёртый пример. */}
+      <CardTable
+        cards={cards}
+        className="grid grid-cols-3 gap-3"
+        slotClassName="h-[148px]"
+        wideSlotClassName="col-span-3 h-[172px] ring-2 ring-[#c9a227]"
+        openWidthClassName="max-w-[330px]"
+      />
+    </div>
   );
 }

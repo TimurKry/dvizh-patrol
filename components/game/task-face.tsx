@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PlaceMark, TaskTypeIcon } from './task-type-icon';
+import { Icon, type IconName } from '@/components/ui/icon';
 import type { TaskCardType } from '@/types/database';
 import { cn } from '@/lib/cn';
 
@@ -54,7 +55,7 @@ export function TaskFace({
   /** Что показать вместо фото: обычно номер задания. */
   placeholder?: string;
   attemptsLine?: string | null;
-  status: { icon: string; text: string; tone: FaceTone };
+  status: { icon: IconName; text: string; tone: FaceTone };
   /** Кнопки внизу: «Открыть», переворот, «Закрыть» — по месту. */
   actions?: ReactNode;
   golden?: boolean;
@@ -91,9 +92,7 @@ export function TaskFace({
         </span>
       </div>
 
-      <p
-        className={cn('signal-label text-micro', golden ? 'text-[#8a6f14]' : 'text-[#5c5c63]')}
-      >
+      <p className={cn('signal-label text-micro', golden ? 'text-[#8a6f14]' : 'text-[#5c5c63]')}>
         {kicker}
       </p>
 
@@ -141,9 +140,7 @@ export function TaskFace({
       </p>
 
       <div className="mt-auto flex flex-col gap-2">
-        {attemptsLine && (
-          <p className="signal-label text-micro text-[#66666d]">{attemptsLine}</p>
-        )}
+        {attemptsLine && <p className="signal-label text-micro text-[#66666d]">{attemptsLine}</p>}
 
         <p
           className={cn(
@@ -151,8 +148,8 @@ export function TaskFace({
             TONE_FOOTER[status.tone],
           )}
         >
-          <span aria-hidden="true" className={cn(status.tone === 'checking' && 'anim-tick')}>
-            {status.icon}
+          <span className={cn(status.tone === 'checking' && 'anim-tick')}>
+            <Icon name={status.icon} size={15} />
           </span>
           <span className="signal-label text-micro">{status.text}</span>
         </p>

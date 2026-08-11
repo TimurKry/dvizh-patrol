@@ -9,6 +9,7 @@ import { requireAdmin } from '@/lib/auth/admin';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { BUCKETS, createSignedUrl, createSignedUrls } from '@/lib/storage';
 import { REVIEW_REASON_TEXT, attemptsWord, pointsWord } from '@/lib/messages';
+import { Icon } from '@/components/ui/icon';
 import type {
   EventRow,
   SubmissionRow,
@@ -248,8 +249,8 @@ export default async function AdminSubmissionPage({
                 <ul className="flex flex-col gap-2 border-t border-hairline pt-3">
                   {submission.ai_result.checks.map((check, index) => (
                     <li key={index} className="flex gap-2 text-caption">
-                      <span aria-hidden="true" className="shrink-0">
-                        {check.passed ? '✓' : '×'}
+                      <span className="mt-0.5 shrink-0">
+                        <Icon name={check.passed ? 'accepted' : 'rejected'} size={14} />
                       </span>
                       <span className="min-w-0">
                         <span className={check.passed ? '' : 'font-medium'}>{check.criterion}</span>
@@ -275,7 +276,7 @@ export default async function AdminSubmissionPage({
           )}
 
           {submission.review_reason && (
-            <Notice icon="⁂">
+            <Notice icon="manual-review">
               Причина ручной проверки:{' '}
               {REVIEW_REASON_TEXT[submission.review_reason] ?? submission.review_reason}
             </Notice>

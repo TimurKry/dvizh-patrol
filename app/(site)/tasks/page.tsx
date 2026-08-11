@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { BottomNav } from '@/components/nav/bottom-nav';
-import { TaskCard } from '@/components/game/task-card';
+import { TaskHand } from '@/components/game/task-hand';
 import { LiveRefresh } from '@/components/game/live-refresh';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { getTeamHand } from '@/lib/data/tasks';
@@ -9,6 +9,7 @@ import { TASK_CARD_TYPE_TEXT } from '@/lib/messages';
 import { TaskTypeIcon } from '@/components/game/task-type-icon';
 import { teamColorVars } from '@/lib/team-colors';
 import { TASK_CARD_TYPES } from '@/types/database';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Рука команды · Figma 103:47.
@@ -74,6 +75,10 @@ export default async function TasksPage() {
       <p className="signal-label text-label text-signal">Команда «{session.team.name}»</p>
       <h1 className="mt-3 text-headline">Задания</h1>
 
+      <p className="mt-4 text-caption text-muted">
+        Карты лежат рубашкой вверх. Нажмите — карта откроется; «Вернуть в колоду» кладёт её обратно.
+      </p>
+
       {/* ═══ Правило руки · Figma 103:51 ══════════════════════ */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-hairline bg-panel px-4 py-4">
         <span className="signal-label text-micro text-ink">Рука {hand.length} / 6</span>
@@ -90,7 +95,7 @@ export default async function TasksPage() {
 
       {session.event.status === 'paused' && (
         <div className="mt-4">
-          <Notice tone="strong" icon="‖">
+          <Notice tone="strong" icon="paused">
             Квест приостановлен организатором. Карточки видны, но отправка временно недоступна.
           </Notice>
         </div>
@@ -98,7 +103,7 @@ export default async function TasksPage() {
 
       {session.event.status === 'finished' && (
         <div className="mt-4">
-          <Notice tone="strong" icon="•">
+          <Notice tone="strong" icon="info">
             Квест завершён. Новые отправки закрыты, результаты досматривает организатор.
           </Notice>
         </div>
@@ -111,18 +116,15 @@ export default async function TasksPage() {
             description="Все карточки этого типа уже забраны другими командами или отыграны вами. Загляните в рейтинг — квест на финишной прямой."
           />
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {hand.map((item) => (
-              <TaskCard key={item.task.id} item={item} />
-            ))}
-          </div>
+          <TaskHand items={hand} />
         )}
       </div>
 
       {/* ═══ Правило гонки · Figma 103:96 ═════════════════════ */}
       <p className="mt-8 flex flex-col gap-1 border-t border-hairline pt-4">
-        <span className="signal-label text-micro text-signal">
-          ⌁ Первая валидная забирает карту
+        <span className="signal-label flex items-center gap-1.5 text-micro text-signal">
+          <Icon name="race" size={14} />
+          Первая валидная забирает карту
         </span>
         <span className="text-caption text-muted">
           Принято → карточка исчезает у всех команд, а вам приходит новая. Побеждает первая отправка

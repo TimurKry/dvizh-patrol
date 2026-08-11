@@ -90,7 +90,7 @@ export default async function AdminLeaderboardPage() {
         </div>
 
         {event.leaderboard_mode === 'frozen' && event.leaderboard_frozen_at && (
-          <Notice icon="❄">
+          <Notice icon="frozen">
             Заморожено{' '}
             {new Intl.DateTimeFormat('ru-RU', {
               day: '2-digit',

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { Icon, type IconName } from './icon';
 
 /**
  * Сообщения, пустые состояния и скелетоны.
@@ -20,7 +21,8 @@ export function Notice({
 }: {
   children: ReactNode;
   tone?: Tone;
-  icon?: string;
+  /** Значок слева — имя из общего набора, не произвольный символ. */
+  icon?: IconName;
   className?: string;
   role?: 'alert' | 'status';
 }) {
@@ -34,8 +36,8 @@ export function Notice({
       )}
     >
       {icon && (
-        <span aria-hidden="true" className="mt-0.5 shrink-0 font-medium">
-          {icon}
+        <span className="mt-1 shrink-0">
+          <Icon name={icon} size={16} />
         </span>
       )}
       <div className="min-w-0 flex-1">{children}</div>
@@ -45,7 +47,7 @@ export function Notice({
 
 export function ErrorNotice({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <Notice tone="strong" icon="!" role="alert" className={className}>
+    <Notice tone="strong" icon="upload-failed" role="alert" className={className}>
       {children}
     </Notice>
   );

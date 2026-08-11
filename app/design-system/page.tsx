@@ -7,8 +7,10 @@ import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { Card, Divider, Eyebrow, SectionTitle } from '@/components/ui/surface';
 import { Ticker } from '@/components/game/ticker';
 import { CountUp } from '@/components/ui/count-up';
-import { SUBMISSION_STATUSES } from '@/types/database';
-import { SUBMISSION_STATUS_TEXT } from '@/lib/messages';
+import { Icon, ICON_NAMES } from '@/components/ui/icon';
+import { TaskTypeIcon } from '@/components/game/task-type-icon';
+import { SUBMISSION_STATUSES, TASK_CARD_TYPES } from '@/types/database';
+import { SUBMISSION_STATUS_TEXT, TASK_CARD_TYPE_TEXT } from '@/lib/messages';
 import { TEAM_COLOR_OPTIONS } from '@/lib/team-colors';
 
 /**
@@ -72,7 +74,7 @@ export default function DesignSystemPage() {
       <header className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
           <Wordmark />
-          <span className="signal-label text-caption text-signal">29 / 08</span>
+          <span className="signal-label text-caption text-signal">05 / 09</span>
         </div>
 
         <div className="signal-rule" />
@@ -121,7 +123,7 @@ export default function DesignSystemPage() {
           состоянии.
         </p>
 
-        <Ticker items={['Leipzig', '29.08', '14:00', '30 заданий', '15 €', 'Свободный маршрут']} />
+        <Ticker items={['Leipzig', '05.09', '14:00', '30 заданий', '15 €', 'Свободный маршрут']} />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Card interactive className="flex flex-col gap-1">
@@ -137,8 +139,8 @@ export default function DesignSystemPage() {
           <Card interactive className="flex flex-col gap-1">
             <span className="signal-label text-caption text-faint">Пульс</span>
             <p className="text-body text-muted">
-              <span aria-hidden="true" className="anim-tick text-signal">
-                »
+              <span className="anim-tick inline-block align-[-2px] text-signal">
+                <Icon name="checking" size={14} />
               </span>{' '}
               Статус «проверяется» пульсирует.
             </p>
@@ -288,10 +290,55 @@ export default function DesignSystemPage() {
         </Card>
       </Block>
 
+      {/* ═══ Значки ═════════════════════════════════════════ */}
+      <Block title="Значки">
+        <p className="max-w-prose text-body text-muted">
+          Один набор — Lucide, сетка 24×24, толщина штриха 2. Значок берётся по имени состояния, а
+          не по внешнему виду: в разметке стоит <code className="text-ink">accepted</code>, а не
+          «галочка». Поменяется рисунок — не придётся искать его по страницам. Типографские символы
+          вроде <code className="text-ink">◇</code> и <code className="text-ink">⁂</code> из
+          интерфейса убраны: их подбирали по тому, что нашлось в юникоде, часть отсутствовала в
+          Unbounded и молча подменялась чужим начертанием.
+        </p>
+
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {ICON_NAMES.map((name) => (
+            <li
+              key={name}
+              className="flex items-center gap-3 border border-hairline bg-panel px-3 py-3"
+            >
+              <Icon name={name} size={18} className="text-signal" />
+              <code className="truncate text-caption text-muted">{name}</code>
+            </li>
+          ))}
+        </ul>
+
+        <p className="max-w-prose text-body text-muted">
+          Типы заданий живут отдельно: фотоаппарат и бегущие человечки нарисованы от руки, а не
+          взяты из набора.
+        </p>
+
+        <ul className="flex flex-wrap gap-3">
+          {TASK_CARD_TYPES.map((type) => (
+            <li
+              key={type}
+              className="flex items-center gap-3 border border-hairline bg-panel px-4 py-3"
+            >
+              <TaskTypeIcon type={type} size={26} className="text-signal" />
+              <span className="signal-label text-micro text-muted">
+                {TASK_CARD_TYPE_TEXT[type].label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Block>
+
       {/* ═══ Сообщения ══════════════════════════════════════ */}
       <Block title="Сообщения и состояния">
-        <Notice icon="•">Фото загружено и отправлено на проверку. Можно продолжать квест.</Notice>
-        <Notice tone="strong" icon="✓">
+        <Notice icon="info">
+          Фото загружено и отправлено на проверку. Можно продолжать квест.
+        </Notice>
+        <Notice tone="strong" icon="accepted">
           Команда создана. Передайте код остальным участникам.
         </Notice>
         <ErrorNotice>Регистрация команд завершена — все доступные места заняты.</ErrorNotice>
@@ -316,8 +363,8 @@ export default function DesignSystemPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="flex flex-col gap-2">
             <p className="text-caption text-muted">Дата</p>
-            <p className="display-figure text-title">29.08</p>
-            <p className="text-caption text-faint">29 августа 2026</p>
+            <p className="display-figure text-title">05.09</p>
+            <p className="text-caption text-faint">5 сентября 2026</p>
           </Card>
           <Card className="flex flex-col gap-2">
             <p className="text-caption text-muted">Старт</p>

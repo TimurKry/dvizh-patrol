@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
 
 /**
@@ -22,24 +23,16 @@ import { cn } from '@/lib/cn';
  * растягивались на весь экран.
  */
 
-const ITEMS = [
-  {
-    href: '/tasks',
-    label: 'Задания',
-    // Ромб — та же метка «доступно», что и на карточке.
-    icon: 'M9 1.5 16.5 9 9 16.5 1.5 9z',
-  },
-  {
-    href: '/team',
-    label: 'Команда',
-    icon: 'M9 9a3.2 3.2 0 1 0 0-6.4A3.2 3.2 0 0 0 9 9zM2.5 16.2a6.5 6.5 0 0 1 13 0',
-  },
-  {
-    href: '/more',
-    label: 'Ещё',
-    icon: 'M2.5 4.5h13M2.5 9h13M2.5 13.5h13',
-  },
-] as const;
+/**
+ * Ромб на «Заданиях» ничего не значил: он был взят из метки
+ * «доступно» на карточке, а в навигации читался как абстрактная
+ * фигура. Колода карт говорит прямо — там лежат карточки.
+ */
+const ITEMS: { href: string; label: string; icon: IconName }[] = [
+  { href: '/tasks', label: 'Задания', icon: 'tasks' },
+  { href: '/team', label: 'Команда', icon: 'teams' },
+  { href: '/more', label: 'Ещё', icon: 'more' },
+];
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -63,16 +56,7 @@ export function BottomNav() {
                   active ? 'text-signal' : 'text-muted hover:text-ink',
                 )}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-                  <path
-                    d={item.icon}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={active ? 1.8 : 1.4}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <Icon name={item.icon} size={20} strokeWidth={active ? 2.2 : 1.7} />
                 <span className="signal-label text-micro">{item.label}</span>
               </Link>
             </li>

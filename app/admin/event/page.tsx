@@ -109,7 +109,7 @@ export default async function AdminEventPage() {
       </Card>
 
       {event.status === 'live' && (
-        <Notice icon="•">
+        <Notice icon="info">
           Пока квест идёт, менять число заданий и их условия не стоит: команды уже строят маршрут.
           Выключение задания скрывает его у всех немедленно.
         </Notice>

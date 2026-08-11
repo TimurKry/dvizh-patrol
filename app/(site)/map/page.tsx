@@ -123,7 +123,7 @@ export default async function MapPage() {
 
       {area && session.event.area_enforced && (
         <div className="mt-6">
-          <Notice tone="strong" icon="!">
+          <Notice tone="strong" icon="upload-failed">
             Фотографии принимаются только внутри игрового поля. Отправка попросит геопозицию — без
             неё принять снимок не получится.
           </Notice>

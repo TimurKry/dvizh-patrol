@@ -56,14 +56,18 @@ export function ReviewPanel({
       <h2 className="text-body-lg">Решение</h2>
 
       {state.message && (
-        <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? '✓' : '!'} role="status">
+        <Notice
+          tone={state.ok ? 'neutral' : 'strong'}
+          icon={state.ok ? 'accepted' : 'upload-failed'}
+          role="status"
+        >
           {state.message}
           {state.ok && nextSubmissionId && ' Открываем следующую…'}
         </Notice>
       )}
 
       {alreadyAccepted && (
-        <Notice icon="•">
+        <Notice icon="info">
           Отправка уже принята. Отклонение снимет начисленные баллы обратной транзакцией — журнал
           сохранится.
         </Notice>

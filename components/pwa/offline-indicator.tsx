@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Индикатор потери связи.
@@ -28,7 +29,7 @@ export function OfflineIndicator() {
   return (
     <div role="status" aria-live="polite" className="page-well sticky top-[72px] z-30 pb-2">
       <p className=" border border-ink bg-panel px-4 py-2 text-caption">
-        <span aria-hidden="true">◍ </span>
+        <Icon name="offline" size={15} className="mr-2 inline-block align-[-2px]" />
         Нет соединения. Выбранные фотографии сохранятся и отправятся, когда связь вернётся.
       </p>
     </div>

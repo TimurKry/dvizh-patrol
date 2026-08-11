@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { listDrafts, type SubmissionDraft } from '@/lib/offline/draft-store';
 import { photosWord } from '@/lib/messages';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Состояние очереди отправок.
@@ -57,8 +58,8 @@ export function OfflineQueueStatus() {
   if (drafts.length === 0) {
     return (
       <p className="flex items-center gap-2 border border-hairline bg-panel px-4 py-3">
-        <span aria-hidden="true" className={online ? 'text-ink' : 'text-signal'}>
-          {online ? '✓' : '◍'}
+        <span className={online ? 'text-ink' : 'text-signal'}>
+          <Icon name={online ? 'accepted' : 'offline'} size={16} />
         </span>
         <span className="signal-label text-micro text-muted">
           {online ? 'Очередь пуста · всё отправлено' : 'Нет связи · очередь пуста'}

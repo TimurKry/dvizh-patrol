@@ -20,7 +20,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 /** Значения на случай недоступной базы: превью не должно падать. */
-const FALLBACK = { date: '29.08.2026', time: '14:00', price: '15 €' };
+const FALLBACK = { date: '05.09.2026', time: '14:00', price: '15 €' };
 
 export default async function OpenGraphImage() {
   let facts = FALLBACK;

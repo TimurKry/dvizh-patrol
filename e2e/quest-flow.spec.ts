@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ADMIN_EMAIL, ADMIN_PASSWORD, loginAsAdmin, setEventStatus } from './helpers/admin';
+import { openFirstTask } from './helpers/hand';
 
 /**
  * Полный цикл: организатор запускает квест, команда отправляет
@@ -63,12 +64,8 @@ test.describe.serial('полный цикл квеста', () => {
     const context = await browser.newContext({ storageState: 'e2e-results/team-state.json' });
     const page = await context.newPage();
 
-    await page.goto('/tasks');
-    await expect(page.getByRole('heading', { name: 'Задания' })).toBeVisible();
-
-    const firstTask = page.locator('a[href^="/tasks/"]').first();
-    await expect(firstTask).toBeVisible();
-    await firstTask.click();
+    // Рука лежит рубашками вверх: сначала карта, потом задание.
+    await openFirstTask(page);
 
     await expect(page.getByRole('button', { name: 'Сделать фото' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Выбрать из галереи' })).toBeVisible();
@@ -80,10 +77,9 @@ test.describe.serial('полный цикл квеста', () => {
     const context = await browser.newContext({ storageState: 'e2e-results/team-state.json' });
     const page = await context.newPage();
 
-    // Фильтров больше нет: команда видит руку из шести карточек
-    // и открывает любую из них.
-    await page.goto('/tasks');
-    await page.locator('a[href^="/tasks/"]').first().click();
+    // Фильтров нет: команда видит расклад из шести карт и
+    // открывает любую.
+    await openFirstTask(page);
 
     // Подставляем файл напрямую: настоящую камеру браузер не даст.
     const poster = readFileSync(join(process.cwd(), 'e2e/fixtures/photo.jpg'));
@@ -104,9 +100,9 @@ test.describe.serial('полный цикл квеста', () => {
     // форму блоком статуса и подтверждение размонтирует. Что успеет
     // увидеть тест, зависит от скорости сервера, поэтому ждём любой
     // из двух кадров.
-    await expect(
-      page.getByText(/отправлено на проверку|уже на проверке/i).first(),
-    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/отправлено на проверку|уже на проверке/i).first()).toBeVisible({
+      timeout: 30_000,
+    });
 
     // Устойчивый итог: повторно отправить по этому заданию нельзя.
     await expect(page.getByRole('button', { name: 'Отправить на проверку' })).toHaveCount(0);

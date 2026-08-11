@@ -6,6 +6,7 @@ import { useTransition } from 'react';
 import { adminLogoutAction } from '@/actions/admin';
 import { DotCluster } from '@/components/ui/logo';
 import { cn } from '@/lib/cn';
+import { Icon, type IconName } from '@/components/ui/icon';
 
 /**
  * Боковая навигация организатора · Figma 104:88.
@@ -20,17 +21,17 @@ import { cn } from '@/lib/cn';
  * посреди мероприятия организатору приходится регулярно.
  */
 
-const LINKS = [
-  { href: '/admin', label: 'Сводка', icon: '▦', exact: true },
-  { href: '/admin/submissions', label: 'Очередь', icon: '⁋' },
-  { href: '/admin/teams', label: 'Команды', icon: '◉' },
-  { href: '/admin/tasks', label: 'Задания', icon: '◇' },
-  { href: '/admin/leaderboard', label: 'Рейтинг', icon: '▲' },
-  { href: '/admin/event', label: 'Мероприятие', icon: '◍' },
-  { href: '/admin/import', label: 'Импорт', icon: '↓' },
-  { href: '/admin/export', label: 'Экспорт', icon: '↑' },
-  { href: '/admin/audit', label: 'Журнал', icon: '≡' },
-  { href: '/admin/settings', label: 'Настройки', icon: '⚙' },
+const LINKS: { href: string; label: string; icon: IconName; exact?: boolean }[] = [
+  { href: '/admin', label: 'Сводка', icon: 'dashboard', exact: true },
+  { href: '/admin/submissions', label: 'Очередь', icon: 'queue' },
+  { href: '/admin/teams', label: 'Команды', icon: 'teams' },
+  { href: '/admin/tasks', label: 'Задания', icon: 'tasks' },
+  { href: '/admin/leaderboard', label: 'Рейтинг', icon: 'leaderboard' },
+  { href: '/admin/event', label: 'Мероприятие', icon: 'event' },
+  { href: '/admin/import', label: 'Импорт', icon: 'import' },
+  { href: '/admin/export', label: 'Экспорт', icon: 'export' },
+  { href: '/admin/audit', label: 'Журнал', icon: 'audit' },
+  { href: '/admin/settings', label: 'Настройки', icon: 'settings' },
 ];
 
 export function AdminNav({
@@ -84,7 +85,7 @@ export function AdminNav({
                 )}
               >
                 <span aria-hidden="true" className="hidden w-5 text-center lg:inline">
-                  {link.icon}
+                  <Icon name={link.icon} size={17} />
                 </span>
                 <span className="signal-label text-micro">{link.label}</span>
               </Link>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { LiveRefresh } from '@/components/game/live-refresh';
-import { SubmissionRow } from '@/components/game/task-card';
+import { SubmissionRow } from '@/components/game/submission-row';
 import { ButtonLink } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/surface';
 import { EmptyState } from '@/components/ui/feedback';

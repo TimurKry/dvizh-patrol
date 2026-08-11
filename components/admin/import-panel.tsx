@@ -25,7 +25,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
   // После успешного импорта показываем только итог.
   if (commit.stage === 'done' && commit.ok) {
     return (
-      <Notice tone="strong" icon="✓" role="status">
+      <Notice tone="strong" icon="accepted" role="status">
         {commit.message} Задания уже видны в разделе «Задания».
       </Notice>
     );
@@ -82,7 +82,11 @@ export function ImportPanel({ eventId }: { eventId: string }) {
       {/* ═══ Шаг 2: результат разбора ═════════════════════ */}
       {state.stage === 'preview' && (
         <div className="flex flex-col gap-5 border-t border-hairline pt-6">
-          <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? '✓' : '!'} role="status">
+          <Notice
+            tone={state.ok ? 'neutral' : 'strong'}
+            icon={state.ok ? 'accepted' : 'upload-failed'}
+            role="status"
+          >
             {state.message}
           </Notice>
 

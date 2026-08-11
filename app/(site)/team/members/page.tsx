@@ -50,7 +50,7 @@ export default async function TeamMembersPage() {
         </header>
 
         {!editable && (
-          <Notice icon="•">
+          <Notice icon="info">
             Квест уже начался — состав команды зафиксирован. Изменения возможны только через
             организатора.
           </Notice>

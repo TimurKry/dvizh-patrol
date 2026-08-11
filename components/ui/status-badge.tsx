@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import { Icon } from './icon';
 import { SUBMISSION_STATUS_TEXT } from '@/lib/messages';
 import type { SubmissionStatus } from '@/types/database';
 
@@ -64,7 +65,7 @@ export function StatusBadge({
               'anim-tick',
           )}
         >
-          {presentation.icon}
+          <Icon name={presentation.icon} size={14} />
         </span>
       )}
       {presentation.label}

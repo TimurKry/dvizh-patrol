@@ -1,3 +1,4 @@
+import type { IconName } from '@/components/ui/icon';
 /**
  * Тексты для пользователя. Все — на русском.
  *
@@ -82,56 +83,54 @@ interface StatusPresentation {
   /** Что это означает для участника. */
   hint: string;
   /** Значок — статус не должен различаться только цветом. */
-  icon: string;
+  icon: IconName;
 }
 
 export const SUBMISSION_STATUS_TEXT: Record<SubmissionStatus, StatusPresentation> = {
   draft: {
     label: 'Черновик',
     hint: 'Фотография выбрана, но ещё не отправлена.',
-    icon: '○',
+    icon: 'draft',
   },
   uploading: {
     label: 'Загружается',
     hint: 'Идёт загрузка. Не закрывайте страницу.',
-    icon: '↑',
+    icon: 'uploading',
   },
   pending: {
     label: 'Ожидает проверки',
     hint: 'Фото загружено и отправлено на проверку. Можно продолжать квест.',
-    icon: '•',
+    icon: 'pending',
   },
   checking: {
     label: 'Проверяется',
     hint: 'Идёт автоматическая проверка.',
-    // ◐ отсутствует в наборе плакатного шрифта и выпадал
-    // в замену. Двойная стрелка есть везде.
-    icon: '»',
+    icon: 'checking',
   },
   accepted: {
     label: 'Принято',
     hint: 'Задание засчитано, баллы начислены.',
-    icon: '✓',
+    icon: 'accepted',
   },
   manual_review: {
     label: 'Ручная проверка',
     hint: 'Фотография ожидает решения организатора.',
-    icon: '⁂',
+    icon: 'manual-review',
   },
   rejected: {
     label: 'Отклонено',
     hint: 'Организатор не засчитал эту фотографию.',
-    icon: '×',
+    icon: 'rejected',
   },
   upload_failed: {
     label: 'Не загрузилось',
     hint: 'Файл не сохранился. Попробуйте отправить снова.',
-    icon: '!',
+    icon: 'upload-failed',
   },
   cancelled: {
     label: 'Отменено',
     hint: 'Отправка отменена организатором.',
-    icon: '−',
+    icon: 'cancelled',
   },
 };
 

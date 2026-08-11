@@ -90,7 +90,7 @@ export default async function LeaderboardPage() {
 
           {view.mode === 'team_position_only' && (
             <div className="flex flex-col gap-6">
-              <Notice icon="•">
+              <Notice icon="info">
                 Организатор показывает каждой команде только её собственное место.
               </Notice>
 
@@ -117,7 +117,7 @@ export default async function LeaderboardPage() {
           {(view.mode === 'public' || view.mode === 'frozen') && (
             <div className="flex flex-col gap-4">
               {view.mode === 'frozen' && (
-                <Notice tone="strong" icon="❄">
+                <Notice tone="strong" icon="frozen">
                   Рейтинг заморожен
                   {view.frozenAt
                     ? ` — показано состояние на ${new Intl.DateTimeFormat('ru-RU', {

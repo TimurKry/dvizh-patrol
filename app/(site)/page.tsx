@@ -126,7 +126,7 @@ export default async function HomePage() {
 
       {!stats.canRegister && (
         <section className="page-well">
-          <Notice icon="•">
+          <Notice icon="info">
             {event.status === 'registration' && stats.isFull
               ? `Все ${event.max_teams} мест заняты — набор команд закрыт.`
               : event.status === 'draft' || event.status === 'registration'
@@ -244,49 +244,55 @@ export default async function HomePage() {
               прочерк, ровно когда звено доехало до кадра. */}
           <div>
             <ol className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-4">
-            {routeStops(time).map((stop, index) => (
-              <Fragment key={stop.n}>
-              {index > 0 && (
-                <Reveal
-                  aria-hidden="true"
-                  className="flex justify-center lg:hidden"
-                  delay={index * 80}
-                >
-                  <TrailLink id={stop.n} />
-                </Reveal>
-              )}
-              <Reveal
-                as="li"
-                delay={index * 80}
-                className={`flex flex-col gap-2 border p-4 ${
-                  stop.accent ? 'border-[#060609] bg-[#060609]' : 'border-[#87877f] bg-[#f5f5f1]'
-                }`}
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span
-                    className={`display-figure text-caption ${
-                      stop.accent ? 'text-signal' : 'text-[#5c5c63]'
+              {routeStops(time).map((stop, index) => (
+                <Fragment key={stop.n}>
+                  {index > 0 && (
+                    <Reveal
+                      aria-hidden="true"
+                      className="flex justify-center lg:hidden"
+                      delay={index * 80}
+                    >
+                      <TrailLink id={stop.n} />
+                    </Reveal>
+                  )}
+                  <Reveal
+                    as="li"
+                    delay={index * 80}
+                    className={`flex flex-col gap-2 border p-4 ${
+                      stop.accent
+                        ? 'border-[#060609] bg-[#060609]'
+                        : 'border-[#87877f] bg-[#f5f5f1]'
                     }`}
                   >
-                    {stop.n}
-                  </span>
-                  <span
-                    className={`signal-label text-micro ${
-                      stop.accent ? 'text-signal' : 'text-[#060609]'
-                    }`}
-                  >
-                    {stop.when}
-                  </span>
-                </div>
-                <h3 className={`text-title ${stop.accent ? 'text-[#f5f5f1]' : 'text-[#060609]'}`}>
-                  {stop.title}
-                </h3>
-                <p className={`text-caption ${stop.accent ? 'text-[#b8b8ba]' : 'text-[#5c5c63]'}`}>
-                  {stop.text}
-                </p>
-              </Reveal>
-              </Fragment>
-            ))}
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span
+                        className={`display-figure text-caption ${
+                          stop.accent ? 'text-signal' : 'text-[#5c5c63]'
+                        }`}
+                      >
+                        {stop.n}
+                      </span>
+                      <span
+                        className={`signal-label text-micro ${
+                          stop.accent ? 'text-signal' : 'text-[#060609]'
+                        }`}
+                      >
+                        {stop.when}
+                      </span>
+                    </div>
+                    <h3
+                      className={`text-title ${stop.accent ? 'text-[#f5f5f1]' : 'text-[#060609]'}`}
+                    >
+                      {stop.title}
+                    </h3>
+                    <p
+                      className={`text-caption ${stop.accent ? 'text-[#b8b8ba]' : 'text-[#5c5c63]'}`}
+                    >
+                      {stop.text}
+                    </p>
+                  </Reveal>
+                </Fragment>
+              ))}
             </ol>
 
             {/* На десктопе карточки стоят сеткой 2×2, и звенья

@@ -99,8 +99,17 @@ test.describe.serial('полный цикл квеста', () => {
 
     await page.getByRole('button', { name: 'Отправить на проверку' }).click();
 
-    await expect(page.getByText(/отправлено на проверку/i)).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/Можно продолжать квест/)).toBeVisible();
+    // Успех виден в двух видах подряд: PhotoUpload показывает
+    // подтверждение, а прилетевший следом router.refresh() заменяет
+    // форму блоком статуса и подтверждение размонтирует. Что успеет
+    // увидеть тест, зависит от скорости сервера, поэтому ждём любой
+    // из двух кадров.
+    await expect(
+      page.getByText(/отправлено на проверку|уже на проверке/i).first(),
+    ).toBeVisible({ timeout: 30_000 });
+
+    // Устойчивый итог: повторно отправить по этому заданию нельзя.
+    await expect(page.getByRole('button', { name: 'Отправить на проверку' })).toHaveCount(0);
 
     await context.close();
   });

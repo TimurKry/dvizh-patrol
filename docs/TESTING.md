@@ -132,9 +132,35 @@ export E2E_ADMIN_PASSWORD=пароль
 npm run test:e2e
 ```
 
-> **Эти тесты не запускались при разработке**: у среды сборки не
-> было ключа `service_role` от боевого проекта. Они написаны, но
-> их первый прогон предстоит выполнить при развёртывании.
+Полностью прогоняются и на локальном стенде — фасаду достаточно
+того же `.env.local`, что и для визуальной проверки:
+
+```bash
+npm run db:start
+./scripts/local-db.sh reset      # только миграции, без qa-seed
+./scripts/local-db.sh psql -c "insert into public.admin_users \
+  (user_id, email, name) values \
+  ('00000000-0000-4000-8000-000000000001','admin@example.test','Организатор') \
+  on conflict (user_id) do nothing;"
+npm run qa:rest
+npm run dev
+
+export E2E_ADMIN_EMAIL=admin@example.test
+export E2E_ADMIN_PASSWORD=local-qa-password       # фасад пароль не проверяет
+export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium   # если браузер предустановлен
+npx playwright test
+```
+
+**Именно `reset`, а не `db:qa`.** Визуальный сид переводит
+мероприятие в статус «идёт», а `quest-flow` начинает с открытия
+набора и обратно из «идёт» уже не вернётся: половина набора
+падает на «Новые команды не регистрируются». Чистые миграции
+оставляют мероприятие в наборе — это и есть нужное начальное
+состояние.
+
+Прогон меняет базу, поэтому повторять его нужно с того же
+`reset`, а для визуальной проверки после этого — снова `npm run
+db:qa`.
 
 `participant.spec.ts` — регистрация, вход по коду, доступность,
 PWA. Не меняет состояние мероприятия.

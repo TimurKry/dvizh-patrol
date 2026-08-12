@@ -52,6 +52,19 @@ const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', '
 const ident = (name) => `"${String(name).replace(/"/g, '')}"`;
 
 /**
+ * Объект или массив — строкой JSON, остальное как есть.
+ *
+ * Драйвер pg по умолчанию превращает JS-массив в литерал массива
+ * Postgres (`{}`), а массивов в схеме нет вовсе: все шесть таких
+ * колонок — jsonb, и такой литерал они отвергают. Настоящий
+ * PostgREST принимает тело как JSON и кладёт его в jsonb как есть;
+ * фасад обязан вести себя так же, иначе он врёт про
+ * работоспособность создания и правки задания.
+ */
+const forPg = (value) =>
+  value !== null && typeof value === 'object' ? JSON.stringify(value) : value;
+
+/**
  * Разбор `select=`.
  *
  * Рекурсивный: `teams:team_id ( *, events:event_id ( * ) )` —
@@ -581,6 +594,14 @@ const server = createServer(async (req, res) => {
     }
 
     // ═══ Запись ═════════════════════════════════════════════
+    //
+    // Объекты и массивы уходят строкой JSON. Драйвер pg по
+    // умолчанию превращает JS-массив в литерал массива Postgres
+    // (`{}`), а в схеме массивов нет вовсе — все шесть таких
+    // колонок jsonb, и такой литерал они отвергают. Настоящий
+    // PostgREST принимает тело как JSON и кладёт его в jsonb как
+    // есть; фасад должен вести себя так же, иначе он врёт про
+    // работоспособность создания и правки задания.
     const body = await readBody(req);
 
     if (req.method === 'POST') {
@@ -591,7 +612,7 @@ const server = createServer(async (req, res) => {
         (record) =>
           `(${names
             .map((name) => {
-              values.push(record[name]);
+              values.push(forPg(record[name]));
               return `$${values.length}`;
             })
             .join(', ')})`,
@@ -610,7 +631,7 @@ const server = createServer(async (req, res) => {
 
     if (req.method === 'PATCH') {
       const names = Object.keys(body ?? {});
-      const values = names.map((name) => body[name]);
+      const values = names.map((name) => forPg(body[name]));
       const assignments = names.map((name, index) => `${ident(name)} = $${index + 1}`);
       const where = buildWhere([...url.searchParams.entries()], table, values);
       const rows = await withRole(role, (client) =>

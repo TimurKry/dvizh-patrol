@@ -47,6 +47,20 @@ export default async function NewTaskPage() {
       </div>
 
       <TaskForm eventId={event.id} nextNumber={nextNumber} areaGuide={guide} />
+
+      {/* Заглушка вместо блока картинок.
+          Файл привязывается к идентификатору задания, а его до
+          сохранения не существует — положить картинку раньше
+          физически некуда. Но пустое место там, где на странице
+          правки стоит загрузка, читается как пропавшая кнопка:
+          лучше сказать прямо. */}
+      <div className="flex flex-col gap-2 border border-dashed border-hairline-strong p-4">
+        <p className="signal-label text-micro text-muted">Картинки</p>
+        <p className="text-caption text-muted">
+          Появятся сразу после сохранения — вместе с выбором видимой зоны. Файл привязывается к
+          заданию, а задания ещё нет.
+        </p>
+      </div>
     </div>
   );
 }

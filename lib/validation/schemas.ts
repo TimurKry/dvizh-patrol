@@ -9,6 +9,7 @@ import {
   VALIDATION_MODES,
 } from '@/types/database';
 import { asAreaPolygon } from '@/lib/geo';
+import { TASK_FIELD_LABELS } from '@/lib/messages';
 
 /**
  * Схемы валидации.
@@ -366,6 +367,37 @@ export const adminLoginSchema = z.object({
 // ═══ Утилиты ═══════════════════════════════════════════════════
 
 /** Первое сообщение об ошибке по каждому полю — для форм. */
+/**
+ * Провал проверки формы задания — с текстом, а не одними пометками
+ * у полей.
+ *
+ * Форма задания длиннее экрана: кнопка «Создать задание» внизу,
+ * обязательное «Полное описание» — вверху. Возвращая только
+ * `fields`, действие оставляло организатора перед формой, которая
+ * на нажатие не отвечает ничем видимым: подпись об ошибке
+ * появлялась там, куда он в этот момент не смотрит. Со стороны это
+ * выглядело как «задание не создаётся» — при том, что вставки
+ * действительно не было, и в базе не появлялось ничего.
+ *
+ * Теперь ошибка называет поля по именам, а форма подматывает к
+ * первому из них.
+ */
+export function taskValidationReport(error: z.ZodError): {
+  message: string;
+  fields: Record<string, string>;
+} {
+  const fields = fieldErrors(error);
+  const names = Object.keys(fields).map((key) => TASK_FIELD_LABELS[key] ?? key);
+
+  return {
+    fields,
+    message:
+      names.length === 1
+        ? `Задание не сохранено: поле «${names[0]}» заполнено неверно.`
+        : `Задание не сохранено: проверьте поля — ${names.join(', ')}.`,
+  };
+}
+
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {

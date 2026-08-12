@@ -19,13 +19,10 @@ import {
   reviewDecisionSchema,
   scoreAdjustmentSchema,
   taskSchema,
+  taskValidationReport,
 } from '@/lib/validation/schemas';
 import { BUCKETS, extensionFor, referencePath } from '@/lib/storage';
-import type {
-  EventStatus,
-  LeaderboardMode,
-  TaskReferenceImageRow,
-} from '@/types/database';
+import type { EventStatus, LeaderboardMode, TaskReferenceImageRow } from '@/types/database';
 
 /**
  * Действия администратора.
@@ -789,6 +786,22 @@ export async function acceptAllForTaskAction(
 
 // ═══ Задания ═══════════════════════════════════════════════════
 
+/**
+ * Что именно оказалось занято.
+ *
+ * Уникальных ограничений у заданий два — номер и слот витрины, — и
+ * оба возвращают 23505. Общий текст «задание с таким номером уже
+ * существует» на занятом слоте отправлял бы организатора менять
+ * правильный номер.
+ */
+function duplicateMessage(error: { message?: string; details?: string }): string {
+  const text = `${error.message ?? ''} ${error.details ?? ''}`;
+  if (text.includes('landing_slot')) {
+    return 'Этот слот на главной уже занят другим заданием. Освободите его или выберите другой.';
+  }
+  return 'Задание с таким номером уже существует.';
+}
+
 export async function saveTaskAction(
   _prev: AdminActionState,
   formData: FormData,
@@ -851,7 +864,7 @@ export async function saveTaskAction(
   });
 
   if (!parsed.success) {
-    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+    return { ok: false, error: 'validation_failed', ...taskValidationReport(parsed.error) };
   }
 
   const payload = {
@@ -897,10 +910,7 @@ export async function saveTaskAction(
     if (error) {
       return {
         ok: false,
-        message:
-          error.code === '23505'
-            ? 'Задание с таким номером уже существует.'
-            : 'Не удалось сохранить задание.',
+        message: error.code === '23505' ? duplicateMessage(error) : 'Не удалось сохранить задание.',
       };
     }
     await audit({
@@ -920,10 +930,7 @@ export async function saveTaskAction(
   if (error) {
     return {
       ok: false,
-      message:
-        error.code === '23505'
-          ? 'Задание с таким номером уже существует.'
-          : 'Не удалось создать задание.',
+      message: error.code === '23505' ? duplicateMessage(error) : 'Не удалось создать задание.',
     };
   }
 

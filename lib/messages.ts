@@ -221,6 +221,41 @@ export const TASK_MAP_MODE_TEXT: Record<
   },
 };
 
+/**
+ * Названия полей формы задания — для сообщения об ошибке.
+ *
+ * Форма длинная: кнопка «Создать задание» стоит внизу, а
+ * незаполненное описание — вверху, и подпись под полем оттуда не
+ * видно. Нажатие выглядело как «ничего не произошло». Поэтому
+ * ошибка называет поля по именам сразу над кнопкой.
+ *
+ * Ключи — пути из схемы, они же ключи `state.fields`.
+ */
+export const TASK_FIELD_LABELS: Record<string, string> = {
+  number: 'Номер',
+  title: 'Название',
+  shortDescription: 'Краткое описание',
+  description: 'Полное описание',
+  points: 'Баллы',
+  category: 'Категория',
+  cardType: 'Тип карточки',
+  difficulty: 'Сложность',
+  validationMode: 'Режим проверки',
+  criteria: 'Критерии проверки',
+  minimumPeople: 'Минимум людей в кадре',
+  maxAttempts: 'Попыток',
+  latitude: 'Широта',
+  longitude: 'Долгота',
+  radiusMeters: 'Радиус',
+  areaPolygon: 'Область на карте',
+  imageCaption: 'Плашка над картинкой',
+  landingSlot: 'Слот на главной',
+  backstory: 'Справка о месте',
+  afterword: 'Что рассказать',
+  afterwordUrl: 'Ссылка',
+  afterwordUrlLabel: 'Подпись ссылки',
+};
+
 export const TASK_DIFFICULTY_TEXT: Record<TaskDifficulty, string> = {
   easy: 'Просто',
   medium: 'Средне',

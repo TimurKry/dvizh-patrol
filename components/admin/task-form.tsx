@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { saveTaskAction, type AdminActionState } from '@/actions/admin';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Select, TextArea, TextInput } from '@/components/ui/field';
@@ -76,6 +76,26 @@ export function TaskForm({
   const [state, formAction, pending] = useActionState(saveTaskAction, INITIAL);
   const fields = state.fields ?? {};
 
+  // Подмотать к первому непринятому полю.
+  //
+  // Форма выше экрана: кнопка внизу, обязательное описание вверху.
+  // Отказ без прокрутки выглядел как «нажал — и ничего»: подпись об
+  // ошибке появлялась там, куда организатор не смотрит. Фокус
+  // вместо простой прокрутки — чтобы читалку тоже переносило к
+  // полю, а не только страницу.
+  useEffect(() => {
+    const first = Object.keys(state.fields ?? {})[0];
+    if (!first) return;
+
+    // Область рисуют мышью, поля с таким именем нет — переносим к
+    // выбору режима карты, рядом с которым живёт и её ошибка.
+    const node = document.getElementById(first === 'areaPolygon' ? 'mapModeSelect' : first);
+    if (!(node instanceof HTMLElement)) return;
+
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    node.focus({ preventScroll: true });
+  }, [state]);
+
   const [mode, setMode] = useState(task?.validation_mode ?? 'manual');
   const [needsLocation, setNeedsLocation] = useState(task?.require_location ?? false);
   const [mapMode, setMapMode] = useState<TaskMapMode>(task?.map_mode ?? 'none');
@@ -121,7 +141,11 @@ export function TaskForm({
           <Notice
             tone={state.ok ? 'neutral' : 'strong'}
             icon={state.ok ? 'accepted' : 'upload-failed'}
-            role="status"
+            // Отказ объявляется сразу, а не в порядке очереди:
+            // «status» читалка договаривает после текущей фразы, и
+            // до сообщения о незаполненном поле дело доходило не
+            // всегда.
+            role={state.ok ? 'status' : 'alert'}
           >
             {state.message}
           </Notice>
@@ -308,7 +332,12 @@ export function TaskForm({
                 height="h-[320px]"
               />
               <div className="flex flex-wrap items-center gap-3">
-                <Button type="button" variant="ghost" onClick={() => setArea([])} disabled={!area.length}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setArea([])}
+                  disabled={!area.length}
+                >
                   Убрать все точки
                 </Button>
                 <span className="text-caption text-muted">
@@ -465,9 +494,9 @@ export function TaskForm({
           {landingSlot !== '0' && (
             <Notice icon="upload-failed">
               Лендинг открыт всем. Всё, что попало в слот, читается до старта: формулировка,
-              картинка и точка на карте. Для загадки это значит, что её решат заранее — либо
-              берите то, что не жалко раскрыть, либо сделайте выключенное задание специально для
-              витрины: выключенное в руки не раздаётся, но на главной показывается.
+              картинка и точка на карте. Для загадки это значит, что её решат заранее — либо берите
+              то, что не жалко раскрыть, либо сделайте выключенное задание специально для витрины:
+              выключенное в руки не раздаётся, но на главной показывается.
             </Notice>
           )}
         </fieldset>
@@ -496,8 +525,8 @@ export function TaskForm({
 
           {cardType === 'riddle' && (
             <Notice icon="upload-failed">
-              У загадки справка почти всегда выдаёт ответ: биография рядом с «тот, кто вписал
-              город в свою книгу» решает её за команду. Если всё же пишете — не называйте объект.
+              У загадки справка почти всегда выдаёт ответ: биография рядом с «тот, кто вписал город
+              в свою книгу» решает её за команду. Если всё же пишете — не называйте объект.
             </Notice>
           )}
         </fieldset>
@@ -569,9 +598,9 @@ export function TaskForm({
             <>
               {mapMode !== 'point' && (
                 <Notice icon="info">
-                  Проверка геопозиции сверяет телефон с координатами задания. Сейчас карта у него
-                  не «Точка», поэтому координаты нужно указать всё равно — переключите карту на
-                  «Точку» или снимите проверку.
+                  Проверка геопозиции сверяет телефон с координатами задания. Сейчас карта у него не
+                  «Точка», поэтому координаты нужно указать всё равно — переключите карту на «Точку»
+                  или снимите проверку.
                 </Notice>
               )}
               <Field

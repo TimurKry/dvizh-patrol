@@ -40,6 +40,7 @@ export function TaskFace({
   placeholder,
   attemptsLine,
   status,
+  map,
   actions,
   golden = false,
   accepted = false,
@@ -64,6 +65,15 @@ export function TaskFace({
   placeholder?: string;
   attemptsLine?: string | null;
   status: { icon: IconName; text: string; tone: FaceTone };
+  /**
+   * Карта прямо на карточке.
+   *
+   * Слот, а не готовая карта: карточка — презентационная и о
+   * Leaflet с Mapbox знать не должна. Витрине лендинга карта нужна
+   * сразу — «куда идти» это половина обещания квеста, и на
+   * примере это видно лучше, чем в тексте.
+   */
+  map?: ReactNode;
   /** Кнопки внизу: «Открыть», переворот, «Закрыть» — по месту. */
   actions?: ReactNode;
   golden?: boolean;
@@ -152,6 +162,12 @@ export function TaskFace({
         <PlaceMark mode={mapMode} />
         {place}
       </p>
+
+      {/* Высоту задаёт тот, кто передал карту: у QuestMap своя
+          обёртка `flex flex-col`, и `h-full` внутри неё
+          разрешается в ноль — Leaflet строит кадр по нулевой
+          высоте и рисует полигон полоской в один пиксель. */}
+      {map && <div className="w-full shrink-0 overflow-hidden">{map}</div>}
 
       <div className="mt-auto flex flex-col gap-2">
         {attemptsLine && <p className="signal-label text-micro text-[#66666d]">{attemptsLine}</p>}

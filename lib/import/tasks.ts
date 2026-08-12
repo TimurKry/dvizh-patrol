@@ -158,6 +158,9 @@ const CSV_ALIASES: Record<string, string> = {
   подписькартинки: 'imageCaption',
   backstory: 'backstory',
   справка: 'backstory',
+  landingslot: 'landingSlot',
+  landing_slot: 'landingSlot',
+  слотлендинга: 'landingSlot',
   afterword: 'afterword',
   послесловие: 'afterword',
   afterwordurl: 'afterwordUrl',
@@ -214,6 +217,7 @@ function csvRowToObject(headers: Array<string | null>, cells: string[]): Record<
   if (raw.mapMode) out.mapMode = raw.mapMode.trim();
   if (raw.imageCaption) out.imageCaption = raw.imageCaption;
   if (raw.backstory) out.backstory = raw.backstory;
+  if (raw.landingSlot) out.landingSlot = Number(raw.landingSlot);
   if (raw.afterword) out.afterword = raw.afterword;
   if (raw.afterwordUrl) out.afterwordUrl = raw.afterwordUrl.trim();
   if (raw.afterwordUrlLabel) out.afterwordUrlLabel = raw.afterwordUrlLabel;
@@ -399,6 +403,7 @@ export function toTaskRow(item: TaskImportItem, eventId: string): Record<string,
     area_polygon: asAreaPolygon(item.areaPolygon),
     image_caption: item.imageCaption || null,
     backstory: item.backstory || null,
+    landing_slot: item.landingSlot || null,
     afterword: item.afterword || null,
     afterword_url: item.afterwordUrl || null,
     afterword_url_label: item.afterwordUrlLabel || null,

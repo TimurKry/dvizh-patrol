@@ -210,6 +210,8 @@ export interface TaskRow {
   area_polygon: unknown;
   /** Плашка над картинкой карточки. NULL — плашки нет. */
   image_caption: string | null;
+  /** Место в витрине лендинга: 1..3, NULL — не показывать. */
+  landing_slot: number | null;
   /** Справка, видная сразу: читается по дороге к точке. */
   backstory: string | null;
   /** Показывается только после отправки, подсказкой быть не может. */

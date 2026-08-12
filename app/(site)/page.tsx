@@ -9,6 +9,7 @@ import { TicketCta } from '@/components/landing/ticket-cta';
 import { TrailLink, TrailRule } from '@/components/landing/route-trail';
 import { QuestMap } from '@/components/game/quest-map';
 import { toPlayArea } from '@/lib/geo';
+import { getLandingExamples } from '@/lib/data/tasks';
 import {
   formatEventDate,
   formatEventDateShort,
@@ -99,6 +100,11 @@ export default async function HomePage() {
 
   const area = toPlayArea(event);
 
+  // Витрину наполняет организатор: три слота проставляются в
+  // админке у самих заданий. Пула это не раскрывает — запрос
+  // отдаёт только то, у чего слот проставлен.
+  const landingExamples = event ? await getLandingExamples(event.id) : [];
+
   return (
     <>
       <Hero
@@ -154,7 +160,7 @@ export default async function HomePage() {
           </Reveal>
 
           <Reveal delay={90}>
-            <TaskDeck />
+            <TaskDeck examples={landingExamples} />
           </Reveal>
         </div>
       </section>

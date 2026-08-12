@@ -48,7 +48,10 @@
     "cardType": "active",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["Башня видна целиком, включая основание", "Снято в границах игрового поля"],
+    "criteria": [
+      "Башня видна целиком, включая основание",
+      "Снято в границах игрового поля"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -64,7 +67,10 @@
     "cardType": "active",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["В кадре граффити-рисунок, а не подпись-тэг", "Рисунок помещается в кадр целиком"],
+    "criteria": [
+      "В кадре граффити-рисунок, а не подпись-тэг",
+      "Рисунок помещается в кадр целиком"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -111,15 +117,15 @@
   {
     "number": 14,
     "title": "Пять жёлтых",
-    "shortDescription": "Пять жёлтых предметов одним кадром",
-    "description": "Найдите пять жёлтых предметов и снимите их одним кадром. Покупать ничего не нужно, и своя жёлтая куртка не считается: ищите в городе.",
+    "shortDescription": "Пять жёлтых предметов одним кадром или коллажем",
+    "description": "Найдите пять жёлтых предметов. Покупать ничего не нужно, и своя жёлтая куртка не считается: ищите в городе.\n\nПять штук в один кадр собираются редко, поэтому отправляется либо общий кадр, либо коллаж из галереи телефона — отправка принимает одну фотографию.",
     "points": 70,
     "category": "object_search",
     "cardType": "active",
     "difficulty": "medium",
     "validationMode": "ai",
     "criteria": [
-      "В кадре пять или больше отчётливо жёлтых предметов",
+      "В кадре или коллаже пять или больше отчётливо жёлтых предметов",
       "Предметы городские, а не вещи участников"
     ],
     "minimumPeople": 0,
@@ -137,7 +143,10 @@
     "cardType": "active",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["В кадре или коллаже пять флагов", "Флаги различаются между собой"],
+    "criteria": [
+      "В кадре или коллаже пять флагов",
+      "Флаги различаются между собой"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 2,
     "requireLocation": false,
@@ -249,7 +258,10 @@
     "cardType": "active",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["В кадре круглое окно или витраж", "Окно видно целиком"],
+    "criteria": [
+      "В кадре круглое окно или витраж",
+      "Окно видно целиком"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 2,
     "requireLocation": false,
@@ -265,7 +277,9 @@
     "cardType": "active",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["Кадр снят вами сегодня, а не взят из интернета"],
+    "criteria": [
+      "Кадр снят вами сегодня, а не взят из интернета"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 1,
     "requireLocation": false,
@@ -281,7 +295,10 @@
     "cardType": "active",
     "difficulty": "easy",
     "validationMode": "manual",
-    "criteria": ["В кадре скамейка", "Видно, чем именно она необычная"],
+    "criteria": [
+      "В кадре скамейка",
+      "Видно, чем именно она необычная"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 2,
     "requireLocation": false,
@@ -307,7 +324,6 @@
     "requireLocation": false,
     "active": true
   },
-
   {
     "number": 4,
     "title": "Тот, кто вписал город в свою книгу",
@@ -318,7 +334,9 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["Памятник виден целиком, включая постамент"],
+    "criteria": [
+      "Памятник виден целиком, включая постамент"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -334,7 +352,9 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре слоны и вход в заведение"],
+    "criteria": [
+      "В кадре слоны и вход в заведение"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -350,7 +370,9 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["Скульптура видна целиком"],
+    "criteria": [
+      "Скульптура видна целиком"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -366,7 +388,10 @@
     "cardType": "photo",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["Чаша видна целиком", "В кадре минимум два участника команды"],
+    "criteria": [
+      "Чаша видна целиком",
+      "В кадре минимум два участника команды"
+    ],
     "minimumPeople": 2,
     "maxAttempts": 2,
     "requireLocation": false,
@@ -382,7 +407,10 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре мемориал целиком", "В кадре нет позирующих участников"],
+    "criteria": [
+      "В кадре мемориал целиком",
+      "В кадре нет позирующих участников"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -398,7 +426,10 @@
     "cardType": "riddle",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["В кадре табличка и вход", "Видно, что табличка стоит под углом"],
+    "criteria": [
+      "В кадре табличка и вход",
+      "Видно, что табличка стоит под углом"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -433,7 +464,9 @@
     "cardType": "riddle",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["Улитка видна крупно и узнаваемо"],
+    "criteria": [
+      "Улитка видна крупно и узнаваемо"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -449,7 +482,9 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре фасад здания целиком"],
+    "criteria": [
+      "В кадре фасад здания целиком"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -465,7 +500,9 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре вывеска или витрина аптеки"],
+    "criteria": [
+      "В кадре вывеска или витрина аптеки"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -481,7 +518,9 @@
     "cardType": "riddle",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["В кадре фасад здания"],
+    "criteria": [
+      "В кадре фасад здания"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -497,7 +536,9 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре вход в заведение или его вывеска"],
+    "criteria": [
+      "В кадре вход в заведение или его вывеска"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -513,7 +554,10 @@
     "cardType": "riddle",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["Циферблат виден целиком", "Различима часть, показывающая фазу Луны"],
+    "criteria": [
+      "Циферблат виден целиком",
+      "Различима часть, показывающая фазу Луны"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -529,7 +573,9 @@
     "cardType": "riddle",
     "difficulty": "easy",
     "validationMode": "manual",
-    "criteria": ["В кадре здание, и виден его масштаб"],
+    "criteria": [
+      "В кадре здание, и виден его масштаб"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -545,7 +591,9 @@
     "cardType": "riddle",
     "difficulty": "easy",
     "validationMode": "manual",
-    "criteria": ["В кадре фасад церкви целиком"],
+    "criteria": [
+      "В кадре фасад церкви целиком"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -561,7 +609,10 @@
     "cardType": "riddle",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре ряд колонн", "Виден фасад здания, которому они принадлежат"],
+    "criteria": [
+      "В кадре ряд колонн",
+      "Виден фасад здания, которому они принадлежат"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
@@ -577,13 +628,15 @@
     "cardType": "riddle",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["Фигура в мостовой видна целиком", "Снято сверху, а не под острым углом"],
+    "criteria": [
+      "Фигура в мостовой видна целиком",
+      "Снято сверху, а не под острым углом"
+    ],
     "minimumPeople": 0,
     "maxAttempts": 3,
     "requireLocation": false,
     "active": true
   },
-
   {
     "number": 9,
     "title": "Суд",
@@ -731,7 +784,10 @@
     "cardType": "photo",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["Камень виден целиком", "В кадре минимум два участника команды"],
+    "criteria": [
+      "Камень виден целиком",
+      "В кадре минимум два участника команды"
+    ],
     "minimumPeople": 2,
     "maxAttempts": 2,
     "requireLocation": false,

@@ -138,11 +138,16 @@ function LeafletMap({
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
 
+  /** Построить кадр заново — когда контейнер дорастёт до размера. */
+  const fitRef = useRef<(() => void) | null>(null);
+  const grownRef = useRef(false);
+
   useEffect(() => {
     const host = hostRef.current;
     if (!host || mapRef.current) return;
 
     let cancelled = false;
+    let observer: ResizeObserver | undefined;
 
     // Leaflet трогает window при загрузке модуля, поэтому его
     // нельзя импортировать статически в компоненте, который
@@ -268,7 +273,8 @@ function LeafletMap({
         // maxZoom обязателен: у одной точки без контура рамка
         // вырождается в ноль, и fitBounds уводит карту на
         // предельный зум — в кадре остаётся кусок крыши.
-        map.fitBounds(bounds, { padding: [28, 28], maxZoom: 17 });
+        fitRef.current = () => map.fitBounds(bounds, { padding: [28, 28], maxZoom: 17 });
+        fitRef.current();
       } else {
         // Ни поля, ни точек — остаёмся на запасном виде,
         // выставленном выше: серый прямоугольник хуже, чем
@@ -276,10 +282,32 @@ function LeafletMap({
       }
 
       mapRef.current = map;
+
+      // Карта живёт внутри карточки, которая прилетает к зрителю с
+      // трансформацией: на момент создания контейнер бывает
+      // нулевого размера. Leaflet считает по нему и тайлы, и кадр —
+      // получается пустой прямоугольник, а после пересчёта размера
+      // остаётся неверный зум: fitBounds отработал по нулю.
+      //
+      // Поэтому наблюдатель не только пересчитывает размер, но и
+      // строит кадр заново — один раз, когда контейнер впервые
+      // дорос до настоящих размеров. Дальше кадр не трогаем: иначе
+      // карта прыгала бы обратно каждый раз, когда её подвинули.
+      observer = new ResizeObserver(([entry]) => {
+        const box = entry?.contentRect;
+        if (!box || box.width === 0 || box.height === 0) return;
+        map.invalidateSize();
+        if (!grownRef.current) {
+          grownRef.current = true;
+          fitRef.current?.();
+        }
+      });
+      observer.observe(host);
     });
 
     return () => {
       cancelled = true;
+      observer?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;
       meRef.current = null;

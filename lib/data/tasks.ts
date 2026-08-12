@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { BUCKETS, createSignedUrls } from '@/lib/storage';
+import { asAreaPolygon, type PolygonRing } from '@/lib/geo';
 import type {
   HandCard,
   ImageFraming,
@@ -314,4 +315,94 @@ export async function getTeamSubmission(
     previewUrl: row.preview_path ? (previewSigned?.get(row.preview_path) ?? null) : null,
     imageUrl: row.image_path ? (imageSigned?.get(row.image_path) ?? null) : null,
   };
+}
+
+// ═══ Витрина лендинга ══════════════════════════════════════════
+
+/** Карточка-пример на лендинге. Всё уже подписано и готово к отрисовке. */
+export interface LandingExample {
+  id: string;
+  slot: number;
+  number: number;
+  title: string;
+  text: string | null;
+  points: number;
+  cardType: TaskRow['card_type'];
+  mapMode: TaskRow['map_mode'];
+  latitude: number | null;
+  longitude: number | null;
+  ring: PolygonRing | null;
+  imageUrl: string | null;
+  imageBadge: string | null;
+  framing: ImageFraming | null;
+}
+
+/**
+ * Задания, выбранные для витрины лендинга.
+ *
+ * Отдаёт только то, у чего проставлен слот. Остальной пул наружу
+ * не уходит: лендинг открыт всем, и запрос «дай все задания»
+ * здесь означал бы «раздай ответы» — ровно то, от чего защищает
+ * `get_team_hand` на боевых экранах.
+ *
+ * `active` не проверяется намеренно. Выключенное задание в руки не
+ * раздаётся, и это законный способ сделать карточку специально для
+ * витрины: показать, ничего не раскрывая из боевого пула.
+ */
+export async function getLandingExamples(eventId: string): Promise<LandingExample[]> {
+  const db = supabaseAdmin();
+
+  const { data } = await db
+    .from('tasks')
+    .select('*')
+    .eq('event_id', eventId)
+    .not('landing_slot', 'is', null)
+    .order('landing_slot', { ascending: true });
+
+  const tasks = (data as TaskRow[] | null) ?? [];
+  if (tasks.length === 0) return [];
+
+  const { data: imageData } = await db
+    .from('task_reference_images')
+    .select('*')
+    .in(
+      'task_id',
+      tasks.map((task) => task.id),
+    )
+    .order('sort_order', { ascending: true });
+
+  const images = (imageData as TaskReferenceImageRow[] | null) ?? [];
+  const firstImage = new Map<string, TaskReferenceImageRow>();
+  for (const image of images) {
+    if (!firstImage.has(image.task_id)) firstImage.set(image.task_id, image);
+  }
+
+  const signed = await createSignedUrls(
+    BUCKETS.references,
+    [...firstImage.values()].map((image) => image.image_path),
+  );
+
+  return tasks.map((task) => {
+    const image = firstImage.get(task.id);
+    const url = image ? (signed.get(image.image_path) ?? null) : null;
+
+    return {
+      id: task.id,
+      slot: task.landing_slot ?? 0,
+      number: task.number,
+      title: task.title,
+      text: task.short_description,
+      points: task.points,
+      cardType: task.card_type,
+      mapMode: task.map_mode,
+      latitude: task.latitude,
+      longitude: task.longitude,
+      ring: asAreaPolygon(task.area_polygon)?.coordinates[0] ?? null,
+      imageUrl: url,
+      imageBadge: image?.caption ?? task.image_caption,
+      framing: image
+        ? { fit: image.fit, focusX: Number(image.focus_x), focusY: Number(image.focus_y) }
+        : null,
+    };
+  });
 }

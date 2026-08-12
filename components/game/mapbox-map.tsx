@@ -81,12 +81,17 @@ export function MapboxMap({
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
+  /** Построить кадр заново — когда контейнер дорастёт до размера. */
+  const fitRef = useRef<(() => void) | null>(null);
+  const grownRef = useRef(false);
+
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
     let cancelled = false;
     let map: MapboxGlMap | null = null;
+    let observer: ResizeObserver | undefined;
 
     void (async () => {
       const mapboxgl = (await import('mapbox-gl')).default;
@@ -121,6 +126,24 @@ export function MapboxMap({
       });
 
       mapRef.current = map;
+
+      // Карта бывает внутри карточки, которая прилетает к зрителю
+      // с трансформацией: на момент создания контейнер нулевого
+      // размера, и на холсте остаётся пустота. Наблюдатель
+      // пересчитывает размер, когда контейнер до него дорастает.
+      observer = new ResizeObserver(([entry]) => {
+        const box = entry?.contentRect;
+        if (!box || box.width === 0 || box.height === 0) return;
+        map?.resize();
+        // Кадр строится заново один раз — когда контейнер впервые
+        // дорос до настоящих размеров. Дальше не трогаем: иначе
+        // карта прыгала бы обратно после каждого движения пальцем.
+        if (!grownRef.current) {
+          grownRef.current = true;
+          fitRef.current?.();
+        }
+      });
+      observer.observe(hostRef.current);
 
       map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
 
@@ -241,6 +264,14 @@ export function MapboxMap({
         // везде». Сначала кадр без наклона, потом наклон отдельно.
         const box = boundsOf(area, points);
         if (box) {
+          fitRef.current = () =>
+            map?.fitBounds(box, {
+              padding: 64,
+              maxZoom: 16.5,
+              pitch: flat ? 0 : undefined,
+              bearing: flat ? 0 : undefined,
+              duration: 0,
+            });
           // maxZoom обязателен: у одной точки без контура рамка
           // вырождается в ноль, и fitBounds уводит камеру на
           // предельный зум — в кадре остаётся кусок крыши.
@@ -269,6 +300,7 @@ export function MapboxMap({
 
     return () => {
       cancelled = true;
+      observer?.disconnect();
       meRef.current?.remove();
       meRef.current = null;
       map?.remove();

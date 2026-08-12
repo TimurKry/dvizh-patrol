@@ -104,6 +104,7 @@ export function TaskForm({
   const [points, setPoints] = useState(String(task?.points ?? 50));
   const [shortDescription, setShortDescription] = useState(task?.short_description ?? '');
   const [imageCaption, setImageCaption] = useState(task?.image_caption ?? '');
+  const [landingSlot, setLandingSlot] = useState(String(task?.landing_slot ?? 0));
 
   const areaPayload =
     area.length >= 3 ? JSON.stringify({ type: 'Polygon', coordinates: [toRing(area)] }) : '';
@@ -435,6 +436,41 @@ export function TaskForm({
             placeholder="Фото-эталон"
           />
         </Field>
+
+        {/* ═══ Витрина лендинга ═══════════════════════════════
+            Три карточки на главной странице раньше были зашиты в
+            код, и любая правка примера упиралась в выкладку. */}
+        <fieldset className="flex flex-col gap-4 border border-hairline bg-panel p-4">
+          <legend className="signal-label px-2 text-micro text-signal">Витрина лендинга</legend>
+
+          <Field
+            label="Слот на главной"
+            htmlFor="landingSlot"
+            error={fields.landingSlot}
+            hint="Три карточки-примера в ряд, слева направо. Один слот — одно задание."
+          >
+            <Select
+              id="landingSlot"
+              name="landingSlot"
+              value={landingSlot}
+              onChange={(e) => setLandingSlot(e.target.value)}
+            >
+              <option value="0">Не показывать</option>
+              <option value="1">Слот 1 — слева</option>
+              <option value="2">Слот 2 — по центру</option>
+              <option value="3">Слот 3 — справа</option>
+            </Select>
+          </Field>
+
+          {landingSlot !== '0' && (
+            <Notice icon="upload-failed">
+              Лендинг открыт всем. Всё, что попало в слот, читается до старта: формулировка,
+              картинка и точка на карте. Для загадки это значит, что её решат заранее — либо
+              берите то, что не жалко раскрыть, либо сделайте выключенное задание специально для
+              витрины: выключенное в руки не раздаётся, но на главной показывается.
+            </Notice>
+          )}
+        </fieldset>
 
         {/* ═══ По дороге ══════════════════════════════════════
             Видно сразу, вместе с условием. До точки идти десять

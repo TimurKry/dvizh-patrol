@@ -162,6 +162,11 @@ const taskExtrasShape = {
   /** Приходит разобранным JSON; форма шлёт строкой, импорт — объектом. */
   areaPolygon: z.unknown().optional(),
   imageCaption: optionalText(60),
+  /**
+   * 0 означает «не показывать»: пустой select не отправить, а в
+   * файле импорта колонки может не быть вовсе.
+   */
+  landingSlot: z.number().int().min(0).max(3).default(0),
   backstory: optionalText(2000),
   afterword: optionalText(2000),
   afterwordUrl: optionalText(500),

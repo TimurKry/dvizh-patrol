@@ -11,6 +11,7 @@ import { Field, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
 import { Icon } from '@/components/ui/icon';
 import { ImageFramingEditor } from '@/components/admin/image-framing';
+import { compressImage, formatBytes } from '@/lib/image/compress';
 import type { ImageFraming } from '@/types/database';
 
 /**
@@ -25,6 +26,16 @@ import type { ImageFraming } from '@/types/database';
  *
  * Первая картинка попадает на карточку, остальные видно на
  * странице задания. Порядок задаётся временем загрузки.
+ *
+ * **Файл ужимается в браузере, до отправки.** Серверные действия
+ * Next.js принимают мегабайт, и снимок с телефона до них просто не
+ * доезжал — организатор получал страницу с ошибкой вместо
+ * объяснения. Заодно это снимает вторую беду: эталоны отдаются
+ * командам как есть, без оптимизации, и полсотни тяжёлых
+ * фотографий качались бы по мобильному интернету посреди города.
+ *
+ * Тот же сжиматель обрабатывает снимки команд — заодно он
+ * разворачивает кадр по EXIF и выбрасывает метаданные.
  */
 
 const INITIAL: AdminActionState = { ok: false };
@@ -39,10 +50,63 @@ export interface TaskImage {
 export function TaskImages({ taskId, images }: { taskId: string; images: TaskImage[] }) {
   const [uploadState, uploadAction, uploading] = useActionState(uploadTaskImageAction, INITIAL);
   const [deleteState, deleteAction] = useActionState(deleteTaskImageAction, INITIAL);
-  const [fileName, setFileName] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Готовый к отправке файл: уже ужатый, уже WebP.
+  const [ready, setReady] = useState<{ file: File; note: string } | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [prepareError, setPrepareError] = useState<string | null>(null);
+
   const state = uploadState.message ? uploadState : deleteState;
+
+  /**
+   * Ужать выбранный файл и положить обратно в поле.
+   *
+   * `DataTransfer` — единственный способ подменить содержимое
+   * `input[type=file]`: форма отправляется как обычная, и
+   * серверное действие получает уже подготовленный файл.
+   */
+  async function prepare(input: HTMLInputElement) {
+    const picked = input.files?.[0];
+    if (!picked) {
+      setReady(null);
+      return;
+    }
+
+    setPreparing(true);
+    setPrepareError(null);
+
+    try {
+      // 1600 px по длинной стороне и 600 КБ: карточка показывает
+      // кадр шириной максимум 672 px, страница задания — столько
+      // же. Больше просто не видно.
+      const compressed = await compressImage(picked, { maxLongEdge: 1600, maxBytes: 600 * 1024 });
+
+      const name = picked.name.replace(/\.[^.]+$/, '');
+      const extension = compressed.contentType === 'image/webp' ? 'webp' : 'jpg';
+      const file = new File([compressed.blob], `${name}.${extension}`, {
+        type: compressed.contentType,
+      });
+
+      const bag = new DataTransfer();
+      bag.items.add(file);
+      input.files = bag.files;
+
+      setReady({
+        file,
+        note:
+          picked.size > compressed.bytes
+            ? `${compressed.width}×${compressed.height}, ${formatBytes(compressed.bytes)} — было ${formatBytes(picked.size)}`
+            : `${compressed.width}×${compressed.height}, ${formatBytes(compressed.bytes)}`,
+      });
+    } catch {
+      setReady(null);
+      input.value = '';
+      setPrepareError('Не получилось прочитать файл. Попробуйте другой — JPEG, PNG или WebP.');
+    } finally {
+      setPreparing(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4 border border-hairline bg-panel p-4">
@@ -55,7 +119,10 @@ export function TaskImages({ taskId, images }: { taskId: string; images: TaskIma
       </div>
 
       {state.message && (
-        <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? 'accepted' : 'upload-failed'}>
+        <Notice
+          tone={state.ok ? 'neutral' : 'strong'}
+          icon={state.ok ? 'accepted' : 'upload-failed'}
+        >
           {state.message}
         </Notice>
       )}
@@ -98,15 +165,28 @@ export function TaskImages({ taskId, images }: { taskId: string; images: TaskIma
             name="file"
             accept="image/jpeg,image/png,image/webp"
             className="sr-only"
-            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
+            onChange={(e) => void prepare(e.currentTarget)}
           />
-          <Button type="button" variant="secondary" onClick={() => fileRef.current?.click()}>
-            Выбрать файл
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={preparing}
+            onClick={() => fileRef.current?.click()}
+          >
+            {preparing ? 'Готовим…' : 'Выбрать файл'}
           </Button>
           <span className="text-caption text-muted">
-            {fileName || 'JPEG, PNG или WebP, до 10 МБ'}
+            {ready
+              ? `${ready.file.name} · ${ready.note}`
+              : 'JPEG, PNG или WebP. Размер и вес подгоним сами.'}
           </span>
         </div>
+
+        {prepareError && (
+          <Notice tone="strong" icon="upload-failed">
+            {prepareError}
+          </Notice>
+        )}
 
         <Field
           label="Подпись под этой картинкой"
@@ -116,7 +196,7 @@ export function TaskImages({ taskId, images }: { taskId: string; images: TaskIma
           <TextInput id="imageOwnCaption" name="caption" maxLength={140} />
         </Field>
 
-        <Button type="submit" disabled={uploading || !fileName} className="self-start">
+        <Button type="submit" disabled={uploading || preparing || !ready} className="self-start">
           {uploading ? 'Загружаем…' : 'Загрузить картинку'}
         </Button>
       </form>

@@ -48,7 +48,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
   // Проверка идёт до загрузки: угадать идентификатор задания
   // нельзя, но и полагаться на это не нужно — пока квест не
   // запущен, формулировка просто не читается из базы.
-  if (!['live', 'paused', 'finished'].includes(session.event.status)) {
+  if (!session.team.is_test && !['live', 'paused', 'finished'].includes(session.event.status)) {
     return (
       <div className="page-well with-bottom-nav py-8">
         <EmptyState
@@ -66,7 +66,7 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
   }
 
   // См. список заданий: срок закрывает отправку раньше статуса.
-  const eventLive = submissionsOpen(session.event);
+  const eventLive = submissionsOpen(session.event) || session.team.is_test;
   const item = await getTaskForTeam(session.event.id, session.teamId, taskId, { eventLive });
 
   if (!item) notFound();

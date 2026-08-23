@@ -10,6 +10,7 @@ import {
   registerTeam,
   resetData,
   revokeSubmission,
+  setTeamTest,
   taskClaim,
   teamHand,
   teamScore,
@@ -344,5 +345,91 @@ describe('глобальный захват задания', () => {
     await acceptSubmission(await readySubmission(team.teamId!, rich));
 
     expect(await teamScore(team.teamId!)).toBe(255);
+  });
+});
+
+/**
+ * Тестовая команда.
+ *
+ * Организатору нужно пройти квест до квеста: проверить каждое
+ * задание, посмотреть его глазами участника, убедиться, что
+ * загадка разгадывается. Раньше для этого приходилось запускать
+ * мероприятие — то есть открывать задания всем, кто уже вошёл.
+ *
+ * Главное требование: проверка не должна уносить задания из пула.
+ * Иначе к вечеру играть будет нечем.
+ */
+describe('тестовая команда', () => {
+  it('получает на руки весь пул, а не шесть карточек', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
+    for (let n = 1; n <= 12; n += 1) {
+      await createTask(id, { number: n, cardType: (['riddle', 'photo', 'active'] as const)[n % 3] });
+    }
+
+    const real = await registerTeam(id, 'Настоящие', { bypassLimits: true });
+    const test = await registerTeam(id, 'Тестовая', { bypassLimits: true });
+    await setTeamTest(test.teamId!, true);
+
+    expect(await teamHand(real.teamId!)).toHaveLength(6);
+    expect(await teamHand(test.teamId!)).toHaveLength(12);
+  });
+
+  it('принятая у неё отправка не забирает задание из пула', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
+    const task = await createTask(id, { number: 1, points: 50 });
+
+    const test = await registerTeam(id, 'Тестовая', { bypassLimits: true });
+    await setTeamTest(test.teamId!, true);
+
+    const slot = await createSlot(test.teamId!, task);
+    await confirmSubmission(slot.submissionId!);
+    const accepted = await acceptSubmission(slot.submissionId!);
+    expect(accepted.ok).toBe(true);
+
+    // Задание свободно: вечером его должна получить настоящая команда.
+    expect((await taskClaim(task)).teamId).toBeNull();
+
+    const real = await registerTeam(id, 'Настоящие', { bypassLimits: true });
+    const realSlot = await createSlot(real.teamId!, task);
+    await confirmSubmission(realSlot.submissionId!);
+    const realAccepted = await acceptSubmission(realSlot.submissionId!);
+    expect(realAccepted.ok, 'настоящая команда не смогла забрать задание').toBe(true);
+    expect((await taskClaim(task)).teamId).toBe(real.teamId);
+  });
+
+  it('играет до старта мероприятия, а обычная — нет', async () => {
+    const id = await createEvent({ status: 'draft' });
+    const task = await createTask(id, { number: 1 });
+
+    const test = await registerTeam(id, 'Тестовая', { bypassLimits: true });
+    await setTeamTest(test.teamId!, true);
+    const real = await registerTeam(id, 'Настоящие', { bypassLimits: true });
+
+    expect((await createSlot(test.teamId!, task)).ok).toBe(true);
+    const refused = await createSlot(real.teamId!, task);
+    expect(refused.ok).toBe(false);
+    expect(refused.error).toBe('event_not_live');
+  });
+
+  it('не попадает в рейтинг', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
+    const task = await createTask(id, { number: 1, points: 50 });
+
+    const test = await registerTeam(id, 'Тестовая', { bypassLimits: true });
+    await setTeamTest(test.teamId!, true);
+
+    const slot = await createSlot(test.teamId!, task);
+    await confirmSubmission(slot.submissionId!);
+    await acceptSubmission(slot.submissionId!);
+
+    // Баллы у неё есть — организатор их видит в карточке.
+    expect(await teamScore(test.teamId!)).toBe(50);
+
+    // А в таблице результатов её нет.
+    const { rows } = await pool.query<{ team_name: string }>(
+      `SELECT team_name FROM public.leaderboard WHERE event_id = $1`,
+      [id],
+    );
+    expect(rows.map((r) => r.team_name)).not.toContain('Тестовая');
   });
 });

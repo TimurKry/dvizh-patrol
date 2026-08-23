@@ -41,7 +41,10 @@ export default async function TasksPage() {
   // список мало: пока формулировки лежат в области видимости
   // компонента, любая будущая правка выше заглушки утащит их в
   // разметку. Не загружено — нечего и утекать.
-  const tasksHidden = !['live', 'paused', 'finished'].includes(session.event.status);
+  // Тестовая команда заходит в любом статусе: организатор
+  // проверяет задания до того, как квест открыт остальным.
+  const tasksHidden =
+    !session.team.is_test && !['live', 'paused', 'finished'].includes(session.event.status);
 
   if (tasksHidden) {
     return (
@@ -65,8 +68,8 @@ export default async function TasksPage() {
 
   // «Идёт» мало: после срока сервер отправки не принимает, и
   // предлагать кнопку было бы обманом.
-  const eventLive = submissionsOpen(session.event);
-  const over = questOver(session.event);
+  const eventLive = submissionsOpen(session.event) || session.team.is_test;
+  const over = questOver(session.event) && !session.team.is_test;
   const hand = await getTeamHand(session.event.id, session.teamId, { eventLive });
 
   const waiting = hand.some((item) => item.state === 'in_review');
@@ -86,9 +89,25 @@ export default async function TasksPage() {
         Карты лежат рубашкой вверх. Нажмите — карта откроется; «Вернуть в колоду» кладёт её обратно.
       </p>
 
+      {/* ═══ Тестовый доступ ════════════════════════════════
+          Плашка нарочно кричащая. Организатор проверяет задания с
+          нескольких телефонов и легко перепутает тестовый вход с
+          настоящим — а разница в том, что отсюда игра не влияет
+          ни на пул, ни на рейтинг. */}
+      {session.team.is_test && (
+        <div className="mt-6">
+          <Notice tone="strong" icon="info">
+            Тестовый доступ. Видны все задания сразу, отправлять можно в любом статусе мероприятия.
+            Принятое здесь не забирает задание из общего пула, и в рейтинг эта команда не попадает.
+          </Notice>
+        </div>
+      )}
+
       {/* ═══ Правило руки · Figma 103:51 ══════════════════════ */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-hairline bg-panel px-4 py-4">
-        <span className="signal-label text-micro text-ink">Рука {hand.length} / 6</span>
+        <span className="signal-label text-micro text-ink">
+          {session.team.is_test ? `Все задания: ${hand.length}` : `Рука ${hand.length} / 6`}
+        </span>
 
         {/* Сколько осталось — рядом с составом руки, а не
             отдельной полосой: это тот же служебный слой. */}

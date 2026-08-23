@@ -422,6 +422,14 @@ export async function updateTeamAction(
       message = `Размер команды: ${size}.`;
       break;
     }
+    case 'set_test': {
+      const on = formData.get('isTest') === 'true';
+      patch = { is_test: on };
+      message = on
+        ? 'Команда стала тестовой: все задания открыты, из пула она ничего не забирает.'
+        : 'Команда снова обычная.';
+      break;
+    }
     case 'set_color': {
       const color = String(formData.get('color') ?? '');
       if (!isTeamColor(color)) return { ok: false, message: 'Неизвестный цвет.' };
@@ -515,6 +523,8 @@ export async function createTeamAction(
 
   // Пусто — «как у всех»: команда живёт по общему числу из
   // настроек мероприятия, а не получает его жёсткой копией.
+  const isTest = formData.get('isTest') === 'on';
+
   const rawSize = String(formData.get('sizeLimit') ?? '').trim();
   const sizeLimit = rawSize === '' ? null : Number(rawSize);
   if (sizeLimit !== null && (!Number.isInteger(sizeLimit) || sizeLimit < 1 || sizeLimit > 6)) {
@@ -549,14 +559,14 @@ export async function createTeamAction(
     return { ok: false, message: messages[result.error] ?? 'Не удалось создать команду.' };
   }
 
-  // Размер ставится вторым шагом: `register_team` — общая функция
-  // регистрации, и добавлять в неё поле ради админки значило бы
-  // тянуть его через весь путь участника.
-  if (sizeLimit !== null) {
-    await supabaseAdmin()
-      .from('teams')
-      .update({ size_limit: sizeLimit })
-      .eq('id', result.data.teamId);
+  // Размер и признак теста ставятся вторым шагом: `register_team`
+  // — общая функция регистрации, и добавлять в неё поля ради
+  // админки значило бы тянуть их через весь путь участника.
+  const patch: Record<string, unknown> = {};
+  if (sizeLimit !== null) patch.size_limit = sizeLimit;
+  if (isTest) patch.is_test = true;
+  if (Object.keys(patch).length) {
+    await supabaseAdmin().from('teams').update(patch).eq('id', result.data.teamId);
   }
 
   await audit({
@@ -564,13 +574,15 @@ export async function createTeamAction(
     action: 'team_created_by_admin',
     entityType: 'team',
     entityId: result.data.teamId,
-    after: { name, captain, size_limit: sizeLimit },
+    after: { name, captain, size_limit: sizeLimit, is_test: isTest },
   });
 
   revalidatePath('/admin/teams');
   return {
     ok: true,
-    message: `Команда «${name}» создана. Код для участников: ${result.data.joinCode}`,
+    message: isTest
+      ? `Тестовая команда «${name}» создана. Код: ${result.data.joinCode}`
+      : `Команда «${name}» создана. Код для участников: ${result.data.joinCode}`,
   };
 }
 

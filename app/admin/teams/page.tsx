@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ActionForm } from '@/components/admin/action-form';
 import { createTeamAction } from '@/actions/admin';
 import { Card, Eyebrow } from '@/components/ui/surface';
-import { Field, TextInput } from '@/components/ui/field';
+import { Checkbox, Field, TextInput } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/feedback';
 import { Tag } from '@/components/ui/status-badge';
 import { requireAdmin } from '@/lib/auth/admin';
@@ -121,6 +121,7 @@ export default async function AdminTeamsPage() {
                       >
                         {team.name}
                       </Link>
+                      {team.is_test && <Tag className="ml-2">тест</Tag>}
                     </td>
                     <td className="py-3 pr-4 font-mono text-caption tabular-nums">
                       {team.join_code}
@@ -197,6 +198,12 @@ export default async function AdminTeamsPage() {
               />
             </Field>
           </div>
+
+          <Checkbox
+            name="isTest"
+            label="Команда для тестов"
+            description="Играет в любом статусе мероприятия и видит все задания сразу. Принятое у неё не забирает задание из общего пула, и в рейтинг она не попадает. Нужна, чтобы пройти квест до квеста — с капитанского входа и с обычного."
+          />
         </ActionForm>
 
         <p className="text-caption text-muted">

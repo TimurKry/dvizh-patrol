@@ -184,6 +184,14 @@ export interface TeamRow {
    * добрать лишних.
    */
   size_limit: number | null;
+  /**
+   * Команда для проверки заданий.
+   *
+   * Играет вне статуса мероприятия, видит весь пул и ничего из
+   * него не забирает: организатору нужно пройти квест до квеста,
+   * не открывая задания тем, кто уже вошёл по коду.
+   */
+  is_test: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -316,6 +324,8 @@ export interface SubmissionRow {
   id: string;
   event_id: string;
   team_id: string;
+  /** Копия признака команды: отправка тестовой в гонке не участвует. */
+  is_test: boolean;
   task_id: string;
   member_id: string | null;
   image_path: string | null;

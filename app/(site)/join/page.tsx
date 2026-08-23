@@ -35,20 +35,28 @@ export default async function JoinPage({
           Введите код из шести символов, который дал капитан.
         </p>
 
-        <div className="mt-8">
-          {joinable ? (
-            /* Ссылка-приглашение приходит с кодом в адресе —
-               подставляем его сразу, чтобы не набирать вручную. */
-            <JoinForm defaultCode={params.code?.toUpperCase().slice(0, 6)} />
-          ) : (
-            <div className="flex flex-col gap-6">
-              <Notice tone="strong" icon="info">
-                К этому мероприятию сейчас нельзя присоединиться.
-              </Notice>
-              <ButtonLink href="/" variant="secondary">
-                На главную
-              </ButtonLink>
-            </div>
+        <div className="mt-8 flex flex-col gap-6">
+          {/* Форма показывается всегда, даже когда набор закрыт.
+              Тестовая команда опознаётся только по коду, а код
+              вводится вот здесь: спрятав поле, мы закрыли бы
+              организатору единственную дверь к проверке заданий.
+              Настоящему коду сервер всё равно откажет — и скажет
+              почему. */}
+          {!joinable && (
+            <Notice tone="strong" icon="info">
+              Набор в команды сейчас закрыт — обычный код не сработает. Тестовый доступ, если он у
+              вас есть, работает.
+            </Notice>
+          )}
+
+          {/* Ссылка-приглашение приходит с кодом в адресе —
+              подставляем его сразу, чтобы не набирать вручную. */}
+          <JoinForm defaultCode={params.code?.toUpperCase().slice(0, 6)} />
+
+          {!joinable && (
+            <ButtonLink href="/" variant="secondary">
+              На главную
+            </ButtonLink>
           )}
         </div>
       </div>

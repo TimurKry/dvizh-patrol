@@ -319,6 +319,11 @@ export async function deleteTeam(teamId: string): Promise<{
   return rows[0]!.r as never;
 }
 
+/** Пометить команду тестовой (или снять пометку). */
+export async function setTeamTest(teamId: string, isTest: boolean): Promise<void> {
+  await pool.query(`UPDATE public.teams SET is_test = $2 WHERE id = $1`, [teamId, isTest]);
+}
+
 /** Свой потолок участников у команды. NULL — общий из мероприятия. */
 export async function setTeamSize(teamId: string, size: number | null): Promise<void> {
   await pool.query(`UPDATE public.teams SET size_limit = $2 WHERE id = $1`, [teamId, size]);

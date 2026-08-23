@@ -48,7 +48,8 @@ export default async function MapPage() {
   // Та же преграда, что и на списке заданий: до старта точки
   // заданий не читаются из базы вовсе. Поле при этом показываем —
   // знать, где будет игра, полезно заранее и ничего не выдаёт.
-  const tasksOpen = ['live', 'paused', 'finished'].includes(session.event.status);
+  const tasksOpen =
+    session.team.is_test || ['live', 'paused', 'finished'].includes(session.event.status);
 
   const points: MapPoint[] = [];
 
@@ -71,7 +72,7 @@ export default async function MapPage() {
     // выдать содержание квеста через карту в обход раздачи —
     // ровно то, от чего рука и защищает.
     const items = await getTeamHand(session.event.id, session.teamId, {
-      eventLive: submissionsOpen(session.event),
+      eventLive: submissionsOpen(session.event) || session.team.is_test,
     });
 
     for (const item of items) {

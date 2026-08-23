@@ -97,13 +97,24 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
         <Link href="/admin/teams" className="text-caption text-muted hover:text-ink">
           ← Все команды
         </Link>
-        <Eyebrow className="mt-4">{TEAM_STATUS_TEXT[team.status]}</Eyebrow>
+        <Eyebrow className="mt-4">
+          {TEAM_STATUS_TEXT[team.status]}
+          {team.is_test && ' · для тестов'}
+        </Eyebrow>
         <h1 className="mt-2 text-headline">{team.name}</h1>
         <p className="mt-1 text-body text-muted">
           Капитан: {team.captain_name}
           {team.contact && ` · ${team.contact}`}
         </p>
       </div>
+
+      {team.is_test && (
+        <Notice tone="strong" icon="info">
+          Команда для тестов. Видит все задания сразу и играет в любом статусе мероприятия; принятое
+          у неё не уходит из общего пула, и в рейтинге её нет. Баллы ниже настоящие — они просто
+          никуда не идут.
+        </Notice>
+      )}
 
       {/* ═══ Цвет команды ═══════════════════════════════════
           Цвет виден участникам на рубашке карточек, поэтому он
@@ -191,6 +202,25 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
             confirm="Отозвать все сессии команды? Участникам придётся войти заново."
           >
             Сбросить сессии
+          </ActionButton>
+
+          {/* Тестовый доступ включается и выключается на ходу:
+              проверили задания — сняли галочку, и команда стала
+              обычной. */}
+          <ActionButton
+            action={updateTeamAction}
+            values={{
+              teamId: team.id,
+              action: 'set_test',
+              isTest: team.is_test ? 'false' : 'true',
+            }}
+            confirm={
+              team.is_test
+                ? 'Сделать команду обычной? Она снова будет играть по правилам: рука из шести и захват заданий.'
+                : 'Сделать команду тестовой? Она увидит все задания сразу и перестанет забирать их из общего пула.'
+            }
+          >
+            {team.is_test ? 'Сделать обычной' : 'Сделать тестовой'}
           </ActionButton>
 
           {team.status === 'cancelled' ? (

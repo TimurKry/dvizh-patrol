@@ -55,7 +55,7 @@ export default async function AdminSubmissionsPage({
 
   let query = db
     .from('submissions')
-    .select('*, tasks:task_id (number, title), teams:team_id (name)', { count: 'exact' })
+    .select('*, tasks:task_id (number, title), teams:team_id (name, is_test)', { count: 'exact' })
     .eq('event_id', event.id)
     .not('status', 'in', '("draft","uploading")');
 
@@ -84,7 +84,7 @@ export default async function AdminSubmissionsPage({
     (data as Array<
       SubmissionRow & {
         tasks: Pick<TaskRow, 'number' | 'title'> | null;
-        teams: { name: string } | null;
+        teams: { name: string; is_test: boolean } | null;
       }
     > | null) ?? [];
 
@@ -196,7 +196,13 @@ export default async function AdminSubmissionsPage({
                     <p className="truncate text-body">
                       {row.tasks ? `${row.tasks.number}. ${row.tasks.title}` : 'Задание удалено'}
                     </p>
-                    <p className="truncate text-caption text-muted">{row.teams?.name ?? '—'}</p>
+                    <p className="truncate text-caption text-muted">
+                      {row.teams?.name ?? '—'}
+                      {/* Тестовые отправки идут в ту же очередь: они
+                          и нужны, чтобы проверить проверку. Но
+                          спутать их с настоящими вечером нельзя. */}
+                      {row.teams?.is_test && <span className="ml-2 text-signal">тест</span>}
+                    </p>
                   </div>
 
                   <div className="mt-auto flex flex-wrap items-center gap-2">

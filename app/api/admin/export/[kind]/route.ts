@@ -94,6 +94,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
             'баллы',
             'принято_заданий',
             'создана',
+            // Тестовые команды не убираем из выгрузки, но
+            // помечаем: в таблице результатов их нет, а здесь
+            // они с настоящими баллами и без пометки читались бы
+            // как участники вечера.
+            'для_тестов',
           ],
           teams.map((t) => [
             t.name,
@@ -105,6 +110,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
             scores.get(t.id)?.total_points ?? 0,
             scores.get(t.id)?.accepted_count ?? 0,
             isoDate(t.created_at, tz),
+            t.is_test ? 'да' : 'нет',
           ]),
         ),
       );

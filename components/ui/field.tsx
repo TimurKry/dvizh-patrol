@@ -145,16 +145,21 @@ export function Checkbox({
   return (
     <div className={cn('flex items-start gap-3', className)}>
       {/* Галочка — отдельный SVG поверх поля: так она рисуется
-          без inline-стилей и одинаково выглядит во всех браузерах. */}
+          без inline-стилей и одинаково выглядит во всех браузерах.
+          Прочерчивание живёт в `.checkbox-mark` (globals.css):
+          переход по `stroke-dashoffset` в утилитах Tailwind не
+          выражается. */}
       <span className="relative mt-[2px] inline-flex h-[22px] w-[22px] shrink-0">
         <input
           id={inputId}
           type="checkbox"
           className={cn(
             'peer h-full w-full cursor-pointer appearance-none',
-            ' border border-hairline-strong bg-panel',
+            'border border-hairline-strong bg-panel',
+            'transition-[background-color,border-color,transform] duration-150 ease-out',
+            'hover:border-ink active:scale-90',
             'checked:border-ink checked:bg-ink',
-            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal',
             'disabled:cursor-not-allowed disabled:opacity-50',
           )}
           {...rest}
@@ -163,14 +168,15 @@ export function Checkbox({
           viewBox="0 0 14 12"
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute left-1/2 top-1/2 h-3 w-3.5',
-            '-translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100',
+            'checkbox-mark pointer-events-none absolute left-1/2 top-1/2 h-3 w-3.5',
+            // Цвет холста: заливка отмеченного поля светлая.
+            '-translate-x-1/2 -translate-y-1/2 text-canvas',
           )}
         >
           <path
             d="M1 6l4 4 8-9"
-            stroke="#faefe5"
-            strokeWidth="2"
+            stroke="currentColor"
+            strokeWidth="2.25"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"

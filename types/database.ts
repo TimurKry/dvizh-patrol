@@ -147,6 +147,19 @@ export interface EventRow {
   area_enforced: boolean;
   /** Граница поля как GeoJSON Polygon. NULL — используется круг. */
   area_polygon: unknown;
+  /**
+   * Место сбора после игры.
+   *
+   * Квест заканчивается не таблицей, а тем, что все встречаются и
+   * идут дальше вместе. Координаты заполняются только парой — это
+   * держит ограничение в базе.
+   */
+  finish_latitude: number | null;
+  finish_longitude: number | null;
+  finish_title: string | null;
+  finish_address: string | null;
+  finish_note: string | null;
+  finish_at: string | null;
   created_at: string;
   updated_at: string;
 }

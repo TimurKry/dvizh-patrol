@@ -8,6 +8,7 @@ import { getTeamHand } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
 import { asAreaPolygon, ringCenter, toPlayArea } from '@/lib/geo';
 import type { MapPoint } from '@/components/game/quest-map';
+import { questOver, submissionsOpen } from '@/lib/event-status';
 
 /**
  * Карта квеста.
@@ -51,12 +52,26 @@ export default async function MapPage() {
 
   const points: MapPoint[] = [];
 
+  // Место сбора появляется, когда игра позади. До этого оно на
+  // карте только сбивает: посреди квеста туда идти рано, а
+  // любопытным звёздочка подсказывает, в какой стороне финиш.
+  if (questOver(session.event) && session.event.finish_latitude !== null) {
+    points.push({
+      id: 'finish',
+      latitude: session.event.finish_latitude,
+      longitude: session.event.finish_longitude!,
+      label: '★',
+      title: session.event.finish_title ?? 'Место сбора',
+      kind: 'cross',
+    });
+  }
+
   if (tasksOpen) {
     // На карте только рука. Показать точки всего пула значило бы
     // выдать содержание квеста через карту в обход раздачи —
     // ровно то, от чего рука и защищает.
     const items = await getTeamHand(session.event.id, session.teamId, {
-      eventLive: session.event.status === 'live',
+      eventLive: submissionsOpen(session.event),
     });
 
     for (const item of items) {

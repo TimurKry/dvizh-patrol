@@ -105,6 +105,49 @@ export const EVENT_TRANSITIONS: Record<EventStatus, EventTransition[]> = {
   archived: [],
 };
 
+/**
+ * Часы игры.
+ *
+ * Квест заканчивается двумя способами: истекло время или
+ * организатор нажал «Завершить». Первого раньше не было вовсе —
+ * колонка `ends_at` лежала в схеме с самого начала и не
+ * использовалась нигде.
+ *
+ * Статус временем не меняется: автоматически переключить его
+ * некому — на бесплатном тарифе Vercel регулярные задания
+ * запускаются раз в сутки. Поэтому срок закрывает окно отправок, а
+ * «Завершить» остаётся кнопкой. Так даже честнее: организатор
+ * завершает квест, когда все дошли, а не когда истекла минута.
+ *
+ * Настоящая проверка стоит в `create_submission_slot`. Здесь —
+ * чтобы интерфейс не предлагал того, в чём сервер откажет.
+ */
+export interface GameClock {
+  status: EventStatus;
+  ends_at: string | null;
+}
+
+/** Срок вышел? Пустое время конца означает «срока нет». */
+export function deadlinePassed(event: GameClock, now: Date = new Date()): boolean {
+  return event.ends_at !== null && now.getTime() > new Date(event.ends_at).getTime();
+}
+
+/** Принимаются ли фотографии прямо сейчас. */
+export function submissionsOpen(event: GameClock, now: Date = new Date()): boolean {
+  return event.status === 'live' && !deadlinePassed(event, now);
+}
+
+/**
+ * Игра позади: пора к месту сбора.
+ *
+ * До старта квест не «закончился», а ещё не начинался, — поэтому
+ * черновик и набор сюда не попадают.
+ */
+export function questOver(event: GameClock, now: Date = new Date()): boolean {
+  if (event.status === 'finished' || event.status === 'archived') return true;
+  return (event.status === 'live' || event.status === 'paused') && deadlinePassed(event, now);
+}
+
 /** Что разрешено серверу. Проверка прав — не дело разметки. */
 export function allowedNextStatuses(from: EventStatus): EventStatus[] {
   return EVENT_TRANSITIONS[from].map((transition) => transition.status);

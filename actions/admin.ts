@@ -139,6 +139,13 @@ export async function updateEventAction(
     areaLongitude: optionalNumber(formData.get('areaLongitude')),
     areaRadiusMeters: optionalNumber(formData.get('areaRadiusMeters')),
     areaEnforced: formData.get('areaEnforced') === 'on',
+    endsAt: optionalText(formData.get('endsAt')),
+    finishLatitude: optionalNumber(formData.get('finishLatitude')),
+    finishLongitude: optionalNumber(formData.get('finishLongitude')),
+    finishTitle: formData.get('finishTitle') ?? '',
+    finishAddress: formData.get('finishAddress') ?? '',
+    finishNote: formData.get('finishNote') ?? '',
+    finishAt: optionalText(formData.get('finishAt')),
   });
 
   if (!parsed.success) {
@@ -185,6 +192,13 @@ export async function updateEventAction(
       area_longitude: parsed.data.areaLongitude,
       area_radius_meters: parsed.data.areaRadiusMeters,
       area_enforced: parsed.data.areaEnforced,
+      ends_at: parsed.data.endsAt ? new Date(parsed.data.endsAt).toISOString() : null,
+      finish_latitude: parsed.data.finishLatitude,
+      finish_longitude: parsed.data.finishLongitude,
+      finish_title: parsed.data.finishTitle || null,
+      finish_address: parsed.data.finishAddress || null,
+      finish_note: parsed.data.finishNote || null,
+      finish_at: parsed.data.finishAt ? new Date(parsed.data.finishAt).toISOString() : null,
     })
     .eq('id', eventId);
 
@@ -214,6 +228,12 @@ export async function updateEventAction(
  * в Атлантике. Без этой проверки очистка поля молча переносила бы
  * квест в Гвинейский залив.
  */
+/** Пустая строка из формы — это «не задано», а не пустая дата. */
+function optionalText(value: FormDataEntryValue | null): string | null {
+  const text = String(value ?? '').trim();
+  return text === '' ? null : text;
+}
+
 function optionalNumber(value: FormDataEntryValue | null): number | null {
   if (value === null) return null;
   const text = String(value).trim();

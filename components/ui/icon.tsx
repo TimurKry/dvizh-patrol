@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Clock,
   Eye,
+  Flag,
   Hourglass,
   Info,
   Layers,
@@ -87,7 +88,8 @@ export type IconName =
   | 'remove'
   | 'open'
   | 'more'
-  | 'map';
+  | 'map'
+  | 'finish';
 
 const ICONS: Record<IconName, LucideIcon> = {
   draft: CircleDashed,
@@ -124,6 +126,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   open: ArrowUpRight,
   more: MoreHorizontal,
   map: MapIcon,
+  finish: Flag,
 };
 
 /** Все имена набора — для витрины дизайн-системы. */

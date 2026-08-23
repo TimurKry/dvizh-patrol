@@ -37,6 +37,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   task_no_longer_available: 'Время выполнения этого задания истекло.',
   event_not_live: 'Квест ещё не начался или уже завершён.',
   event_paused: 'Квест приостановлен организатором. Отправки временно недоступны.',
+  event_over: 'Время вышло — отправки закрыты. Идите к месту сбора.',
   already_accepted: 'Это задание уже засчитано вашей команде.',
   attempt_limit_reached: 'Попытки по этому заданию закончились.',
   submission_not_found: 'Отправка не найдена.',

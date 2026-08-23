@@ -47,6 +47,9 @@ export interface TestEventOptions {
   teamSize?: number;
   registrationOpen?: boolean;
   aiEnabled?: boolean;
+  /** Смещения от «сейчас» в интервалах Postgres: '-2 hours', '3 hours'. */
+  startsIn?: string;
+  endsIn?: string | null;
 }
 
 export async function createEvent(options: TestEventOptions = {}): Promise<string> {
@@ -57,16 +60,20 @@ export async function createEvent(options: TestEventOptions = {}): Promise<strin
     teamSize = 4,
     registrationOpen = true,
     aiEnabled = true,
+    startsIn = '1 day',
+    endsIn = null,
   } = options;
 
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO public.events
-       (slug, title, city, timezone, starts_at, status, price_cents,
+       (slug, title, city, timezone, starts_at, ends_at, status, price_cents,
         max_teams, team_size, registration_open, ai_validation_enabled)
-     VALUES ($1, 'Тестовый квест', 'Leipzig', 'Europe/Berlin', now() + interval '1 day',
+     VALUES ($1, 'Тестовый квест', 'Leipzig', 'Europe/Berlin',
+             now() + $7::interval,
+             CASE WHEN $8::text IS NULL THEN NULL ELSE now() + $8::interval END,
              $2, 1500, $3, $4, $5, $6)
      RETURNING id`,
-    [slug, status, maxTeams, teamSize, registrationOpen, aiEnabled],
+    [slug, status, maxTeams, teamSize, registrationOpen, aiEnabled, startsIn, endsIn],
   );
 
   return rows[0]!.id;

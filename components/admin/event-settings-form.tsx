@@ -1,10 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { updateEventAction, type AdminActionState } from '@/actions/admin';
+import { PointPick } from '@/components/admin/point-pick';
 import { Button } from '@/components/ui/button';
-import { Checkbox, Field, Select, TextInput } from '@/components/ui/field';
+import { Checkbox, Field, Select, TextArea, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
+import { asAreaPolygon, type PolygonRing } from '@/lib/geo';
 import { LEADERBOARD_MODE_TEXT } from '@/lib/messages';
 import { LEADERBOARD_MODES, type EventRow } from '@/types/database';
 
@@ -43,6 +45,22 @@ export function EventSettingsForm({
 }) {
   const [state, formAction, pending] = useActionState(updateEventAction, INITIAL);
   const fields = state.fields ?? {};
+
+  // Точка сбора ставится кликом по карте: набирать координаты
+  // руками — тот же способ промахнуться на тысячу километров, от
+  // которого уже отказались у заданий.
+  const [finishPoint, setFinishPoint] = useState<{ lat: number; lon: number } | null>(() =>
+    event.finish_latitude != null && event.finish_longitude != null
+      ? { lat: event.finish_latitude, lon: event.finish_longitude }
+      : null,
+  );
+
+  // Граница поля пунктиром под картой: место сбора обычно рядом с
+  // полем, и видеть его контур помогает не промахнуться районом.
+  const areaGuide: PolygonRing | null = (() => {
+    const parsed = asAreaPolygon(event.area_polygon);
+    return parsed ? parsed.coordinates[0] : null;
+  })();
 
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
@@ -94,6 +112,25 @@ export function EventSettingsForm({
             type="datetime-local"
             defaultValue={toLocalInput(event.starts_at, event.timezone)}
             required
+          />
+        </Field>
+
+        {/* Конец игры закрывает приём отправок сам, без кнопки.
+            Организатор в этот момент сам где-то в городе, и
+            рассчитывать, что он нажмёт «Завершить» ровно в срок,
+            нельзя. Статус при этом не меняется: квест завершают
+            руками, когда все дошли до места сбора. */}
+        <Field
+          label="Конец игры"
+          htmlFor="endsAt"
+          error={fields.endsAt}
+          hint="Во столько закрывается приём фотографий. Пусто — только по кнопке «Завершить»."
+        >
+          <TextInput
+            id="endsAt"
+            name="endsAt"
+            type="datetime-local"
+            defaultValue={event.ends_at ? toLocalInput(event.ends_at, event.timezone) : ''}
           />
         </Field>
 
@@ -260,6 +297,98 @@ export function EventSettingsForm({
             {fields.areaEnforced}
           </p>
         )}
+      </fieldset>
+
+      {/* ═══ Место сбора ═══════════════════════════════════
+          Квест заканчивается не таблицей, а тем, что все
+          встречаются и идут дальше вместе. Пока об этом было
+          написано только на лендинге — то есть там, где участник
+          в конце игры точно не находится. */}
+      <fieldset className="flex flex-col gap-4 border border-hairline bg-panel p-4">
+        <legend className="px-1 text-caption font-medium uppercase tracking-[0.08em] text-muted">
+          Место сбора после игры
+        </legend>
+
+        <p className="text-caption text-faint">
+          Откроется у команд, когда время выйдет или вы завершите квест. До этого момента закрыто:
+          посреди игры адрес сбора только отвлекает.
+        </p>
+
+        <PointPick value={finishPoint} onChange={setFinishPoint} guide={areaGuide} />
+
+        {finishPoint && (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-caption text-muted">
+              {finishPoint.lat.toFixed(5)}, {finishPoint.lon.toFixed(5)}
+            </span>
+            <Button type="button" variant="ghost" onClick={() => setFinishPoint(null)}>
+              Убрать точку
+            </Button>
+          </div>
+        )}
+
+        <input type="hidden" name="finishLatitude" value={finishPoint?.lat ?? ''} />
+        <input type="hidden" name="finishLongitude" value={finishPoint?.lon ?? ''} />
+        {fields.finishLatitude && (
+          <p className="text-caption text-ink" role="alert">
+            <span aria-hidden="true">! </span>
+            {fields.finishLatitude}
+          </p>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Название места"
+            htmlFor="finishTitle"
+            error={fields.finishTitle}
+            hint="«Clara-Zetkin-Park, у главного входа»"
+          >
+            <TextInput
+              id="finishTitle"
+              name="finishTitle"
+              defaultValue={event.finish_title ?? ''}
+              maxLength={120}
+            />
+          </Field>
+
+          <Field label="Адрес" htmlFor="finishAddress" error={fields.finishAddress}>
+            <TextInput
+              id="finishAddress"
+              name="finishAddress"
+              defaultValue={event.finish_address ?? ''}
+              maxLength={200}
+            />
+          </Field>
+        </div>
+
+        <Field
+          label="Во сколько встречаемся"
+          htmlFor="finishAt"
+          error={fields.finishAt}
+          hint="Обычно позже конца игры: дойти тоже нужно время."
+        >
+          <TextInput
+            id="finishAt"
+            name="finishAt"
+            type="datetime-local"
+            defaultValue={event.finish_at ? toLocalInput(event.finish_at, event.timezone) : ''}
+          />
+        </Field>
+
+        <Field
+          label="Что сказать команде"
+          htmlFor="finishNote"
+          error={fields.finishNote}
+          hint="Что взять с собой, куда идём дальше, кто скидывается на закупку."
+        >
+          <TextArea
+            id="finishNote"
+            name="finishNote"
+            defaultValue={event.finish_note ?? ''}
+            rows={4}
+            maxLength={600}
+          />
+        </Field>
       </fieldset>
 
       <div className="flex flex-col gap-4 border border-hairline bg-panel p-4">

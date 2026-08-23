@@ -142,6 +142,19 @@ export function formatEventTime(event: EventRow): string {
   }).format(new Date(event.starts_at));
 }
 
+/**
+ * Произвольный момент в поясе мероприятия — конец игры, время
+ * встречи. Отдельная функция, потому что остальные привязаны к
+ * `starts_at`, а этих моментов теперь несколько.
+ */
+export function formatEventMoment(event: EventRow, iso: string): string {
+  return new Intl.DateTimeFormat('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: event.timezone,
+  }).format(new Date(iso));
+}
+
 export function formatEventDateLong(event: EventRow): string {
   return new Intl.DateTimeFormat('ru-RU', {
     day: 'numeric',

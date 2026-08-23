@@ -20,6 +20,9 @@ import { TASK_FIELD_LABELS } from '@/lib/messages';
  * буквально один объект.
  */
 
+/** Необязательное короткое поле: пусто — законное значение. */
+const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
+
 const trimmed = (min: number, max: number, label: string) =>
   z
     .string()
@@ -122,6 +125,18 @@ export const eventSettingsSchema = z
       .max(20000, 'Максимум 20 километров')
       .nullable(),
     areaEnforced: z.boolean(),
+
+    // ─── Конец игры и место сбора ───────────────────────────────
+    // Пустое время конца — законное значение: квест завершается
+    // кнопкой организатора. Заданное — закрывает приём отправок,
+    // и это правило проверяется в базе, а не только здесь.
+    endsAt: z.string().nullable(),
+    finishLatitude: z.number().min(-90).max(90).nullable(),
+    finishLongitude: z.number().min(-180).max(180).nullable(),
+    finishTitle: optionalText(120),
+    finishAddress: optionalText(200),
+    finishNote: optionalText(600),
+    finishAt: z.string().nullable(),
   })
   .superRefine((value, ctx) => {
     const filled = [value.areaLatitude, value.areaLongitude, value.areaRadiusMeters].filter(
@@ -145,6 +160,33 @@ export const eventSettingsSchema = z
         path: ['areaEnforced'],
       });
     }
+
+    // Конец раньше начала — почти всегда описка в дате, а не
+    // намерение. То же ограничение стоит в базе.
+    if (value.endsAt && new Date(value.endsAt) <= new Date(value.startsAt)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Конец игры должен быть позже старта',
+        path: ['endsAt'],
+      });
+    }
+
+    if (value.finishAt && new Date(value.finishAt) <= new Date(value.startsAt)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Встреча после игры, а не до неё',
+        path: ['finishAt'],
+      });
+    }
+
+    // Половина координаты — это не место, а ошибка ввода.
+    if ((value.finishLatitude === null) !== (value.finishLongitude === null)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Точка сбора задаётся парой координат. Поставьте её кликом по карте',
+        path: ['finishLatitude'],
+      });
+    }
   });
 
 // ═══ Задание ═══════════════════════════════════════════════════
@@ -156,7 +198,6 @@ export const eventSettingsSchema = z
  * добавленное только в форму, приезжает из файла пустым, и
  * организатор узнаёт об этом, когда половина заданий уже залита.
  */
-const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
 
 const taskExtrasShape = {
   mapMode: z.enum(TASK_MAP_MODES),

@@ -1,10 +1,10 @@
-# Миграции 0008–0017: накатывание и откат
+# Миграции 0008–0018: накатывание и откат
 
-Десять миграций, добавленных при доводке до V3 Mono Signal. Здесь
+Одиннадцать миграций, добавленных при доводке до V3 Mono Signal. Здесь
 описано, что каждая делает, чем рискует, как её накатить и как
 откатить.
 
-Порядок отката — обратный порядку накатывания: `0017`, `0016`, `0015`,
+Порядок отката — обратный порядку накатывания: `0018`, `0017`, `0016`, `0015`,
 `0014`, `0013`, `0012`, `0011`, `0010`, `0009`, `0008`. Пропускать шаги нельзя: `0009` создаёт тип, на
 который ссылается колонка, `0010` — ограничение, которое проверяет
 колонку из той же миграции, а `0011` правит права функций из
@@ -12,8 +12,9 @@
 
 ## Накатывание на production
 
-Все десять применены к `mnoytybnurzsbvhyuuxb`: `0008`–`0012` 11.08.2026,
-`0013`–`0017` — тогда же, с подтверждения владельца. Ниже — порядок
+Все одиннадцать применены к `mnoytybnurzsbvhyuuxb`: `0008`–`0012` 11.08.2026,
+`0013`–`0017` — тогда же, `0018` — 23.08.2026, все с подтверждения
+владельца. Ниже — порядок
 на случай второго контура: тестового проекта, восстановления из
 резервной копии, переезда.
 
@@ -41,6 +42,7 @@ supabase/migrations/0014_task_map_and_afterword.sql
 supabase/migrations/0015_image_framing.sql
 supabase/migrations/0016_task_backstory.sql
 supabase/migrations/0017_landing_slots.sql
+supabase/migrations/0018_finish_and_deadline.sql
 ```
 
 `supabase db push` из корня репозитория применит их сам. Через MCP —
@@ -233,6 +235,40 @@ COMMIT;
 **Если индекс не создаётся,** значит в базе уже есть две принятые
 отправки одной команды по одному заданию. Такого быть не должно;
 разберитесь с данными до отката.
+
+---
+
+## 0018 — конец игры по времени и место сбора
+
+**Делает:** начинает использовать `events.ends_at` (колонка была в
+схеме с самого начала и не читалась нигде) и добавляет место сбора:
+`finish_latitude`, `finish_longitude`, `finish_title`,
+`finish_address`, `finish_note`, `finish_at` с проверками. Заменяет
+`create_submission_slot`: после `ends_at` отправка не создаётся,
+ошибка `event_over`.
+
+```sql
+ALTER TABLE public.events DROP CONSTRAINT IF EXISTS events_finish_point_complete;
+ALTER TABLE public.events DROP CONSTRAINT IF EXISTS events_finish_latitude_range;
+ALTER TABLE public.events DROP CONSTRAINT IF EXISTS events_finish_longitude_range;
+ALTER TABLE public.events DROP CONSTRAINT IF EXISTS events_finish_after_start;
+ALTER TABLE public.events
+  DROP COLUMN IF EXISTS finish_latitude,
+  DROP COLUMN IF EXISTS finish_longitude,
+  DROP COLUMN IF EXISTS finish_title,
+  DROP COLUMN IF EXISTS finish_address,
+  DROP COLUMN IF EXISTS finish_note,
+  DROP COLUMN IF EXISTS finish_at;
+```
+
+**Функцию откатывать отдельно:** заново применить определение
+`create_submission_slot` из `0002_functions.sql`. Без этого квест
+продолжит закрывать отправки по `ends_at`, а `ends_at` после отката
+колонок останется — она из `0001`.
+
+**Осторожно с откатом во время игры.** Если `ends_at` заполнено, а
+функцию вернули к старой, окно отправок снова станет бессрочным:
+команды смогут досылать фотографии после конца.
 
 ---
 

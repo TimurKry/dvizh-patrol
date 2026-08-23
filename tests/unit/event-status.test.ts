@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { EVENT_TRANSITIONS, allowedNextStatuses, dashboardTransitions } from '@/lib/event-status';
+import {
+  EVENT_TRANSITIONS,
+  allowedNextStatuses,
+  dashboardTransitions,
+  deadlinePassed,
+  questOver,
+  submissionsOpen,
+} from '@/lib/event-status';
 import { EVENT_STATUSES } from '@/types/database';
 import type { EventStatus } from '@/types/database';
 
@@ -76,5 +83,55 @@ describe('переходы между статусами', () => {
       // организатор упрётся в сводку, на которой нечего нажать.
       expect(short.length > 0).toBe(status !== 'archived');
     }
+  });
+});
+
+/**
+ * Часы игры.
+ *
+ * Квест заканчивается двумя способами — по времени и кнопкой, — и
+ * первого раньше не существовало: колонка `ends_at` лежала в схеме
+ * с самого начала и не использовалась нигде.
+ */
+describe('часы игры', () => {
+  const at = (iso: string) => new Date(iso);
+  const noon = at('2026-09-05T12:00:00Z');
+
+  const live = (endsAt: string | null) => ({ status: 'live' as const, ends_at: endsAt });
+
+  it('без времени конца отправки открыты сколько угодно', () => {
+    expect(deadlinePassed(live(null), noon)).toBe(false);
+    expect(submissionsOpen(live(null), noon)).toBe(true);
+    expect(questOver(live(null), noon)).toBe(false);
+  });
+
+  it('до срока отправки открыты, после — закрыты', () => {
+    const game = live('2026-09-05T18:00:00Z');
+    expect(submissionsOpen(game, noon)).toBe(true);
+    expect(submissionsOpen(game, at('2026-09-05T18:00:01Z'))).toBe(false);
+    expect(questOver(game, at('2026-09-05T18:00:01Z'))).toBe(true);
+  });
+
+  it('на паузе отправки закрыты, но игра ещё не позади', () => {
+    const paused = { status: 'paused' as const, ends_at: '2026-09-05T18:00:00Z' };
+    expect(submissionsOpen(paused, noon)).toBe(false);
+    expect(questOver(paused, noon)).toBe(false);
+    // А вот после срока — позади, даже если пауза так и висит.
+    expect(questOver(paused, at('2026-09-05T18:30:00Z'))).toBe(true);
+  });
+
+  it('до старта квест не «закончился», а ещё не начинался', () => {
+    for (const status of ['draft', 'registration'] as const) {
+      // Время конца в прошлом — остаток прошлого мероприятия.
+      const event = { status, ends_at: '2020-01-01T00:00:00Z' };
+      expect(questOver(event, noon), status).toBe(false);
+      expect(submissionsOpen(event, noon), status).toBe(false);
+    }
+  });
+
+  it('кнопка «Завершить» заканчивает игру и без срока', () => {
+    expect(questOver({ status: 'finished', ends_at: null }, noon)).toBe(true);
+    expect(questOver({ status: 'archived', ends_at: null }, noon)).toBe(true);
+    expect(submissionsOpen({ status: 'finished', ends_at: null }, noon)).toBe(false);
   });
 });

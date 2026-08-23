@@ -3,6 +3,10 @@ import { BottomNav } from '@/components/nav/bottom-nav';
 import { TaskHand } from '@/components/game/task-hand';
 import { LiveRefresh } from '@/components/game/live-refresh';
 import { EmptyState, Notice } from '@/components/ui/feedback';
+import { FinishPoint } from '@/components/game/finish-point';
+import { TimeLeft } from '@/components/game/time-left';
+import { formatEventMoment } from '@/lib/data/event';
+import { questOver, submissionsOpen } from '@/lib/event-status';
 import { getTeamHand } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
 import { TASK_CARD_TYPE_TEXT } from '@/lib/messages';
@@ -59,7 +63,10 @@ export default async function TasksPage() {
     );
   }
 
-  const eventLive = session.event.status === 'live';
+  // «Идёт» мало: после срока сервер отправки не принимает, и
+  // предлагать кнопку было бы обманом.
+  const eventLive = submissionsOpen(session.event);
+  const over = questOver(session.event);
   const hand = await getTeamHand(session.event.id, session.teamId, { eventLive });
 
   const waiting = hand.some((item) => item.state === 'in_review');
@@ -82,6 +89,10 @@ export default async function TasksPage() {
       {/* ═══ Правило руки · Figma 103:51 ══════════════════════ */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-hairline bg-panel px-4 py-4">
         <span className="signal-label text-micro text-ink">Рука {hand.length} / 6</span>
+
+        {/* Сколько осталось — рядом с составом руки, а не
+            отдельной полосой: это тот же служебный слой. */}
+        {!over && session.event.ends_at && <TimeLeft endsAt={session.event.ends_at} />}
         <ul className="flex items-center gap-4">
           {TASK_CARD_TYPES.map((type) => (
             <li key={type} className="signal-label flex items-center gap-1.5 text-micro">
@@ -93,7 +104,7 @@ export default async function TasksPage() {
         </ul>
       </div>
 
-      {session.event.status === 'paused' && (
+      {session.event.status === 'paused' && !over && (
         <div className="mt-4">
           <Notice tone="strong" icon="paused">
             Квест приостановлен организатором. Карточки видны, но отправка временно недоступна.
@@ -101,11 +112,30 @@ export default async function TasksPage() {
         </div>
       )}
 
-      {session.event.status === 'finished' && (
-        <div className="mt-4">
+      {/* ═══ Финиш ═════════════════════════════════════════
+          Место сбора выше руки: карточки уже ничего не решают,
+          а идти надо сейчас. Сама рука остаётся ниже — посмотреть,
+          что было на руках, приятно, и отнимать это незачем. */}
+      {over && (
+        <div className="mt-6 flex flex-col gap-4">
           <Notice tone="strong" icon="info">
-            Квест завершён. Новые отправки закрыты, результаты досматривает организатор.
+            {session.event.status === 'finished'
+              ? 'Квест завершён. Новые отправки закрыты, результаты досматривает организатор.'
+              : 'Время вышло — отправки закрыты. Результаты досматривает организатор.'}
           </Notice>
+
+          <FinishPoint
+            place={{
+              latitude: session.event.finish_latitude,
+              longitude: session.event.finish_longitude,
+              title: session.event.finish_title,
+              address: session.event.finish_address,
+              note: session.event.finish_note,
+              time: session.event.finish_at
+                ? formatEventMoment(session.event, session.event.finish_at)
+                : null,
+            }}
+          />
         </div>
       )}
 

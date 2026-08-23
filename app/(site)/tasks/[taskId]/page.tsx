@@ -24,6 +24,7 @@ import {
   pointsWord,
 } from '@/lib/messages';
 import { asAreaPolygon, ringCenter } from '@/lib/geo';
+import { submissionsOpen } from '@/lib/event-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +65,8 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
     );
   }
 
-  const eventLive = session.event.status === 'live';
+  // См. список заданий: срок закрывает отправку раньше статуса.
+  const eventLive = submissionsOpen(session.event);
   const item = await getTaskForTeam(session.event.id, session.teamId, taskId, { eventLive });
 
   if (!item) notFound();

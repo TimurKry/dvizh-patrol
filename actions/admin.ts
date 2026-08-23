@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { isTeamColor, teamColorLabel } from '@/lib/team-colors';
 import { asAreaPolygon } from '@/lib/geo';
 import { audit, requireAdmin } from '@/lib/auth/admin';
+import { allowedNextStatuses } from '@/lib/event-status';
 import { runValidationWorker } from '@/lib/ai/worker';
 import { env } from '@/lib/env';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -221,15 +222,6 @@ function optionalNumber(value: FormDataEntryValue | null): number | null {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-const ALLOWED_TRANSITIONS: Record<EventStatus, EventStatus[]> = {
-  draft: ['registration'],
-  registration: ['draft', 'live'],
-  live: ['paused', 'finished'],
-  paused: ['live', 'finished'],
-  finished: ['archived', 'live'],
-  archived: [],
-};
-
 export async function changeEventStatusAction(
   _prev: AdminActionState,
   formData: FormData,
@@ -243,7 +235,7 @@ export async function changeEventStatusAction(
   if (!before) return { ok: false, message: 'Мероприятие не найдено.' };
 
   const current = before.status as EventStatus;
-  if (!ALLOWED_TRANSITIONS[current]?.includes(next)) {
+  if (!allowedNextStatuses(current).includes(next)) {
     return {
       ok: false,
       message: `Переход «${current}» → «${next}» не разрешён.`,

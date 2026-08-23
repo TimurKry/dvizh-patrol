@@ -7,6 +7,7 @@ import { Card, Eyebrow } from '@/components/ui/surface';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { requireAdmin } from '@/lib/auth/admin';
 import { getCurrentEvent, getRegistrationStats } from '@/lib/data/event';
+import { EVENT_TRANSITIONS } from '@/lib/event-status';
 import { EVENT_STATUS_TEXT } from '@/lib/messages';
 import type { EventStatus } from '@/types/database';
 
@@ -21,27 +22,6 @@ const STATUS_DESCRIPTION: Record<EventStatus, string> = {
   paused: 'Пауза. Новые отправки блокируются, всё остальное доступно.',
   finished: 'Квест завершён. Отправки закрыты, участники видят результаты.',
   archived: 'Архив. Только просмотр, фотографии могут быть удалены по политике хранения.',
-};
-
-const TRANSITIONS: Record<EventStatus, Array<{ status: EventStatus; label: string }>> = {
-  draft: [{ status: 'registration', label: 'Открыть регистрацию' }],
-  registration: [
-    { status: 'live', label: 'Запустить квест' },
-    { status: 'draft', label: 'Вернуть в черновик' },
-  ],
-  live: [
-    { status: 'paused', label: 'Приостановить' },
-    { status: 'finished', label: 'Завершить' },
-  ],
-  paused: [
-    { status: 'live', label: 'Продолжить' },
-    { status: 'finished', label: 'Завершить' },
-  ],
-  finished: [
-    { status: 'live', label: 'Возобновить' },
-    { status: 'archived', label: 'В архив' },
-  ],
-  archived: [],
 };
 
 export default async function AdminEventPage() {
@@ -79,30 +59,18 @@ export default async function AdminEventPage() {
         <p className="text-body text-muted">{STATUS_DESCRIPTION[event.status]}</p>
 
         <div className="flex flex-wrap gap-2">
-          {TRANSITIONS[event.status].map((transition) => (
+          {EVENT_TRANSITIONS[event.status].map((transition) => (
             <ActionButton
               key={transition.status}
               action={changeEventStatusAction}
               values={{ eventId: event.id, status: transition.status }}
               variant={transition.status === 'live' ? 'primary' : 'secondary'}
-              confirm={
-                transition.status === 'live'
-                  ? 'Запустить квест? Задания станут видны всем командам, и раздача рук начнётся.'
-                  : transition.status === 'paused'
-                    ? 'Приостановить квест? Карточки останутся видны, но отправки перестанут приниматься.'
-                    : transition.status === 'finished'
-                      ? 'Завершить квест? Новые отправки будут заблокированы.'
-                      : transition.status === 'archived'
-                        ? 'Отправить в архив? Вернуть событие обратно будет нельзя.'
-                        : transition.status === 'registration'
-                          ? 'Вернуть квест в набор команд? Задания снова закроются у всех.'
-                          : undefined
-              }
+              confirm={transition.confirm}
             >
               {transition.label}
             </ActionButton>
           ))}
-          {TRANSITIONS[event.status].length === 0 && (
+          {EVENT_TRANSITIONS[event.status].length === 0 && (
             <p className="text-caption text-muted">Из архива переходов нет.</p>
           )}
         </div>

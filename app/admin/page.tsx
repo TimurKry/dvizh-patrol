@@ -9,26 +9,13 @@ import { requireAdmin } from '@/lib/auth/admin';
 import { isAiConfigured } from '@/lib/env';
 import { getCurrentEvent, formatEventDateLong, formatEventTime } from '@/lib/data/event';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { dashboardTransitions } from '@/lib/event-status';
 import { EVENT_STATUS_TEXT, membersWord, teamsWord } from '@/lib/messages';
-import type { AdminDashboardRow, EventStatus, SubmissionRow, TaskRow } from '@/types/database';
+import type { AdminDashboardRow, SubmissionRow, TaskRow } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Сводка' };
-
-const NEXT_STATUS: Partial<Record<EventStatus, Array<{ status: EventStatus; label: string }>>> = {
-  draft: [{ status: 'registration', label: 'Открыть регистрацию' }],
-  registration: [{ status: 'live', label: 'Запустить квест' }],
-  live: [
-    { status: 'paused', label: 'Пауза' },
-    { status: 'finished', label: 'Завершить' },
-  ],
-  paused: [
-    { status: 'live', label: 'Продолжить' },
-    { status: 'finished', label: 'Завершить' },
-  ],
-  finished: [{ status: 'archived', label: 'В архив' }],
-};
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
@@ -81,19 +68,13 @@ export default async function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(NEXT_STATUS[event.status] ?? []).map((transition) => (
+          {dashboardTransitions(event.status).map((transition) => (
             <ActionButton
               key={transition.status}
               action={changeEventStatusAction}
               values={{ eventId: event.id, status: transition.status }}
               variant={transition.status === 'live' ? 'primary' : 'secondary'}
-              confirm={
-                transition.status === 'live'
-                  ? 'Запустить квест? Задания станут видны всем командам, регистрация закроется.'
-                  : transition.status === 'finished'
-                    ? 'Завершить квест? Новые отправки будут заблокированы.'
-                    : undefined
-              }
+              confirm={transition.confirm}
             >
               {transition.label}
             </ActionButton>

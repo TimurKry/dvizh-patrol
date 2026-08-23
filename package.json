@@ -25,7 +25,18 @@
     "db:qa": "./scripts/local-db.sh reset && ./scripts/local-db.sh psql -q -X -f supabase/local/qa-seed.sql",
     "qa:rest": "node scripts/qa-rest.mjs",
     "db:psql": "./scripts/local-db.sh psql",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "video:deps": "node video-preview/src/fetch-fonts.mjs",
+    "video:stack": "bash video-preview/stack/up.sh",
+    "video:seed": "node video-preview/stack/seed-demo.mjs",
+    "video:capture": "bash video-preview/capture/with-display.sh node video-preview/capture/record-app.mjs",
+    "video:titles": "bash video-preview/capture/with-display.sh node video-preview/capture/record-titles.mjs",
+    "video:overlays": "node video-preview/src/render-overlays.mjs",
+    "video:audio": "node video-preview/src/audio.mjs",
+    "video:render": "node video-preview/src/compose.mjs",
+    "video:verify": "node video-preview/src/verify.mjs",
+    "video:clean": "node video-preview/stack/clean-demo.mjs",
+    "video:build": "npm run video:deps && npm run video:stack && npm run video:capture && npm run video:titles && npm run video:overlays && npm run video:audio && npm run video:render && npm run video:verify"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

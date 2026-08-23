@@ -46,3 +46,13 @@ next-env.d.ts
 # артефакты прогонов Playwright: трассы, снимки, cookie сессии
 /e2e-results/
 /playwright-report/
+
+# Промежуточные файлы записи ролика: сцены, куски монтажа, логи,
+# бинарник PostgREST, файлы локального хранилища.
+video-preview/scratch/
+
+# Дорожка звука пересобирается детерминированно: npm run video:audio
+video-preview/assets/audio/
+
+# Служебный каталог Supabase CLI
+supabase/.temp/

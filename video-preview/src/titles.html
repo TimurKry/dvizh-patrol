@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Движ-Патруль · титры ролика</title>
+    <link rel="stylesheet" href="../assets/fonts.css" />
+    <style>
+      /* ─────────────────────────────────────────────────────────
+         Титры ролика.
+
+         Отдельная страница, а не наложение поверх записи: маршрут
+         рисуется, полароиды въезжают, логотип проявляется — всё это
+         движение, и его проще написать один раз на CSS, чем
+         собирать покадрово в ffmpeg.
+
+         Палитра и шрифты — те же, что в приложении (V3 Mono
+         Signal): холст #060609, текст #F5F5F1, сигнал #FF00B3,
+         Unbounded и Onest.
+         ───────────────────────────────────────────────────────── */
+
+      :root {
+        --canvas: #060609;
+        --ink: #f5f5f1;
+        --muted: #a3a3a8;
+        --signal: #ff00b3;
+        --hairline: #404045;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: 'Onest', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .stage {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--canvas);
+      }
+
+      /* Техническая сетка: тонкие линии по 26px, как разлиновка
+         чертежа. Заметна ровно настолько, чтобы фон не был плоским. */
+      .grid {
+        position: absolute;
+        inset: -10%;
+        background-image:
+          linear-gradient(to right, rgba(245, 245, 241, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(245, 245, 241, 0.05) 1px, transparent 1px);
+        background-size: 26px 26px;
+        opacity: 0;
+      }
+
+      /* Плёночное зерно: два слоя SVG-шума с разной частотой,
+         сдвигаются друг относительно друга — так оно живёт, а не
+         стоит текстурой. */
+      .grain {
+        position: absolute;
+        inset: -50%;
+        opacity: 0.22;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        background-repeat: repeat;
+        background-size: 220px 220px;
+      }
+
+      .vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 80% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
+        pointer-events: none;
+      }
+
+      /* ─── Маршрут ───────────────────────────────────────────── */
+
+      .route {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .route path {
+        fill: none;
+        stroke: var(--signal);
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-dasharray: var(--len);
+        stroke-dashoffset: var(--len);
+        filter: drop-shadow(0 0 6px rgba(255, 0, 179, 0.55));
+      }
+
+      .marker {
+        opacity: 0;
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      .marker line {
+        stroke: var(--signal);
+        stroke-width: 2;
+      }
+
+      .marker circle {
+        fill: none;
+        stroke: var(--signal);
+        stroke-width: 1.5;
+      }
+
+      /* ─── Полароиды ─────────────────────────────────────────── */
+
+      .shots {
+        position: absolute;
+        inset: 0;
+      }
+
+      .shot {
+        position: absolute;
+        width: 152px;
+        padding: 8px 8px 26px;
+        background: #f5f5f1;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+        opacity: 0;
+      }
+
+      .shot img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        object-fit: cover;
+        filter: grayscale(0.15) contrast(1.05);
+      }
+
+      .shot span {
+        position: absolute;
+        left: 10px;
+        bottom: 7px;
+        font-size: 9px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #5c5c63;
+      }
+
+      .shot.a {
+        left: 22px;
+        top: 176px;
+        transform: rotate(-7deg);
+      }
+      .shot.b {
+        right: 18px;
+        top: 258px;
+        transform: rotate(6deg);
+      }
+      .shot.c {
+        left: 96px;
+        top: 396px;
+        transform: rotate(-2deg);
+      }
+
+      /* ─── Типографика ───────────────────────────────────────── */
+
+      .center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 0 28px;
+        text-align: center;
+      }
+
+      .headline {
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 700;
+        font-size: 40px;
+        line-height: 0.98;
+        letter-spacing: -0.035em;
+        text-transform: uppercase;
+      }
+
+      .headline span {
+        display: block;
+        opacity: 0;
+      }
+
+      .rule {
+        width: 0;
+        height: 2px;
+        background: var(--signal);
+      }
+
+      .kicker {
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 500;
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--muted);
+        opacity: 0;
+      }
+
+      .logo {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 210px;
+        transform: translate(-50%, -50%) scale(0.92);
+        opacity: 0;
+      }
+
+      /* ─── Финальная карточка ────────────────────────────────── */
+
+      .facts {
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        top: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        opacity: 0;
+      }
+
+      .fact {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--hairline);
+        padding-top: 9px;
+      }
+
+      .fact dt {
+        font-family: 'Unbounded', sans-serif;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .fact dd {
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 600;
+        font-size: 19px;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+      }
+
+      .cta {
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        bottom: 118px;
+        text-align: center;
+        opacity: 0;
+      }
+
+      .cta strong {
+        display: block;
+        font-family: 'Unbounded', sans-serif;
+        font-weight: 700;
+        font-size: 30px;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+      }
+
+      .cta em {
+        display: inline-block;
+        margin-top: 14px;
+        padding: 9px 16px;
+        border: 1px solid var(--signal);
+        color: var(--signal);
+        font-family: 'Unbounded', sans-serif;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .flash {
+        position: absolute;
+        inset: 0;
+        background: var(--signal);
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <div class="grid" id="grid"></div>
+
+      <svg class="route" viewBox="0 0 390 844" preserveAspectRatio="none" id="route">
+        <path id="line" d="" />
+        <g id="markers"></g>
+      </svg>
+
+      <div class="shots" id="shots">
+        <figure class="shot a">
+          <img src="../../public/assets/polaroid-markt.webp" alt="" />
+          <span>Markt</span>
+        </figure>
+        <figure class="shot b">
+          <img src="../../public/assets/polaroid-station.webp" alt="" />
+          <span>Hbf</span>
+        </figure>
+        <figure class="shot c">
+          <img src="../../public/assets/polaroid-center.webp" alt="" />
+          <span>Augustusplatz</span>
+        </figure>
+      </div>
+
+      <div class="center" id="center">
+        <p class="kicker" id="kicker">Leipzig · 05.09.2026</p>
+        <h1 class="headline" id="headline">
+          <span>Город</span>
+          <span>становится</span>
+          <span>игрой</span>
+        </h1>
+        <div class="rule" id="rule"></div>
+      </div>
+
+      <img class="logo" id="logo" src="../../public/brand/dvizh-leipzig.png" alt="Движ-Патруль" />
+
+      <dl class="facts" id="facts">
+        <div class="fact"><dt>Дата</dt><dd>05.09.2026 · 14:00</dd></div>
+        <div class="fact"><dt>Город</dt><dd>Leipzig</dd></div>
+        <div class="fact"><dt>Участие</dt><dd>15 € с человека</dd></div>
+      </dl>
+
+      <div class="cta" id="cta">
+        <strong>Собирай<br />команду</strong>
+        <em>dvizh-patrol.vercel.app</em>
+      </div>
+
+      <div class="vignette"></div>
+      <div class="grain" id="grain"></div>
+      <div class="flash" id="flash"></div>
+    </div>
+
+    <script>
+      // ═══ Зерно ═══════════════════════════════════════════════
+      // Шум генерируется один раз в canvas и ставится фоном: SVG
+      // feTurbulence на каждом кадре стоит дороже, чем весь
+      // остальной титр вместе взятый.
+      (() => {
+        const size = 220;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const image = ctx.createImageData(size, size);
+        for (let i = 0; i < image.data.length; i += 4) {
+          const v = 120 + Math.random() * 135;
+          image.data[i] = v;
+          image.data[i + 1] = v;
+          image.data[i + 2] = v;
+          image.data[i + 3] = 26 + Math.random() * 40;
+        }
+        ctx.putImageData(image, 0, 0);
+        document.getElementById('grain').style.backgroundImage = `url(${canvas.toDataURL()})`;
+      })();
+
+      // ═══ Маршрут ═════════════════════════════════════════════
+      const POINTS = [
+        [40, 150],
+        [128, 262],
+        [248, 214],
+        [316, 352],
+        [214, 470],
+        [92, 560],
+        [286, 668],
+      ];
+
+      const line = document.getElementById('line');
+      line.setAttribute(
+        'd',
+        POINTS.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' '),
+      );
+
+      const markers = document.getElementById('markers');
+      for (const [x, y] of POINTS) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'marker');
+        group.innerHTML =
+          `<circle cx="${x}" cy="${y}" r="9" />` +
+          `<line x1="${x - 14}" y1="${y}" x2="${x - 4}" y2="${y}" />` +
+          `<line x1="${x + 4}" y1="${y}" x2="${x + 14}" y2="${y}" />` +
+          `<line x1="${x}" y1="${y - 14}" x2="${x}" y2="${y - 4}" />` +
+          `<line x1="${x}" y1="${y + 4}" x2="${x}" y2="${y + 14}" />`;
+        markers.appendChild(group);
+      }
+
+      const length = line.getTotalLength();
+      line.style.setProperty('--len', length);
+
+      // ═══ Раскадровка ═════════════════════════════════════════
+      const scene = new URLSearchParams(location.search).get('scene') ?? 'hook';
+      const $ = (id) => document.getElementById(id);
+      const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+      const animate = (node, frames, options) =>
+        node.animate(frames, { fill: 'both', easing: ease, ...options });
+
+      function hook() {
+        // Две секунды на всё: маршрут, полароиды, заголовок, знак.
+        // Тайминг подогнан под монтаж — сцена в ролике длится 2,0 с.
+        $('facts').remove();
+        $('cta').remove();
+
+        animate($('grid'), [{ opacity: 0 }, { opacity: 1 }], { duration: 320 });
+        animate($('grid'), [{ transform: 'scale(1.10)' }, { transform: 'scale(1)' }], {
+          duration: 2000,
+        });
+
+        // Маршрут прочерчивается первым: он и есть обещание ролика.
+        animate(line, [{ strokeDashoffset: length }, { strokeDashoffset: 0 }], {
+          duration: 900,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        });
+
+        document.querySelectorAll('.marker').forEach((marker, index) => {
+          animate(
+            marker,
+            [
+              { opacity: 0, transform: 'scale(0.4) rotate(-25deg)' },
+              { opacity: 1, transform: 'scale(1) rotate(0deg)' },
+            ],
+            { duration: 240, delay: 80 + index * 105 },
+          );
+        });
+
+        // Полароиды въезжают с разной скоростью — параллакс.
+        [...document.querySelectorAll('.shot')].forEach((shot, index) => {
+          const rotate = [-7, 6, -2][index];
+          animate(
+            shot,
+            [
+              {
+                opacity: 0,
+                transform: `translateY(${34 + index * 12}px) rotate(${rotate}deg) scale(0.9)`,
+              },
+              { opacity: 1, transform: `translateY(0) rotate(${rotate}deg) scale(1)` },
+            ],
+            { duration: 420, delay: 250 + index * 130 },
+          );
+        });
+
+        // Заголовок поверх — с затемнением подложки, иначе он ляжет
+        // на полароиды и перестанет читаться.
+        animate($('shots'), [{ filter: 'brightness(1)' }, { filter: 'brightness(0.3)' }], {
+          duration: 320,
+          delay: 880,
+        });
+
+        animate($('kicker'), [{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 880 });
+
+        [...$('headline').children].forEach((word, index) => {
+          animate(
+            word,
+            [
+              { opacity: 0, transform: 'translateY(24px)' },
+              { opacity: 1, transform: 'translateY(0)' },
+            ],
+            { duration: 300, delay: 940 + index * 90 },
+          );
+        });
+
+        animate($('rule'), [{ width: '0px' }, { width: '128px' }], {
+          duration: 340,
+          delay: 1240,
+        });
+
+        // Знак «Движ-Патруль» — внизу, небольшой: он подписывает
+        // кадр, а не забирает его. Дальше сразу приложение.
+        $('logo').style.top = 'auto';
+        $('logo').style.bottom = '104px';
+        $('logo').style.width = '132px';
+        $('logo').style.transform = 'translateX(-50%)';
+        animate(
+          $('logo'),
+          [
+            { opacity: 0, transform: 'translateX(-50%) translateY(14px)' },
+            { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
+          ],
+          { duration: 300, delay: 1480 },
+        );
+
+        animate($('flash'), [{ opacity: 0 }, { opacity: 0.55 }, { opacity: 0 }], {
+          duration: 260,
+          delay: 1820,
+        });
+      }
+
+      function cta() {
+        // Одна секунда: всё появляется почти разом и держится,
+        // читать надо успеть за кадр.
+        $('shots').remove();
+        $('center').remove();
+
+        $('grid').style.opacity = 1;
+
+        animate(line, [{ strokeDashoffset: length }, { strokeDashoffset: 0 }], {
+          duration: 520,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        });
+        document.querySelectorAll('.marker').forEach((marker, index) => {
+          animate(marker, [{ opacity: 0 }, { opacity: 1 }], {
+            duration: 140,
+            delay: 40 + index * 35,
+          });
+        });
+
+        $('logo').style.top = '168px';
+        animate(
+          $('logo'),
+          [
+            { opacity: 0, transform: 'translate(-50%, -50%) scale(0.92)' },
+            { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' },
+          ],
+          { duration: 220 },
+        );
+
+        animate(
+          $('facts'),
+          [
+            { opacity: 0, transform: 'translateY(14px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+          { duration: 260, delay: 90 },
+        );
+
+        animate(
+          $('cta'),
+          [
+            { opacity: 0, transform: 'translateY(16px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+          { duration: 280, delay: 200 },
+        );
+
+        // Вспышка на последнюю долю: с ней совпадает финальный удар.
+        animate($('flash'), [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }], {
+          duration: 380,
+          delay: 620,
+        });
+      }
+
+      window.__play = () => {
+        document.getAnimations().forEach((animation) => animation.cancel());
+        if (scene === 'cta') cta();
+        else hook();
+      };
+
+      // До команды записи всё стоит на первом кадре.
+      document.querySelectorAll('.shot, .marker').forEach((node) => {
+        node.style.opacity = 0;
+      });
+    </script>
+  </body>
+</html>

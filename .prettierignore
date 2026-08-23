@@ -6,3 +6,6 @@ playwright-report
 e2e-results
 coverage
 .local-db
+
+# Скачано у Google Fonts как есть
+video-preview/assets/fonts.css

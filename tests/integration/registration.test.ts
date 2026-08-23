@@ -1,5 +1,19 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { closePool, createEvent, joinTeam, pool, registerTeam, resetData } from '../helpers/db';
+import {
+  acceptSubmission,
+  closePool,
+  confirmSubmission,
+  createEvent,
+  createSlot,
+  createTask,
+  deleteTeam,
+  joinTeam,
+  pool,
+  registerTeam,
+  resetData,
+  setTeamSize,
+  taskClaim,
+} from '../helpers/db';
 
 /**
  * Регистрация команд и участников.
@@ -293,5 +307,114 @@ describe('лимит участников', () => {
 
     const result = await joinTeam(eventId, team.joinCode!.toLowerCase(), 'Второй');
     expect(result.ok).toBe(true);
+  });
+});
+
+/**
+ * Свой размер у команды.
+ *
+ * Живой случай: одна компания приходит вшестером, остальные
+ * вчетвером. Общее число в настройках мероприятия либо не пускает
+ * позванных, либо разрешает всем добрать лишних.
+ */
+describe('свой потолок участников', () => {
+  it('команда со своим числом пускает больше общего', async () => {
+    const id = await createEvent({ status: 'registration', teamSize: 4 });
+    const team = await registerTeam(id, 'Шестеро', { bypassLimits: true });
+    await setTeamSize(team.teamId!, 6);
+
+    // Капитан уже внутри — добираем до шести.
+    for (const name of ['Второй', 'Третий', 'Четвёртый', 'Пятый', 'Шестой']) {
+      const joined = await joinTeam(id, team.joinCode!, name);
+      expect(joined.ok, `${name} не вошёл`).toBe(true);
+    }
+
+    const seventh = await joinTeam(id, team.joinCode!, 'Седьмой');
+    expect(seventh.ok).toBe(false);
+    expect(seventh.error).toBe('team_full');
+  });
+
+  it('без своего числа действует общее', async () => {
+    const id = await createEvent({ status: 'registration', teamSize: 2 });
+    const team = await registerTeam(id, 'Двое', { bypassLimits: true });
+
+    expect((await joinTeam(id, team.joinCode!, 'Второй')).ok).toBe(true);
+    const third = await joinTeam(id, team.joinCode!, 'Третий');
+    expect(third.ok).toBe(false);
+    expect(third.error).toBe('team_full');
+  });
+
+  it('своё число может быть и меньше общего', async () => {
+    const id = await createEvent({ status: 'registration', teamSize: 6 });
+    const team = await registerTeam(id, 'Вдвоём', { bypassLimits: true });
+    await setTeamSize(team.teamId!, 2);
+
+    expect((await joinTeam(id, team.joinCode!, 'Второй')).ok).toBe(true);
+    expect((await joinTeam(id, team.joinCode!, 'Третий')).ok).toBe(false);
+  });
+});
+
+/**
+ * Удаление команды.
+ *
+ * Отмена и удаление — разные действия. Удаление нужно до старта:
+ * обкатали, попробовали, теперь список должен быть чистым перед
+ * настоящими людьми.
+ */
+describe('удаление команды', () => {
+  it('уносит участников и освобождает место', async () => {
+    const id = await createEvent({ status: 'registration', maxTeams: 1 });
+    const team = await registerTeam(id, 'Тестовая', { bypassLimits: true });
+    await joinTeam(id, team.joinCode!, 'Второй');
+
+    const result = await deleteTeam(team.teamId!);
+    expect(result.ok).toBe(true);
+    expect(result.members).toBe(2);
+
+    // Место освободилось: следующая команда влезает в лимит.
+    const next = await registerTeam(id, 'Настоящая');
+    expect(next.ok).toBe(true);
+  });
+
+  it('возвращает захваченные задания в общий пул', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
+    const team = await registerTeam(id, 'Захватчики', { bypassLimits: true });
+    const task = await createTask(id, { number: 1, points: 50 });
+
+    const slot = await createSlot(team.teamId!, task);
+    await confirmSubmission(slot.submissionId!);
+    await acceptSubmission(slot.submissionId!);
+    expect((await taskClaim(task)).teamId).toBe(team.teamId);
+
+    // До старта вернуть нельзя — сначала статус, потом удаление.
+    await pool.query(`UPDATE public.events SET status = 'registration' WHERE id = $1`, [id]);
+
+    const result = await deleteTeam(team.teamId!);
+    expect(result.ok).toBe(true);
+    expect(result.releasedTasks).toBe(1);
+
+    // Задание снова свободно: иначе оно ушло бы из игры вместе с
+    // удалённой командой, и никто бы его больше не увидел.
+    expect((await taskClaim(task)).teamId).toBeNull();
+    expect((await taskClaim(task)).submissionId).toBeNull();
+  });
+
+  it('после старта удалить нельзя — только отменить', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
+    const team = await registerTeam(id, 'Играющие', { bypassLimits: true });
+
+    const result = await deleteTeam(team.teamId!);
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('event_started');
+
+    // И команда на месте.
+    const { rows } = await pool.query(`SELECT id FROM public.teams WHERE id = $1`, [team.teamId]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('несуществующую команду удалить нельзя', async () => {
+    const result = await deleteTeam('00000000-0000-4000-8000-000000000000');
+    expect(result.ok).toBe(false);
+    expect(result.error).toBe('team_not_found');
   });
 });

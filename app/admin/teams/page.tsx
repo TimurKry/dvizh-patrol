@@ -127,7 +127,10 @@ export default async function AdminTeamsPage() {
                     </td>
                     <td className="py-3 pr-4 text-muted">{team.captain_name}</td>
                     <td className="py-3 pr-4 tabular-nums">
-                      {count} / {event.team_size}
+                      {count} / {team.size_limit ?? event.team_size}
+                      {team.size_limit !== null && (
+                        <span className="ml-1 text-caption text-muted">своё</span>
+                      )}
                     </td>
                     <td className="py-3 pr-4">
                       <Tag emphasis={team.status === 'confirmed'}>
@@ -175,11 +178,30 @@ export default async function AdminTeamsPage() {
             <Field label="Контакт" htmlFor="new-contact" name="contact">
               <TextInput id="new-contact" name="contact" maxLength={200} />
             </Field>
+            {/* Своё число сразу при создании: у одной компании
+                шестеро, у остальных четверо, и переоткрывать
+                карточку ради этого не хочется. */}
+            <Field
+              label="Человек в команде"
+              htmlFor="new-size"
+              name="sizeLimit"
+              hint={`Пусто — как у всех: ${event.team_size}.`}
+            >
+              <TextInput
+                id="new-size"
+                name="sizeLimit"
+                type="number"
+                min="1"
+                max="6"
+                placeholder={String(event.team_size)}
+              />
+            </Field>
           </div>
         </ActionForm>
 
         <p className="text-caption text-muted">
-          Всего в команде может быть до {event.team_size} {membersWord(event.team_size)}.
+          По умолчанию в команде до {event.team_size} {membersWord(event.team_size)}. Своё число
+          можно поставить здесь или потом в карточке команды.
         </p>
       </Card>
     </div>

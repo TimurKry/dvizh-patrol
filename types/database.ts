@@ -175,6 +175,15 @@ export interface TeamRow {
   payment_confirmed: boolean;
   /** Ключ цвета. Hex — в lib/team-colors.ts. NULL, если все шесть заняты. */
   color: TeamColor | null;
+  /**
+   * Свой потолок участников.
+   *
+   * NULL — берётся общий из настроек мероприятия. Нужен, потому
+   * что одна компания приходит вшестером, а остальные вчетвером:
+   * общее число либо не пускает позванных, либо разрешает всем
+   * добрать лишних.
+   */
+  size_limit: number | null;
   created_at: string;
   updated_at: string;
 }

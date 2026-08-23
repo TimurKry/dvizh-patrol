@@ -301,3 +301,25 @@ export async function teamScore(teamId: string): Promise<number> {
   );
   return Number(rows[0]?.total_points ?? 0);
 }
+
+/** Удаление команды со всем следом. Только до старта квеста. */
+export async function deleteTeam(teamId: string): Promise<{
+  ok: boolean;
+  error?: string;
+  teamName?: string;
+  members?: number;
+  submissions?: number;
+  releasedTasks?: number;
+  imagePaths?: string[];
+}> {
+  const { rows } = await pool.query<{ r: Record<string, unknown> }>(
+    `SELECT public.delete_team($1) AS r`,
+    [teamId],
+  );
+  return rows[0]!.r as never;
+}
+
+/** Свой потолок участников у команды. NULL — общий из мероприятия. */
+export async function setTeamSize(teamId: string, size: number | null): Promise<void> {
+  await pool.query(`UPDATE public.teams SET size_limit = $2 WHERE id = $1`, [teamId, size]);
+}

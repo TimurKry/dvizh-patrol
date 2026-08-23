@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ActionButton, ActionForm } from '@/components/admin/action-form';
-import { adjustScoreAction, updateTeamAction } from '@/actions/admin';
+import { adjustScoreAction, deleteTeamAction, updateTeamAction } from '@/actions/admin';
 import { Card, Eyebrow } from '@/components/ui/surface';
 import { Field, Select, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
@@ -232,6 +232,76 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
             <TextInput id="team-name" name="name" defaultValue={team.name} maxLength={60} />
           </Field>
         </ActionForm>
+
+        {/* ═══ Размер именно этой команды ═══════════════════
+            Число в настройках мероприятия — значение по
+            умолчанию. Одна компания приходит вшестером, а
+            остальные вчетвером: общий потолок либо не пускает
+            позванных, либо разрешает всем добрать лишних. */}
+        <ActionForm
+          action={updateTeamAction}
+          submitLabel="Изменить размер"
+          variant="secondary"
+          className="flex flex-col gap-3 border-t border-hairline pt-4"
+        >
+          <input type="hidden" name="teamId" value={team.id} />
+          <input type="hidden" name="action" value="set_size" />
+          <Field
+            label="Человек в команде"
+            htmlFor="team-size"
+            name="sizeLimit"
+            hint={
+              team.size_limit === null
+                ? `Сейчас как у всех: ${event?.team_size ?? '—'}. Впишите своё число, чтобы отличалось.`
+                : `Своё число. Очистите поле — вернётся общее (${event?.team_size ?? '—'}).`
+            }
+          >
+            <TextInput
+              id="team-size"
+              name="sizeLimit"
+              type="number"
+              min="1"
+              max="6"
+              defaultValue={team.size_limit ?? ''}
+              placeholder={String(event?.team_size ?? '')}
+            />
+          </Field>
+          <p className="text-caption text-faint">
+            Сейчас вошло: {members.length}. Ниже этого числа потолок не опустить.
+          </p>
+        </ActionForm>
+      </Card>
+
+      {/* ═══ Убрать команду ═════════════════════════════════
+          Отмена и удаление — разные действия. Отмена нужна во
+          время игры: команда сошла, место освободилось, а её
+          баллы остаются в журнале, потому что влияли на гонку у
+          всех остальных. Удаление нужно до старта — чтобы список
+          был чистым перед настоящими людьми. */}
+      <Card className="flex flex-col gap-4 p-5">
+        <h2 className="text-body-lg">Убрать команду совсем</h2>
+
+        {canDelete ? (
+          <>
+            <p className="text-body text-muted">
+              Исчезнут и участники, и отправки, и баллы — целиком и без следа. Захваченные задания
+              вернутся в общий пул. Отменить это будет нечем.
+            </p>
+            <ActionButton
+              action={deleteTeamAction}
+              values={{ teamId: team.id }}
+              variant="danger"
+              confirm={`Удалить «${team.name}» насовсем? Участники (${members.length}), отправки (${submissions.length}) и баллы исчезнут без возможности вернуть.`}
+            >
+              Удалить команду
+            </ActionButton>
+          </>
+        ) : (
+          <Notice icon="info">
+            Квест уже запущен, и удаление закрыто: баллы этой команды влияли на гонку за задания у
+            всех остальных. Сошедшую команду отменяйте — место освободится, а история останется.
+          </Notice>
+        )}
       </Card>
 
       {/* ═══ Баллы ══════════════════════════════════════════ */}

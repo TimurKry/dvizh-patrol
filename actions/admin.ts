@@ -388,6 +388,40 @@ export async function updateTeamAction(
       message = 'Название изменено.';
       break;
     }
+    case 'set_size': {
+      // Пусто — «как у всех»: команда возвращается к общему числу
+      // из настроек мероприятия, а не получает жёсткую копию.
+      const raw = String(formData.get('sizeLimit') ?? '').trim();
+      if (raw === '') {
+        patch = { size_limit: null };
+        message = 'Размер команды снова общий.';
+        break;
+      }
+
+      const size = Number(raw);
+      if (!Number.isInteger(size) || size < 1 || size > 6) {
+        return { ok: false, message: 'Размер команды — целое число от 1 до 6.' };
+      }
+
+      // Опустить потолок ниже уже вошедших нельзя: лишние люди
+      // иначе оказались бы «сверх лимита» задним числом, а
+      // выгонять их некому.
+      const { count: members } = await db
+        .from('team_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('team_id', teamId);
+
+      if ((members ?? 0) > size) {
+        return {
+          ok: false,
+          message: `В команде уже ${members} участников — ниже этого числа потолок не опустить.`,
+        };
+      }
+
+      patch = { size_limit: size };
+      message = `Размер команды: ${size}.`;
+      break;
+    }
     case 'set_color': {
       const color = String(formData.get('color') ?? '');
       if (!isTeamColor(color)) return { ok: false, message: 'Неизвестный цвет.' };
@@ -479,6 +513,14 @@ export async function createTeamAction(
     return { ok: false, message: 'Укажите название команды и имя капитана.' };
   }
 
+  // Пусто — «как у всех»: команда живёт по общему числу из
+  // настроек мероприятия, а не получает его жёсткой копией.
+  const rawSize = String(formData.get('sizeLimit') ?? '').trim();
+  const sizeLimit = rawSize === '' ? null : Number(rawSize);
+  if (sizeLimit !== null && (!Number.isInteger(sizeLimit) || sizeLimit < 1 || sizeLimit > 6)) {
+    return { ok: false, message: 'Размер команды — целое число от 1 до 6.' };
+  }
+
   // Сессия здесь никому не нужна, но функция её создаёт — кладём
   // случайный хэш, который никому не соответствует.
   const throwawayHash = randomBytes(32).toString('hex');
@@ -507,16 +549,98 @@ export async function createTeamAction(
     return { ok: false, message: messages[result.error] ?? 'Не удалось создать команду.' };
   }
 
+  // Размер ставится вторым шагом: `register_team` — общая функция
+  // регистрации, и добавлять в неё поле ради админки значило бы
+  // тянуть его через весь путь участника.
+  if (sizeLimit !== null) {
+    await supabaseAdmin()
+      .from('teams')
+      .update({ size_limit: sizeLimit })
+      .eq('id', result.data.teamId);
+  }
+
   await audit({
     admin,
     action: 'team_created_by_admin',
     entityType: 'team',
     entityId: result.data.teamId,
-    after: { name, captain },
+    after: { name, captain, size_limit: sizeLimit },
   });
 
   revalidatePath('/admin/teams');
-  return { ok: true, message: `Команда создана. Код: ${result.data.joinCode}` };
+  return {
+    ok: true,
+    message: `Команда «${name}» создана. Код для участников: ${result.data.joinCode}`,
+  };
+}
+
+/**
+ * Удаление команды.
+ *
+ * Отмена регистрации и удаление — разные действия, и разница не в
+ * силе. Отмена нужна во время игры: команда сошла, место
+ * освободилось, а её отправки и баллы остаются в журнале, потому
+ * что влияли на гонку за задания у всех остальных.
+ *
+ * Удаление нужно до старта: обкатали, попробовали, теперь список
+ * должен быть чистым перед настоящими людьми. После старта база
+ * его не разрешит — проверка стоит в `delete_team`, а не здесь:
+ * серверное действие вызывается по своему адресу и защищаться
+ * обязано на стороне базы.
+ */
+export async function deleteTeamAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+  const teamId = String(formData.get('teamId') ?? '');
+
+  const result = await callRpc<{
+    teamName: string;
+    members: number;
+    submissions: number;
+    releasedTasks: number;
+    imagePaths: string[];
+    previewPaths: string[];
+  }>('delete_team', { p_team_id: teamId });
+
+  if (!result.ok) {
+    const messages: Record<string, string> = {
+      team_not_found: 'Команда не найдена.',
+      event_started:
+        'Квест уже запущен — команду можно только отменить. Её баллы влияли на гонку за задания у всех остальных.',
+    };
+    return { ok: false, message: messages[result.error] ?? 'Не удалось удалить команду.' };
+  }
+
+  // Снимки убираем после строк: если удаление не прошло, файлы
+  // остались на месте и целыми.
+  const { removeObjects } = await import('@/lib/storage');
+  if (result.data.imagePaths.length) {
+    await removeObjects(BUCKETS.submissions, result.data.imagePaths);
+  }
+  if (result.data.previewPaths.length) {
+    await removeObjects(BUCKETS.previews, result.data.previewPaths);
+  }
+
+  await audit({
+    admin,
+    action: 'team_deleted',
+    entityType: 'team',
+    entityId: teamId,
+    before: {
+      name: result.data.teamName,
+      members: result.data.members,
+      submissions: result.data.submissions,
+    },
+  });
+
+  revalidatePath('/admin/teams');
+  revalidatePath('/admin/leaderboard');
+  revalidatePath('/leaderboard');
+
+  // Карточки удалённой команды больше нет — возвращаться некуда.
+  redirect('/admin/teams');
 }
 
 export async function adjustScoreAction(

@@ -7,6 +7,7 @@ import { isTeamColor, teamColorLabel } from '@/lib/team-colors';
 import { asAreaPolygon } from '@/lib/geo';
 import { audit, requireAdmin } from '@/lib/auth/admin';
 import { allowedNextStatuses } from '@/lib/event-status';
+import { fromZonedInput } from '@/lib/time';
 import { runValidationWorker } from '@/lib/ai/worker';
 import { env } from '@/lib/env';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -152,6 +153,21 @@ export async function updateEventAction(
     return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
   }
 
+  // Все три момента читаются в поясе мероприятия — в том самом,
+  // который организатор только что мог и поменять.
+  const moment = (local: string | null) =>
+    local ? fromZonedInput(local, parsed.data.timezone) : null;
+
+  const startsAt = moment(parsed.data.startsAt);
+  if (!startsAt) {
+    return {
+      ok: false,
+      error: 'validation_failed',
+      message: 'Не разобрали дату старта. Проверьте поле и часовой пояс.',
+      fields: { startsAt: 'Непонятная дата' },
+    };
+  }
+
   const db = supabaseAdmin();
   const { data: before } = await db.from('events').select('*').eq('id', eventId).maybeSingle();
 
@@ -179,7 +195,11 @@ export async function updateEventAction(
       subtitle: parsed.data.subtitle || null,
       city: parsed.data.city,
       timezone: parsed.data.timezone,
-      starts_at: new Date(parsed.data.startsAt).toISOString(),
+      // Поле формы — время в поясе мероприятия, а не в поясе
+      // сервера. Пока это читалось через `new Date(...)`, каждое
+      // сохранение сдвигало дату на смещение пояса: три нажатия
+      // «Сохранить» подряд уводили старт на шесть часов.
+      starts_at: startsAt,
       price_cents: parsed.data.priceCents,
       max_teams: parsed.data.maxTeams,
       team_size: parsed.data.teamSize,
@@ -192,13 +212,13 @@ export async function updateEventAction(
       area_longitude: parsed.data.areaLongitude,
       area_radius_meters: parsed.data.areaRadiusMeters,
       area_enforced: parsed.data.areaEnforced,
-      ends_at: parsed.data.endsAt ? new Date(parsed.data.endsAt).toISOString() : null,
+      ends_at: moment(parsed.data.endsAt),
       finish_latitude: parsed.data.finishLatitude,
       finish_longitude: parsed.data.finishLongitude,
       finish_title: parsed.data.finishTitle || null,
       finish_address: parsed.data.finishAddress || null,
       finish_note: parsed.data.finishNote || null,
-      finish_at: parsed.data.finishAt ? new Date(parsed.data.finishAt).toISOString() : null,
+      finish_at: moment(parsed.data.finishAt),
     })
     .eq('id', eventId);
 

@@ -5,6 +5,7 @@ import { saveTaskAction, type AdminActionState } from '@/actions/admin';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Select, TextArea, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
+import { useFormValues } from '@/components/admin/form-values';
 import { PolygonDraw, toRing, type DrawPoint } from '@/components/admin/polygon-draw';
 import { PointPick } from '@/components/admin/point-pick';
 import { TaskFace } from '@/components/game/task-face';
@@ -96,8 +97,37 @@ export function TaskForm({
     node.focus({ preventScroll: true });
   }, [state]);
 
-  const [mode, setMode] = useState(task?.validation_mode ?? 'manual');
-  const [needsLocation, setNeedsLocation] = useState(task?.require_location ?? false);
+  // Все поля управляемые. React 19 сбрасывает форму после
+  // серверного действия: при отказе введённое описание исчезало —
+  // то есть форма наказывала за собственную же придирчивость.
+  const form = useFormValues({
+    number: String(task?.number ?? nextNumber),
+    title: task?.title ?? '',
+    shortDescription: task?.short_description ?? '',
+    description: task?.description ?? '',
+    points: String(task?.points ?? 50),
+    category: task?.category ?? 'object_search',
+    cardType: task?.card_type ?? 'photo',
+    difficulty: task?.difficulty ?? 'medium',
+    validationMode: task?.validation_mode ?? 'manual',
+    criteria: (task?.criteria ?? []).join('\n'),
+    minimumPeople: String(task?.minimum_people ?? 0),
+    maxAttempts: String(task?.max_attempts ?? 2),
+    radiusMeters: String(task?.radius_meters ?? 150),
+    imageCaption: task?.image_caption ?? '',
+    landingSlot: String(task?.landing_slot ?? 0),
+    backstory: task?.backstory ?? '',
+    afterword: task?.afterword ?? '',
+    afterwordUrl: task?.afterword_url ?? '',
+    afterwordUrlLabel: task?.afterword_url_label ?? '',
+    requireLocation: task?.require_location ?? false,
+    active: task?.active ?? true,
+  });
+
+  const mode = form.values.validationMode;
+  const needsLocation = form.values.requireLocation;
+  const cardType = form.values.cardType as TaskCardType;
+
   const [mapMode, setMapMode] = useState<TaskMapMode>(task?.map_mode ?? 'none');
 
   // Точка задания. Живёт в состоянии, потому что её ставят кликом
@@ -114,17 +144,6 @@ export function TaskForm({
     if (!parsed) return [];
     return parsed.coordinates[0].slice(0, -1).map(([lon, lat]) => ({ lat, lon }));
   });
-
-  // Поля, которые видно в превью, живут в состоянии. Остальные
-  // остаются неуправляемыми: перерисовывать всю форму на каждую
-  // букву описания незачем.
-  const [cardType, setCardType] = useState<TaskCardType>(task?.card_type ?? 'photo');
-  const [number, setNumber] = useState(String(task?.number ?? nextNumber));
-  const [title, setTitle] = useState(task?.title ?? '');
-  const [points, setPoints] = useState(String(task?.points ?? 50));
-  const [shortDescription, setShortDescription] = useState(task?.short_description ?? '');
-  const [imageCaption, setImageCaption] = useState(task?.image_caption ?? '');
-  const [landingSlot, setLandingSlot] = useState(String(task?.landing_slot ?? 0));
 
   const areaPayload =
     area.length >= 3 ? JSON.stringify({ type: 'Polygon', coordinates: [toRing(area)] }) : '';
@@ -153,40 +172,16 @@ export function TaskForm({
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Номер" htmlFor="number" required error={fields.number}>
-            <TextInput
-              id="number"
-              name="number"
-              type="number"
-              min="1"
-              value={number}
-              onChange={(e) => setNumber(e.target.value)}
-              required
-            />
+            <TextInput {...form.field('number')} type="number" min="1" required />
           </Field>
 
           <Field label="Баллы" htmlFor="points" required error={fields.points}>
-            <TextInput
-              id="points"
-              name="points"
-              type="number"
-              min="0"
-              max="1000"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
-              required
-            />
+            <TextInput {...form.field('points')} type="number" min="0" max="1000" required />
           </Field>
         </div>
 
         <Field label="Название" htmlFor="title" required error={fields.title}>
-          <TextInput
-            id="title"
-            name="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={140}
-          />
+          <TextInput {...form.field('title')} required maxLength={140} />
         </Field>
 
         <Field
@@ -195,13 +190,7 @@ export function TaskForm({
           error={fields.shortDescription}
           hint="Одна строка на карточке. Длиннее трёх строк — обрежется, видно справа."
         >
-          <TextInput
-            id="shortDescription"
-            name="shortDescription"
-            value={shortDescription}
-            onChange={(e) => setShortDescription(e.target.value)}
-            maxLength={200}
-          />
+          <TextInput {...form.field('shortDescription')} maxLength={200} />
         </Field>
 
         <Field
@@ -211,13 +200,7 @@ export function TaskForm({
           error={fields.description}
           hint="Что именно нужно сделать и что должно попасть в кадр. Видно на странице задания, а не на карточке."
         >
-          <TextArea
-            id="description"
-            name="description"
-            defaultValue={task?.description}
-            required
-            rows={6}
-          />
+          <TextArea {...form.field('description')} required rows={6} />
         </Field>
 
         {/* Тип карточки стоит выше категории намеренно: он решает,
@@ -230,12 +213,7 @@ export function TaskForm({
           hint="Рука команды собирается по два задания каждого типа"
           error={fields.cardType}
         >
-          <Select
-            id="cardType"
-            name="cardType"
-            value={cardType}
-            onChange={(e) => setCardType(e.target.value as TaskCardType)}
-          >
+          <Select {...form.field('cardType')}>
             {TASK_CARD_TYPES.map((value) => (
               <option key={value} value={value}>
                 {/* Внутри <option> живёт только текст: рисунок туда
@@ -359,7 +337,7 @@ export function TaskForm({
 
         <div className="grid gap-5 sm:grid-cols-3">
           <Field label="Категория" htmlFor="category" error={fields.category}>
-            <Select id="category" name="category" defaultValue={task?.category ?? 'object_search'}>
+            <Select {...form.field('category')}>
               {TASK_CATEGORIES.map((category) => (
                 <option key={category} value={category}>
                   {TASK_CATEGORY_TEXT[category]}
@@ -369,7 +347,7 @@ export function TaskForm({
           </Field>
 
           <Field label="Сложность" htmlFor="difficulty" error={fields.difficulty}>
-            <Select id="difficulty" name="difficulty" defaultValue={task?.difficulty ?? 'medium'}>
+            <Select {...form.field('difficulty')}>
               {TASK_DIFFICULTIES.map((difficulty) => (
                 <option key={difficulty} value={difficulty}>
                   {TASK_DIFFICULTY_TEXT[difficulty]}
@@ -390,12 +368,7 @@ export function TaskForm({
                   : 'Каждая фотография попадает к вам.'
             }
           >
-            <Select
-              id="validationMode"
-              name="validationMode"
-              value={mode}
-              onChange={(e) => setMode(e.target.value as typeof mode)}
-            >
+            <Select {...form.field('validationMode')}>
               <option value="manual">Только вручную</option>
               <option value="ai">Автоматическая проверка</option>
               <option value="auto">Принимать сразу</option>
@@ -411,9 +384,7 @@ export function TaskForm({
           hint="По одному в строке. Их видит и команда — для загадки это значит, что критерий не должен называть ответ."
         >
           <TextArea
-            id="criteria"
-            name="criteria"
-            defaultValue={(task?.criteria ?? []).join('\n')}
+            {...form.field('criteria')}
             rows={5}
             placeholder={'Виден треугольный дорожный знак\nВ кадре минимум два участника'}
           />
@@ -426,26 +397,11 @@ export function TaskForm({
             error={fields.minimumPeople}
             hint="0 — если люди не обязательны."
           >
-            <TextInput
-              id="minimumPeople"
-              name="minimumPeople"
-              type="number"
-              min="0"
-              max="10"
-              defaultValue={task?.minimum_people ?? 0}
-            />
+            <TextInput {...form.field('minimumPeople')} type="number" min="0" max="10" />
           </Field>
 
           <Field label="Попыток" htmlFor="maxAttempts" required error={fields.maxAttempts}>
-            <TextInput
-              id="maxAttempts"
-              name="maxAttempts"
-              type="number"
-              min="1"
-              max="10"
-              defaultValue={task?.max_attempts ?? 2}
-              required
-            />
+            <TextInput {...form.field('maxAttempts')} type="number" min="1" max="10" required />
           </Field>
         </div>
 
@@ -456,14 +412,7 @@ export function TaskForm({
           error={fields.imageCaption}
           hint="«Фото-эталон», «Картина», «Так это выглядело в 1900-м». Пусто — плашки не будет. Сами картинки грузятся отдельным блоком под формой."
         >
-          <TextInput
-            id="imageCaption"
-            name="imageCaption"
-            value={imageCaption}
-            onChange={(e) => setImageCaption(e.target.value)}
-            maxLength={60}
-            placeholder="Фото-эталон"
-          />
+          <TextInput {...form.field('imageCaption')} maxLength={60} placeholder="Фото-эталон" />
         </Field>
 
         {/* ═══ Витрина лендинга ═══════════════════════════════
@@ -478,12 +427,7 @@ export function TaskForm({
             error={fields.landingSlot}
             hint="Три карточки-примера в ряд, слева направо. Один слот — одно задание."
           >
-            <Select
-              id="landingSlot"
-              name="landingSlot"
-              value={landingSlot}
-              onChange={(e) => setLandingSlot(e.target.value)}
-            >
+            <Select {...form.field('landingSlot')}>
               <option value="0">Не показывать</option>
               <option value="1">Слот 1 — слева</option>
               <option value="2">Слот 2 — по центру</option>
@@ -491,7 +435,7 @@ export function TaskForm({
             </Select>
           </Field>
 
-          {landingSlot !== '0' && (
+          {form.values.landingSlot !== '0' && (
             <Notice icon="upload-failed">
               Лендинг открыт всем. Всё, что попало в слот, читается до старта: формулировка,
               картинка и точка на карте. Для загадки это значит, что её решат заранее — либо берите
@@ -514,13 +458,7 @@ export function TaskForm({
             error={fields.backstory}
             hint="Кому памятник, чем известен дом. Видно сразу, вместе с условием — команда читает это, пока идёт."
           >
-            <TextArea
-              id="backstory"
-              name="backstory"
-              defaultValue={task?.backstory ?? ''}
-              rows={5}
-              maxLength={2000}
-            />
+            <TextArea {...form.field('backstory')} rows={5} maxLength={2000} />
           </Field>
 
           {cardType === 'riddle' && (
@@ -550,22 +488,14 @@ export function TaskForm({
             error={fields.afterword}
             hint="Пара абзацев о месте: что это, почему интересно."
           >
-            <TextArea
-              id="afterword"
-              name="afterword"
-              defaultValue={task?.afterword ?? ''}
-              rows={5}
-              maxLength={2000}
-            />
+            <TextArea {...form.field('afterword')} rows={5} maxLength={2000} />
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Ссылка" htmlFor="afterwordUrl" error={fields.afterwordUrl}>
               <TextInput
-                id="afterwordUrl"
-                name="afterwordUrl"
+                {...form.field('afterwordUrl')}
                 type="url"
-                defaultValue={task?.afterword_url ?? ''}
                 placeholder="https://ru.wikipedia.org/wiki/…"
               />
             </Field>
@@ -575,21 +505,14 @@ export function TaskForm({
               error={fields.afterwordUrlLabel}
               hint="Пусто — напишем «Читать дальше»."
             >
-              <TextInput
-                id="afterwordUrlLabel"
-                name="afterwordUrlLabel"
-                defaultValue={task?.afterword_url_label ?? ''}
-                maxLength={80}
-              />
+              <TextInput {...form.field('afterwordUrlLabel')} maxLength={80} />
             </Field>
           </div>
         </fieldset>
 
         <div className="flex flex-col gap-4 border border-hairline bg-panel p-4">
           <Checkbox
-            name="requireLocation"
-            checked={needsLocation}
-            onChange={(e) => setNeedsLocation(e.target.checked)}
+            {...form.flag('requireLocation')}
             label="Требовать геопозицию при отправке"
             description="Браузер спросит разрешение только при отправке этого задания."
           />
@@ -610,21 +533,13 @@ export function TaskForm({
                 error={fields.radiusMeters}
                 hint="К нему добавится погрешность телефона."
               >
-                <TextInput
-                  id="radiusMeters"
-                  name="radiusMeters"
-                  type="number"
-                  min="10"
-                  max="20000"
-                  defaultValue={task?.radius_meters ?? 150}
-                />
+                <TextInput {...form.field('radiusMeters')} type="number" min="10" max="20000" />
               </Field>
             </>
           )}
 
           <Checkbox
-            name="active"
-            defaultChecked={task?.active ?? true}
+            {...form.flag('active')}
             label="Задание активно"
             description="Выключенное задание мгновенно исчезает из списка у всех команд."
           />
@@ -648,21 +563,21 @@ export function TaskForm({
         <TaskFace
           type={cardType}
           mapMode={mapMode}
-          kicker={`${TASK_CARD_TYPE_TEXT[cardType].label} / №${number || '—'}`}
-          title={title || 'Без названия'}
-          points={points || '0'}
-          text={shortDescription}
+          kicker={`${TASK_CARD_TYPE_TEXT[cardType].label} / №${form.values.number || '—'}`}
+          title={form.values.title || 'Без названия'}
+          points={form.values.points || '0'}
+          text={form.values.shortDescription}
           place={TASK_MAP_MODE_TEXT[mapMode].place}
           image={
             referenceImageUrl
               ? {
                   src: referenceImageUrl,
-                  badge: imageCaption || undefined,
+                  badge: form.values.imageCaption || undefined,
                   framing: referenceFraming,
                 }
               : null
           }
-          placeholder={number || '—'}
+          placeholder={form.values.number || '—'}
           status={{ icon: 'available', text: 'Доступно', tone: 'available' }}
         />
 

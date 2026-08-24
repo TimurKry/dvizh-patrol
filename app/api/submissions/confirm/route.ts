@@ -1,9 +1,9 @@
 import { NextResponse, after } from 'next/server';
-import sharp from 'sharp';
 import { runValidationWorker } from '@/lib/ai/worker';
 import { isAiConfigured } from '@/lib/env';
 import { checkLocation, checkPlayArea, toPlayArea } from '@/lib/geo';
 import { computePerceptualHash, findDuplicate } from '@/lib/image/phash';
+import { loadSharp } from '@/lib/image/sharp';
 import { errorMessage } from '@/lib/messages';
 import { getTeamSession } from '@/lib/session/team-session';
 import { callRpc, supabaseAdmin } from '@/lib/supabase/admin';
@@ -304,6 +304,9 @@ function mimeFor(extension: string): string {
 }
 
 async function buildPreview(file: Buffer): Promise<Buffer | null> {
+  const sharp = await loadSharp();
+  if (!sharp) return null;
+
   try {
     return await sharp(file)
       .rotate()

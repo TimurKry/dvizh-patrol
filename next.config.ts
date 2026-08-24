@@ -1,6 +1,22 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  /**
+   * `sharp` — нативный модуль: рядом с ним лежит собранная
+   * libvips (`@img/sharp-libvips-linux-x64`). Собирать его в общий
+   * пакет нельзя, а трассировщик файлов о `.so` рядом с ним не
+   * догадывается сам — на боевом Vercel функция подтверждения
+   * отправки падала с `libvips-cpp.so.8.18.3: cannot open shared
+   * object file`, и ни одна команда не могла отправить фотографию.
+   *
+   * Первое говорит «не бандли», второе — «положи бинарники рядом».
+   */
+  serverExternalPackages: ['sharp'],
+
+  outputFileTracingIncludes: {
+    '/api/submissions/confirm': ['./node_modules/@img/**'],
+  },
+
   experimental: {
     /**
      * Потолок тела серверного действия.

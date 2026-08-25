@@ -111,6 +111,7 @@ export function TaskForm({
     difficulty: task?.difficulty ?? 'medium',
     validationMode: task?.validation_mode ?? 'manual',
     criteria: (task?.criteria ?? []).join('\n'),
+    hiddenCriteria: (task?.hidden_criteria ?? []).join('\n'),
     minimumPeople: String(task?.minimum_people ?? 0),
     maxAttempts: String(task?.max_attempts ?? 2),
     radiusMeters: String(task?.radius_meters ?? 150),
@@ -389,6 +390,32 @@ export function TaskForm({
             placeholder={'Виден треугольный дорожный знак\nВ кадре минимум два участника'}
           />
         </Field>
+
+        {/* ═══ Скрытые критерии ══════════════════════════════
+            Открытые критерии читает команда, и у загадки это ломает
+            игру: «на фото памятник Фаусту» — готовый ответ под
+            условием. Из-за этого все загадки стояли на ручной
+            проверке. Скрытые уходят только в запрос к модели. */}
+        <Field
+          label="Скрытые критерии — только для проверки"
+          htmlFor="hiddenCriteria"
+          error={fields.hiddenCriteria}
+          hint="По одному в строке. Команда их не видит нигде: ни на карточке, ни на странице задания. Сюда пишется ответ — «в кадре памятник Фаусту у входа в погреб Ауэрбаха»."
+        >
+          <TextArea
+            {...form.field('hiddenCriteria')}
+            rows={4}
+            placeholder={'В кадре памятник Фаусту и Мефистофелю\nВиден вход в погреб'}
+          />
+        </Field>
+
+        {cardType === 'riddle' && mode === 'manual' && (
+          <Notice icon="info">
+            Загадку можно отдать на автоматическую проверку: впишите ответ в скрытые критерии выше и
+            переключите режим на «Автоматическая». Команда ответа не увидит, а вам не придётся
+            сидеть в очереди весь вечер.
+          </Notice>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field

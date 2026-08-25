@@ -243,6 +243,7 @@ export const TASK_FIELD_LABELS: Record<string, string> = {
   difficulty: 'Сложность',
   validationMode: 'Режим проверки',
   criteria: 'Критерии проверки',
+  hiddenCriteria: 'Скрытые критерии',
   minimumPeople: 'Минимум людей в кадре',
   maxAttempts: 'Попыток',
   latitude: 'Широта',

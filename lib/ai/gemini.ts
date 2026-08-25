@@ -70,11 +70,17 @@ function buildPrompt(task: {
   title: string;
   description: string;
   criteria: string[];
+  hiddenCriteria?: string[];
   minimumPeople: number;
 }): string {
+  // Открытые и скрытые критерии для судьи равнозначны: он проверяет
+  // и те, и другие. Разница только в том, что скрытые не видит
+  // команда, — у загадки открытый критерий назвал бы ответ.
+  const all = [...task.criteria, ...(task.hiddenCriteria ?? [])];
+
   const criteria =
-    task.criteria.length > 0
-      ? task.criteria.map((c, i) => `${i + 1}. ${c}`).join('\n')
+    all.length > 0
+      ? all.map((c, i) => `${i + 1}. ${c}`).join('\n')
       : 'Отдельных критериев нет — оценивай по описанию задания.';
 
   const people =
@@ -94,6 +100,10 @@ ${criteria}${people}
 Проверь каждый критерий по фотографии и верни результат.`;
 }
 
+/** Тот же промпт для теста: собирать его заново в тесте — значит
+    проверять копию, а не то, что уходит к модели. */
+export const buildPromptForTests = buildPrompt;
+
 // ═══ Вызов ═════════════════════════════════════════════════════
 
 export type AiOutcome =
@@ -109,6 +119,7 @@ export interface ValidateParams {
     title: string;
     description: string;
     criteria: string[];
+    hiddenCriteria?: string[];
     minimumPeople: number;
   };
   referenceBase64?: string | null;

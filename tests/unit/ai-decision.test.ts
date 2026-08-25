@@ -99,3 +99,41 @@ describe('противоречия в ответе', () => {
     expect(verdict.action).toBe('accept');
   });
 });
+
+/**
+ * Скрытые критерии в запросе к модели.
+ *
+ * Судье всё равно, какой критерий открытый, а какой скрытый: он
+ * проверяет оба списка. Разница только в том, что скрытые не видит
+ * команда — у загадки открытый критерий назвал бы ответ.
+ */
+describe('скрытые критерии в промпте', () => {
+  it('уходят к модели вместе с открытыми', async () => {
+    const { buildPromptForTests } = await import('@/lib/ai/gemini');
+
+    const prompt = buildPromptForTests({
+      title: 'Тот, кто вписал город в свою книгу',
+      description: 'Найдите и снимите.',
+      criteria: ['В кадре вся команда'],
+      hiddenCriteria: ['В кадре памятник Фаусту'],
+      minimumPeople: 0,
+    });
+
+    expect(prompt).toContain('В кадре вся команда');
+    expect(prompt).toContain('В кадре памятник Фаусту');
+  });
+
+  it('без скрытых критериев промпт прежний', async () => {
+    const { buildPromptForTests } = await import('@/lib/ai/gemini');
+
+    const prompt = buildPromptForTests({
+      title: 'Повторите знак',
+      description: 'Найдите знак.',
+      criteria: ['Виден треугольный знак'],
+      minimumPeople: 2,
+    });
+
+    expect(prompt).toContain('Виден треугольный знак');
+    expect(prompt).toContain('минимум 2');
+  });
+});

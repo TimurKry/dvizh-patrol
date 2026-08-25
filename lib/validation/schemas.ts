@@ -280,6 +280,9 @@ export const taskSchema = z
     difficulty: z.enum(TASK_DIFFICULTIES),
     validationMode: z.enum(VALIDATION_MODES),
     criteria: z.array(trimmed(3, 300, 'Критерий')).max(12, 'Не больше двенадцати критериев'),
+    hiddenCriteria: z
+      .array(trimmed(3, 300, 'Скрытый критерий'))
+      .max(12, 'Не больше двенадцати скрытых критериев'),
     minimumPeople: z.number().int().min(0).max(10),
     maxAttempts: z.number().int().min(1, 'Минимум одна попытка').max(10),
     requireLocation: z.boolean(),
@@ -292,11 +295,18 @@ export const taskSchema = z
   })
   .superRefine((value, ctx) => {
     checkTaskExtras(value, ctx);
-    if (value.validationMode === 'ai' && value.criteria.length === 0) {
+    // Модели всё равно, какой критерий открытый, а какой скрытый —
+    // она проверяет и те, и другие. Поэтому у загадки достаточно
+    // одних скрытых: открытые там называли бы ответ.
+    if (
+      value.validationMode === 'ai' &&
+      value.criteria.length === 0 &&
+      value.hiddenCriteria.length === 0
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['criteria'],
-        message: 'Для автоматической проверки нужен хотя бы один критерий',
+        message: 'Для автоматической проверки нужен хотя бы один критерий — открытый или скрытый',
       });
     }
     if (value.requireLocation) {

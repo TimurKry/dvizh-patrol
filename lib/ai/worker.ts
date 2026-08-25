@@ -155,6 +155,7 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
       title: task.title,
       description: task.description,
       criteria: task.criteria,
+      hiddenCriteria: task.hidden_criteria,
       minimumPeople: task.minimum_people,
     },
     referenceBase64: reference?.base64 ?? null,

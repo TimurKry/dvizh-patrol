@@ -229,6 +229,15 @@ export interface TaskRow {
   difficulty: TaskDifficulty;
   validation_mode: ValidationMode;
   criteria: string[];
+  /**
+   * Критерии только для модели.
+   *
+   * Открытые критерии читает команда, и у загадки это ломает игру:
+   * «на фото памятник Фаусту» — готовый ответ под условием.
+   * Скрытые уходят в запрос к модели и наружу не отдаются — см.
+   * `publicTask` в `lib/data/tasks.ts`.
+   */
+  hidden_criteria: string[];
   minimum_people: number;
   max_attempts: number;
   require_location: boolean;

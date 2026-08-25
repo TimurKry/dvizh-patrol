@@ -85,6 +85,24 @@ export async function getTeamHand(
   return items.sort((a, b) => (order.get(a.task.id) ?? 0) - (order.get(b.task.id) ?? 0));
 }
 
+/**
+ * Задание без скрытых критериев.
+ *
+ * `TaskHand` и карточки — клиентские компоненты, и всё, что в них
+ * попадает, уезжает в браузер целиком: колонка, добавленная в
+ * таблицу, оказывается в разметке страницы, даже если её нигде не
+ * рисуют. Для скрытых критериев это означало бы ответы к загадкам,
+ * лежащие в исходном коде страницы.
+ *
+ * Поэтому наружу задание отдаётся только через эту функцию. Модель
+ * читает скрытые критерии своим запросом, на сервере
+ * (`lib/ai/worker.ts`), и туда они и попадают.
+ */
+function publicTask(task: TaskRow): TaskRow {
+  const { hidden_criteria: _hidden, ...rest } = task;
+  return rest as TaskRow;
+}
+
 export async function getTasksForTeam(
   eventId: string,
   teamId: string,
@@ -116,7 +134,7 @@ export async function getTasksForTeam(
     db.from('task_reference_images').select('*').order('sort_order', { ascending: true }),
   ]);
 
-  const tasks = (tasksResult.data as TaskRow[] | null) ?? [];
+  const tasks = ((tasksResult.data as TaskRow[] | null) ?? []).map(publicTask);
   const submissions = (submissionsResult.data as SubmissionRow[] | null) ?? [];
   const references = (referencesResult.data as TaskReferenceImageRow[] | null) ?? [];
 
@@ -184,7 +202,11 @@ export async function getTasksForTeam(
         attemptsLeft > 0,
       referenceImageUrl: reference ? (signedReferences.get(reference.image_path) ?? null) : null,
       referenceFraming: reference
-        ? { fit: reference.fit, focusX: Number(reference.focus_x), focusY: Number(reference.focus_y) }
+        ? {
+            fit: reference.fit,
+            focusX: Number(reference.focus_x),
+            focusY: Number(reference.focus_y),
+          }
         : null,
     };
   });
@@ -359,7 +381,7 @@ export async function getLandingExamples(eventId: string): Promise<LandingExampl
     .not('landing_slot', 'is', null)
     .order('landing_slot', { ascending: true });
 
-  const tasks = (data as TaskRow[] | null) ?? [];
+  const tasks = ((data as TaskRow[] | null) ?? []).map(publicTask);
   if (tasks.length === 0) return [];
 
   const { data: imageData } = await db

@@ -979,10 +979,14 @@ export async function saveTaskAction(
   const taskId = String(formData.get('taskId') ?? '');
   const eventId = String(formData.get('eventId') ?? '');
 
-  const criteria = String(formData.get('criteria') ?? '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const lines = (value: FormDataEntryValue | null) =>
+    String(value ?? '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+  const criteria = lines(formData.get('criteria'));
+  const hiddenCriteria = lines(formData.get('hiddenCriteria'));
 
   const requireLocation = formData.get('requireLocation') === 'on';
 
@@ -1014,6 +1018,7 @@ export async function saveTaskAction(
     difficulty: formData.get('difficulty'),
     validationMode: formData.get('validationMode'),
     criteria,
+    hiddenCriteria,
     minimumPeople: Number(formData.get('minimumPeople') ?? 0),
     maxAttempts: Number(formData.get('maxAttempts') ?? 1),
     requireLocation,
@@ -1047,6 +1052,7 @@ export async function saveTaskAction(
     difficulty: parsed.data.difficulty,
     validation_mode: parsed.data.validationMode,
     criteria: parsed.data.criteria,
+    hidden_criteria: parsed.data.hiddenCriteria,
     minimum_people: parsed.data.minimumPeople,
     max_attempts: parsed.data.maxAttempts,
     require_location: parsed.data.requireLocation,

@@ -363,7 +363,10 @@ describe('тестовая команда', () => {
   it('получает на руки весь пул, а не шесть карточек', async () => {
     const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
     for (let n = 1; n <= 12; n += 1) {
-      await createTask(id, { number: n, cardType: (['riddle', 'photo', 'active'] as const)[n % 3] });
+      await createTask(id, {
+        number: n,
+        cardType: (['riddle', 'photo', 'active'] as const)[n % 3],
+      });
     }
 
     const real = await registerTeam(id, 'Настоящие', { bypassLimits: true });
@@ -431,5 +434,66 @@ describe('тестовая команда', () => {
       [id],
     );
     expect(rows.map((r) => r.team_name)).not.toContain('Тестовая');
+  });
+});
+
+/**
+ * Скрытые критерии.
+ *
+ * Критерии проверки видит команда — и правильно: человек должен
+ * понимать, что от него хотят. Но у загадки это ломает игру:
+ * критерий «на фото памятник Фаусту» — готовый ответ под условием.
+ * Из-за этого все семнадцать загадок стояли на ручной проверке.
+ *
+ * Проверяется главное свойство: скрытое остаётся скрытым. Рука
+ * команды приходит из `get_team_hand`, и всё, что она вернёт,
+ * уезжает в браузер.
+ */
+describe('скрытые критерии', () => {
+  it('в руку команды не попадают', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-1 hour' });
+    const task = await createTask(id, { number: 1, criteria: ['Видно вход'] });
+
+    await pool.query(
+      `UPDATE public.tasks SET hidden_criteria = '["В кадре памятник Фаусту"]'::jsonb WHERE id = $1`,
+      [task],
+    );
+
+    const team = await registerTeam(id, 'Любопытные', { bypassLimits: true });
+    const { rows } = await pool.query<{ r: unknown }>(`SELECT public.get_team_hand($1) AS r`, [
+      team.teamId,
+    ]);
+
+    const payload = JSON.stringify(rows[0]!.r);
+    expect(payload).toContain('Видно вход');
+    expect(payload, 'ответ к загадке уехал в руку команды').not.toContain('Фауст');
+    expect(payload).not.toContain('hidden');
+  });
+
+  it('хранятся у задания и достаются серверу', async () => {
+    const id = await createEvent({ status: 'registration' });
+    const task = await createTask(id, { number: 1 });
+
+    await pool.query(
+      `UPDATE public.tasks SET hidden_criteria = '["Ответ", "Второй признак"]'::jsonb WHERE id = $1`,
+      [task],
+    );
+
+    const { rows } = await pool.query<{ hidden_criteria: string[] }>(
+      `SELECT hidden_criteria FROM public.tasks WHERE id = $1`,
+      [task],
+    );
+    expect(rows[0]!.hidden_criteria).toEqual(['Ответ', 'Второй признак']);
+  });
+
+  it('по умолчанию пусты — старые задания не ломаются', async () => {
+    const id = await createEvent({ status: 'registration' });
+    const task = await createTask(id, { number: 1 });
+
+    const { rows } = await pool.query<{ hidden_criteria: string[] }>(
+      `SELECT hidden_criteria FROM public.tasks WHERE id = $1`,
+      [task],
+    );
+    expect(rows[0]!.hidden_criteria).toEqual([]);
   });
 });

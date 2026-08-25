@@ -497,3 +497,51 @@ describe('скрытые критерии', () => {
     expect(rows[0]!.hidden_criteria).toEqual([]);
   });
 });
+
+/**
+ * Скрытые критерии переживают повторный импорт.
+ *
+ * Организатор вписывает ответы к семнадцати загадкам руками. Если
+ * после этого он зальёт обновлённый файл заданий — а он зальёт, —
+ * работа не должна пропасть. В файле импорта колонки скрытых
+ * критериев нет, и запрос обновления её не упоминает: Postgres в
+ * `ON CONFLICT DO UPDATE` трогает только перечисленные колонки.
+ *
+ * Проверяется тем же запросом, какой строит PostgREST для upsert
+ * по `event_id,number` — тем, через который идёт настоящий импорт.
+ */
+describe('импорт и скрытые критерии', () => {
+  it('повторная заливка не стирает вписанные ответы', async () => {
+    const id = await createEvent({ status: 'registration' });
+    const task = await createTask(id, { number: 7, title: 'Загадка' });
+
+    await pool.query(
+      `UPDATE public.tasks SET hidden_criteria = '["Памятник Фаусту"]'::jsonb WHERE id = $1`,
+      [task],
+    );
+
+    // Ровно то, что уходит в базу при импорте: колонок скрытых
+    // критериев в списке нет.
+    await pool.query(
+      `INSERT INTO public.tasks
+         (event_id, number, title, description, points, category, difficulty,
+          validation_mode, criteria, max_attempts, active, sort_order, card_type)
+       VALUES ($1, 7, 'Загадка, переписанная в файле', 'Новое описание', 120,
+               'monuments', 'medium', 'ai', '["Открытый критерий"]'::jsonb, 3, true, 7, 'riddle')
+       ON CONFLICT (event_id, number) DO UPDATE SET
+         title = excluded.title,
+         description = excluded.description,
+         points = excluded.points,
+         criteria = excluded.criteria`,
+      [id],
+    );
+
+    const { rows } = await pool.query<{ title: string; hidden_criteria: string[] }>(
+      `SELECT title, hidden_criteria FROM public.tasks WHERE event_id = $1 AND number = 7`,
+      [id],
+    );
+
+    expect(rows[0]!.title).toBe('Загадка, переписанная в файле');
+    expect(rows[0]!.hidden_criteria, 'импорт стёр ответ к загадке').toEqual(['Памятник Фаусту']);
+  });
+});

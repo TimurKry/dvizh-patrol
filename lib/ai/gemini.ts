@@ -114,6 +114,13 @@ export const buildPromptForTests = buildPrompt;
  */
 const GENERATION_CONFIG = {
   temperature: 0.1,
+  // Gemini 3 размышляет перед ответом, и по умолчанию — подолгу:
+  // на 2.5 запрос укладывался в секунды, на 3.6 упирался в таймаут
+  // и уходил в ручную проверку. Здесь размышлять особо не над чем:
+  // критерии сформулированы явно, модель сверяет их с фотографией.
+  // Совсем выключить размышление в третьем поколении нельзя, но
+  // `low` возвращает время ответа к прежнему порядку.
+  thinkingConfig: { thinkingLevel: 'low' },
   // Структурированный вывод: модель обязана вернуть JSON
   // нужной формы, а не текст с описанием JSON.
   responseMimeType: 'application/json',
@@ -280,7 +287,11 @@ export async function validatePhoto(params: ValidateParams): Promise<AiOutcome> 
     const aborted = error instanceof Error && error.name === 'AbortError';
     return {
       status: 'error',
-      error: aborted ? 'timeout' : String(error).slice(0, 300),
+      // Срок называется прямо: «timeout» без числа не даёт понять,
+      // модель отвечает медленно или мы её ждём слишком мало.
+      error: aborted
+        ? `timeout (${Math.round(config.AI_REQUEST_TIMEOUT_MS / 1000)} с)`
+        : String(error).slice(0, 300),
       retryable: true,
     };
   } finally {
@@ -333,7 +344,13 @@ export async function pingGemini(): Promise<PingResult> {
   // ─── Ключ ─────────────────────────────────────────────────
   const plain = await probe(apiKey, config.GEMINI_MODEL, config.AI_REQUEST_TIMEOUT_MS, 'key', {
     contents: [{ role: 'user', parts: [{ text: 'Ответь одним словом: ok' }, image] }],
-    generationConfig: { temperature: 0, maxOutputTokens: 16 },
+    // Размышление считается в тот же лимит, поэтому «16 токенов»
+    // на думающей модели означало бы обрыв ещё до ответа.
+    generationConfig: {
+      temperature: 0,
+      thinkingConfig: { thinkingLevel: 'low' },
+      maxOutputTokens: 512,
+    },
   });
   if (plain) return plain;
 

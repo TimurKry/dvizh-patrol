@@ -84,7 +84,19 @@ const schema = z.object({
 
   AI_VALIDATION_ENABLED: boolFromEnv(true),
   AI_ACCEPT_THRESHOLD: floatFromEnv(0.88, 0, 1),
-  AI_REQUEST_TIMEOUT_MS: intFromEnv(20_000, 1_000, 120_000),
+  /**
+   * Сколько ждать модель.
+   *
+   * 20 секунд хватало на `gemini-2.5-flash`; третье поколение
+   * размышляет перед ответом, и на них каждая фотография уходила
+   * в ручную проверку по таймауту. Даже с `thinkingLevel: low`
+   * запас нужен больший.
+   *
+   * Потолок держит `maxDuration` функций: 60 с у подтверждения
+   * отправки, 120 с у обработчика очереди. Пачка идёт параллельно,
+   * поэтому 45 с — это время одной проверки, а не всей пачки.
+   */
+  AI_REQUEST_TIMEOUT_MS: intFromEnv(45_000, 1_000, 120_000),
   AI_MAX_CONCURRENCY: intFromEnv(4, 1, 6),
   AI_STALE_CHECK_MINUTES: intFromEnv(5, 1, 120),
   AI_MAX_ATTEMPTS: intFromEnv(2, 1, 5),

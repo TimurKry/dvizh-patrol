@@ -120,7 +120,7 @@ Gemini — по желанию:
 
 ```bash
 GEMINI_API_KEY=<ключ или пусто>
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
 Без ключа приложение работает полностью, фотографии идут в ручную

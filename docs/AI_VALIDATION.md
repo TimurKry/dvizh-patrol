@@ -114,7 +114,7 @@ confidence < порог мероприятия   → manual_review (ai_low_confi
 
 ```bash
 GEMINI_API_KEY=            # пусто — всё вручную
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 AI_VALIDATION_ENABLED=true
 AI_ACCEPT_THRESHOLD=0.88   # значение по умолчанию для новых мероприятий
 AI_REQUEST_TIMEOUT_MS=20000
@@ -186,7 +186,7 @@ AI_MAX_ATTEMPTS=2
 
 ## Стоимость
 
-При 500 фотографиях и `gemini-2.5-flash` расход на порядок ниже
+При 500 фотографиях и `gemini-3.6-flash` расход на порядок ниже
 евро за мероприятие. Сжатие до 1600px по длинной стороне снижает
 и трафик, и число токенов на изображение.
 

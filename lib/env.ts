@@ -67,10 +67,20 @@ const schema = z.object({
   WORKER_SECRET: optionalText,
 
   GEMINI_API_KEY: optionalText,
+  /**
+   * Модель проверки.
+   *
+   * Значение по умолчанию приходится обновлять: Google закрывает
+   * старые модели для новых ключей, не трогая старые. Так и вышло
+   * с `gemini-2.5-flash` — ключ был рабочий, а модель для него уже
+   * не существовала, и каждая фотография уходила в ручную проверку
+   * с HTTP 404. Проверяется кнопкой «Проверить связь с ИИ» в
+   * настройках; переопределяется переменной без пересборки.
+   */
   GEMINI_MODEL: z
     .string()
     .optional()
-    .transform((v) => (v && v.trim() !== '' ? v.trim() : 'gemini-2.5-flash')),
+    .transform((v) => (v && v.trim() !== '' ? v.trim() : 'gemini-3.6-flash')),
 
   AI_VALIDATION_ENABLED: boolFromEnv(true),
   AI_ACCEPT_THRESHOLD: floatFromEnv(0.88, 0, 1),

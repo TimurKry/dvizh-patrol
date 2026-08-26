@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { ActionButton } from '@/components/admin/action-form';
-import { purgePhotosAction } from '@/actions/admin';
+import { checkAiConnectionAction, purgePhotosAction } from '@/actions/admin';
 import { Card, Eyebrow } from '@/components/ui/surface';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { Tag } from '@/components/ui/status-badge';
@@ -84,6 +84,18 @@ export default async function AdminSettingsPage() {
           Эти значения задаются переменными окружения и меняются при развёртывании, а не из
           интерфейса. Настройки самого мероприятия — в разделе «Мероприятие».
         </p>
+
+        {/* Наличие ключа ещё не значит, что он рабочий: проверяем
+            связь заранее, а не по первой фотографии команды. */}
+        <div className="flex flex-col items-start gap-2 border-t border-hairline pt-4">
+          <ActionButton action={checkAiConnectionAction} values={{}}>
+            Проверить связь с ИИ
+          </ActionButton>
+          <p className="text-caption text-muted">
+            Отправляет модели один пробный запрос и показывает ответ Google целиком — включая
+            причину отказа, если ключ не принят.
+          </p>
+        </div>
       </Card>
 
       {/* ═══ Хранение фотографий ════════════════════════════ */}

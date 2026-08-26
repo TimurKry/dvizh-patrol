@@ -1448,6 +1448,64 @@ export async function purgePhotosAction(
   return { ok: true, message: `Удалено файлов: ${rows.length}.` };
 }
 
+// ═══ Проверка связи с моделью ══════════════════════════════════
+
+/**
+ * «Проверить связь с ИИ».
+ *
+ * Появилось после того, как первая боевая отправка ушла на ручную
+ * проверку с кодом `ai_error`: ключ в переменных окружения был, а
+ * ответ Google — нет, и понять это можно было только по чужой
+ * фотографии. Кнопка отвечает на вопрос до квеста, а не во время.
+ *
+ * Наружу уходит текст ошибки Google (например, «API key not
+ * valid»), но никогда сам ключ.
+ */
+export async function checkAiConnectionAction(
+  _prev: AdminActionState,
+  _formData: FormData,
+): Promise<AdminActionState> {
+  const admin = await requireAdmin();
+
+  const limit = await checkRateLimit('aiPing', admin.userId);
+  if (!limit.allowed) {
+    return { ok: false, error: 'rate_limited', message: 'Слишком часто. Подождите минуту.' };
+  }
+
+  const { pingGemini } = await import('@/lib/ai/gemini');
+  const result = await pingGemini();
+
+  if (result.status === 'ok') {
+    return {
+      ok: true,
+      message: `Связь есть: ${result.model}, ответ за ${result.durationMs} мс.`,
+    };
+  }
+
+  if (result.status === 'disabled') {
+    return {
+      ok: false,
+      error: 'ai_unavailable',
+      message: 'Ключ не задан или автоматическая проверка выключена в окружении.',
+    };
+  }
+
+  // Ключ не принят — чинится в переменных окружения. Отвергнут
+  // сам запрос — ключ рабочий, чинить надо код проверки.
+  const where =
+    result.stage === 'key' ? 'Ключ не принят' : 'Ключ рабочий, но модель отвергла запрос';
+
+  if (result.status === 'network') {
+    return { ok: false, error: 'ai_error', message: `${where}. Сеть: ${result.detail}` };
+  }
+
+  return {
+    ok: false,
+    error: 'ai_error',
+    message: `${where}. HTTP ${result.code}: ${result.detail}`,
+  };
+}
+
 // ═══ Игровое поле полигоном ════════════════════════════════════
 
 /**

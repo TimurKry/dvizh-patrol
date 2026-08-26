@@ -31,6 +31,8 @@ export const RATE_LIMITS = {
   retryValidation: { windowSeconds: 60, max: 30 },
   /* Вход администратора. */
   adminLogin: { windowSeconds: 900, max: 10 },
+  /* Проверка связи с моделью: кнопка в админке, а не игровой путь. */
+  aiPing: { windowSeconds: 60, max: 10 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

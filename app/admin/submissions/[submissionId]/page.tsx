@@ -36,28 +36,41 @@ export default async function AdminSubmissionPage({
   const submission = data as SubmissionRow | null;
   if (!submission) notFound();
 
-  const [taskResult, teamResult, eventResult, refsResult, attemptsResult] = await Promise.all([
-    db.from('tasks').select('*').eq('id', submission.task_id).maybeSingle(),
-    db.from('teams').select('*').eq('id', submission.team_id).maybeSingle(),
-    db.from('events').select('*').eq('id', submission.event_id).maybeSingle(),
-    db
-      .from('task_reference_images')
-      .select('*')
-      .eq('task_id', submission.task_id)
-      .order('sort_order', { ascending: true })
-      .limit(1),
-    db
-      .from('submissions')
-      .select('id, status, attempt_number')
-      .eq('team_id', submission.team_id)
-      .eq('task_id', submission.task_id),
-  ]);
+  const [taskResult, teamResult, eventResult, refsResult, attemptsResult, jobResult] =
+    await Promise.all([
+      db.from('tasks').select('*').eq('id', submission.task_id).maybeSingle(),
+      db.from('teams').select('*').eq('id', submission.team_id).maybeSingle(),
+      db.from('events').select('*').eq('id', submission.event_id).maybeSingle(),
+      db
+        .from('task_reference_images')
+        .select('*')
+        .eq('task_id', submission.task_id)
+        .order('sort_order', { ascending: true })
+        .limit(1),
+      db
+        .from('submissions')
+        .select('id, status, attempt_number')
+        .eq('team_id', submission.team_id)
+        .eq('task_id', submission.task_id),
+      // Техническая причина сбоя проверки: без неё «ai_error» ничего
+      // не объясняет, а разбираться приходится во время квеста.
+      db
+        .from('validation_jobs')
+        .select('status, attempts, last_error')
+        .eq('submission_id', submission.id)
+        .maybeSingle(),
+    ]);
 
   const task = taskResult.data as TaskRow | null;
   const team = teamResult.data as TeamRow | null;
   const event = eventResult.data as EventRow | null;
   const references = (refsResult.data as TaskReferenceImageRow[] | null) ?? [];
   const attempts = (attemptsResult.data as Array<{ status: string }> | null) ?? [];
+  const job = jobResult.data as {
+    status: string;
+    attempts: number;
+    last_error: string | null;
+  } | null;
 
   const [imageUrl, referenceUrl] = await Promise.all([
     submission.image_path ? createSignedUrl(BUCKETS.submissions, submission.image_path) : null,
@@ -279,6 +292,14 @@ export default async function AdminSubmissionPage({
             <Notice icon="manual-review">
               Причина ручной проверки:{' '}
               {REVIEW_REASON_TEXT[submission.review_reason] ?? submission.review_reason}
+              {/* Что именно ответила модель. Видит только
+                  организатор: участнику этот текст ничего не даёт. */}
+              {job?.last_error && (
+                <span className="mt-1 block break-words text-caption text-faint">
+                  {job.last_error}
+                  {job.attempts > 1 ? ` · попыток: ${job.attempts}` : ''}
+                </span>
+              )}
             </Notice>
           )}
 

@@ -27,6 +27,7 @@ const filled = {
   difficulty: 'medium',
   validationMode: 'manual',
   criteria: [],
+  hiddenCriteria: [],
   minimumPeople: 2,
   maxAttempts: 2,
   requireLocation: false,
@@ -48,6 +49,18 @@ describe('отказ формы задания', () => {
   it('без описания задание не сохраняется', () => {
     expect(taskSchema.safeParse(filled).success).toBe(true);
     expect(taskSchema.safeParse({ ...filled, description: '' }).success).toBe(false);
+  });
+
+  it('ИИ-заданию хватает одних скрытых критериев', () => {
+    // У загадки открытый критерий назвал бы ответ, поэтому все
+    // критерии у неё скрытые. Требовать вдобавок открытый значило бы
+    // требовать спойлер.
+    const riddle = { ...filled, validationMode: 'ai', criteria: [], hiddenCriteria: [] };
+    expect(taskSchema.safeParse(riddle).success).toBe(false);
+
+    expect(
+      taskSchema.safeParse({ ...riddle, hiddenCriteria: ['На фото памятник Баху'] }).success,
+    ).toBe(true);
   });
 
   it('называет незаполненное поле по-русски', () => {

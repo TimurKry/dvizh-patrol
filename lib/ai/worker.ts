@@ -125,7 +125,7 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
   const event = eventData as EventRow | null;
 
   if (!task || !event) {
-    await markManual(job, submission.id, 'ai_error');
+    await markManual(job, submission.id, 'ai_error', 'задание или мероприятие не найдено');
     return 'manual_review';
   }
 
@@ -136,7 +136,7 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
   }
 
   if (!submission.image_path) {
-    await markManual(job, submission.id, 'ai_error');
+    await markManual(job, submission.id, 'ai_error', 'у отправки нет файла');
     return 'manual_review';
   }
 
@@ -164,11 +164,16 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
 
   // ─── Сбой сети или таймаут: повтор, потом человек ─────────
   if (outcome.status === 'error') {
+    console.error('Проверка ИИ не удалась', {
+      submissionId: submission.id,
+      taskNumber: task.number,
+      error: outcome.error,
+    });
     if (outcome.retryable && job.attempts < config.AI_MAX_ATTEMPTS) {
       await failJob(job, outcome.error);
       return 'failed';
     }
-    await markManual(job, submission.id, 'ai_error');
+    await markManual(job, submission.id, 'ai_error', outcome.error);
     return 'manual_review';
   }
 
@@ -180,7 +185,7 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
 
   // ─── Ответ не разобрался ──────────────────────────────────
   if (outcome.status === 'invalid') {
-    await markManual(job, submission.id, 'ai_invalid_response');
+    await markManual(job, submission.id, 'ai_invalid_response', outcome.raw);
     return 'manual_review';
   }
 
@@ -206,7 +211,7 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
 
     if (!accepted.ok) {
       // Например, по заданию уже принята другая фотография.
-      await markManual(job, submission.id, 'ai_error');
+      await markManual(job, submission.id, 'ai_error', `начисление не прошло: ${accepted.error}`);
       return 'manual_review';
     }
 
@@ -218,7 +223,19 @@ async function processJob(job: ClaimedJob): Promise<JobOutcome> {
   return 'manual_review';
 }
 
-async function markManual(job: ClaimedJob, submissionId: string, reason: string): Promise<void> {
+/**
+ * Отправка уходит человеку.
+ *
+ * `note` — техническая причина для организатора: что именно
+ * ответила модель. Без неё в базе оставался только код
+ * `ai_error`, и разбирать сбой было не по чему.
+ */
+async function markManual(
+  job: ClaimedJob,
+  submissionId: string,
+  reason: string,
+  note?: string,
+): Promise<void> {
   const db = supabaseAdmin();
   await db.rpc('mark_submission_manual_review', {
     p_submission_id: submissionId,
@@ -226,7 +243,10 @@ async function markManual(job: ClaimedJob, submissionId: string, reason: string)
     p_ai_result: null,
     p_confidence: null,
   });
-  await db.rpc('complete_validation_job', { p_job_id: job.job_id });
+  await db.rpc('complete_validation_job', {
+    p_job_id: job.job_id,
+    p_error: note ?? null,
+  });
 }
 
 async function failJob(job: ClaimedJob, error: string): Promise<void> {

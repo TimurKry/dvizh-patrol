@@ -513,7 +513,7 @@ describe('скрытые критерии', () => {
 describe('импорт и скрытые критерии', () => {
   it('повторная заливка не стирает вписанные ответы', async () => {
     const id = await createEvent({ status: 'registration' });
-    const task = await createTask(id, { number: 7, title: 'Загадка' });
+    const task = await createTask(id, { number: 7 });
 
     await pool.query(
       `UPDATE public.tasks SET hidden_criteria = '["Памятник Фаусту"]'::jsonb WHERE id = $1`,

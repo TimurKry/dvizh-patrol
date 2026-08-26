@@ -17,6 +17,7 @@ import {
   EVENT_STATUS_TEXT,
   TEAM_STATUS_TEXT,
   membersWord,
+  participantReason,
   pointsWord,
   tasksWord,
 } from '@/lib/messages';
@@ -228,7 +229,9 @@ export default async function TeamPage({
                 >
                   <div className="min-w-0">
                     <p>{TRANSACTION_LABEL[tx.transaction_type] ?? tx.transaction_type}</p>
-                    {tx.reason && <p className="text-caption text-muted">{tx.reason}</p>}
+                    {participantReason(tx.reason) && (
+                      <p className="text-caption text-muted">{participantReason(tx.reason)}</p>
+                    )}
                   </div>
                   <span className="shrink-0 tabular-nums">
                     {tx.points > 0 ? `+${tx.points}` : tx.points}

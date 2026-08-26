@@ -148,6 +148,34 @@ export const REVIEW_REASON_TEXT: Record<string, string> = {
   area_location_required: 'Не удалось подтвердить, что снимок сделан внутри поля',
 };
 
+/**
+ * Служебные причины начисления.
+ *
+ * В журнал баллов причина пишется всегда: организатору важно
+ * знать, кто засчитал отправку — модель, человек или разбор
+ * очереди пачкой. Команде это ничего не говорит, а под строкой
+ * «Задание принято» выглядит как утёкший наружу код: на экране
+ * состава так и стояло «ai_validation».
+ *
+ * Поэтому машинные причины участнику не показываем. Всё
+ * остальное — текст, который организатор написал руками, — он
+ * писал именно для команды, и его видно.
+ */
+const MACHINE_REASONS = new Set([
+  'ai_validation',
+  'manual_review',
+  'bulk_accept',
+  'task_accepted',
+  'submission_revoked',
+  'accepted',
+  'revoked',
+]);
+
+export function participantReason(reason: string | null | undefined): string | null {
+  if (!reason) return null;
+  return MACHINE_REASONS.has(reason) ? null : reason;
+}
+
 // ═══ Задания ═══════════════════════════════════════════════════
 
 export const TASK_CATEGORY_TEXT: Record<TaskCategory, string> = {

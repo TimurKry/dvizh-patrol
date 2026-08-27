@@ -1,0 +1,18 @@
+{
+  "name": "dvizh-app-preview",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@remotion/cli": "^4.0.518",
+    "@remotion/renderer": "^4.0.518",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "remotion": "^4.0.518"
+  },
+  "scripts": {
+    "preview": "remotion studio src/index.jsx",
+    "render": "remotion render src/index.jsx app-preview renders/dvizh-patrol-app-preview-1080x1920.mp4 --crf=17 --browser-executable=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+    "cover": "remotion still src/index.jsx app-preview renders/dvizh-patrol-app-preview-cover.png --frame=250 --browser-executable=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
+  }
+}

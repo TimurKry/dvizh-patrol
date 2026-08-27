@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { Map as LeafletMap, Marker, Polygon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { PolygonRing } from '@/lib/geo';
+import { CROSS_SIZE, crossSvg } from '@/lib/map-marker';
 
 /**
  * Точка на карте по клику.
@@ -103,21 +104,19 @@ export function PointPick({
 
     const point = valueRef.current;
     if (point) {
-      // Крест — тот же знак, что команда увидит на своей карте.
+      // Крест — тот же знак и тот же код, что у команды на её
+      // карте. Раньше здесь был квадрат с `clip-path`, и сборка
+      // выбрасывала это свойство из строки со стилем: маркер
+      // приезжал в браузер прозрачным. См. lib/map-marker.
       markerRef.current = L.marker([point.lat, point.lon], {
         draggable: true,
         keyboard: true,
         title: 'Точка задания',
         icon: L.divIcon({
           className: '',
-          html:
-            `<span style="display:block;width:28px;height:28px;position:relative">` +
-            `<span style="position:absolute;inset:0;background:${SIGNAL};` +
-            `clip-path:polygon(43% 0,57% 0,57% 43%,100% 43%,100% 57%,57% 57%,57% 100%,` +
-            `43% 100%,43% 57%,0 57%,0 43%,43% 43%);` +
-            `outline:2px solid ${CANVAS}"></span></span>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          html: crossSvg(SIGNAL, CANVAS),
+          iconSize: [CROSS_SIZE, CROSS_SIZE],
+          iconAnchor: [CROSS_SIZE / 2, CROSS_SIZE / 2],
         }),
       }).addTo(map);
 

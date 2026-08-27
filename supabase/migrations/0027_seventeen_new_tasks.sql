@@ -87,7 +87,8 @@ INSERT INTO public.tasks (
 SELECT
   (SELECT id FROM public.events LIMIT 1),
   t.number, t.title, t.short_description, t.description, t.points, t.category,
-  t.card_type, t.difficulty, 'ai', t.criteria::jsonb, t.minimum_people,
+  t.card_type::public.task_card_type, t.difficulty,
+  'ai'::public.validation_mode, t.criteria::jsonb, t.minimum_people,
   t.map_mode,
   CASE WHEN t.map_mode = 'point' THEN t.lat END,
   CASE WHEN t.map_mode = 'point' THEN t.lon END,

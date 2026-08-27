@@ -56,4 +56,24 @@ test('задание с нуля: отказ виден, а сохранённо
   // идентификатору, которого до сохранения не существовало.
   await expect(page).toHaveURL(/\/admin\/tasks\/[0-9a-f-]{36}$/);
   await expect(page.locator('input[type=file]')).toHaveCount(1);
+
+  // ─── Крест на карте виден, а не только присутствует ─────────
+  //
+  // Живой случай: организатор сказал, что «когда ставим координаты,
+  // мы не знаем точной точки, не видим визуальной». Маркер при этом
+  // в разметке был. Крест рисовался квадратом с `clip-path` в
+  // инлайновом стиле, и сборка выбрасывала это свойство из строки —
+  // в браузер приезжал прозрачный квадрат 28×28.
+  //
+  // Поэтому проверяется не наличие маркера, а то, из чего он
+  // сделан: две линии SVG. Такая проверка переживает и следующую
+  // поломку того же рода, чем бы её ни вызвали.
+  await page.getByLabel('Режим карты').selectOption('point');
+  await page.locator('#latitude').fill('51.3406');
+  await page.locator('#longitude').fill('12.3752');
+
+  const marker = page.locator('.leaflet-marker-icon');
+  await expect(marker).toHaveCount(1);
+  await expect(marker.locator('svg path')).toHaveCount(2);
+  await expect(marker.locator('svg path').nth(1)).toHaveAttribute('stroke', '#ff00b3');
 });

@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { MapboxMap } from './mapbox-map';
 import type { PlayArea, PolygonRing } from '@/lib/geo';
+import { CROSS_SIZE, crossSvg } from '@/lib/map-marker';
 
 /**
  * Карта квеста.
@@ -443,11 +444,8 @@ function escapeHtml(value: string): string {
 function crossHtml(point: MapPoint): string {
   const color = point.done ? INK : SIGNAL;
   return (
-    `<span style="position:relative;display:block;width:34px;height:34px">` +
-    `<svg width="34" height="34" viewBox="0 0 34 34" fill="none">` +
-    `<path d="M9 9 25 25M25 9 9 25" stroke="${CANVAS}" stroke-width="7" stroke-linecap="round"/>` +
-    `<path d="M9 9 25 25M25 9 9 25" stroke="${color}" stroke-width="3.4" stroke-linecap="round"/>` +
-    `</svg>` +
+    `<span style="position:relative;display:block;width:${CROSS_SIZE}px;height:${CROSS_SIZE}px">` +
+    crossSvg(color, CANVAS) +
     `<span style="position:absolute;left:50%;top:30px;transform:translateX(-50%);` +
     `padding:1px 5px;border-radius:2px;background:${CANVAS};color:${INK};` +
     `font:600 11px/1.3 Onest,sans-serif">${escapeHtml(point.label)}</span>` +

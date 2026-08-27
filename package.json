@@ -25,6 +25,7 @@
     "db:qa": "./scripts/local-db.sh reset && ./scripts/local-db.sh psql -q -X -f supabase/local/qa-seed.sql",
     "qa:rest": "node scripts/qa-rest.mjs",
     "db:psql": "./scripts/local-db.sh psql",
+    "refs:upload": "node scripts/upload-references.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {

@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/cn';
 
@@ -84,6 +92,8 @@ export function CardTable({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [settled, setSettled] = useState(false);
+  // Цвет команды для окна: см. `teamVars` ниже.
+  const [teamVars, setTeamVars] = useState<CSSProperties>({});
 
   const slots = useRef(new Map<string, HTMLButtonElement | null>());
   const cardRef = useRef<HTMLDivElement>(null);
@@ -106,6 +116,22 @@ export function CardTable({
 
     const slot = slots.current.get(open.id);
     const node = cardRef.current;
+
+    // Цвет команды снимается с гнезда и переносится в окно.
+    //
+    // `--team-color` объявлен на секции страницы, а окно живёт в
+    // портале у `body` — вне этой секции и потому вне каскада.
+    // Рубашка внутри окна брала значение по умолчанию, и во время
+    // переворота карта на мгновение меняла цвет. Значение читается
+    // с гнезда, а не приходит пропсом: так же работает золотая
+    // карта в витрине, у которой цвет свой.
+    if (slot) {
+      const style = getComputedStyle(slot);
+      setTeamVars({
+        '--team-color': style.getPropertyValue('--team-color'),
+        '--team-on-color': style.getPropertyValue('--team-on-color'),
+      } as CSSProperties);
+    }
 
     const reduced =
       typeof window !== 'undefined' &&
@@ -168,6 +194,7 @@ export function CardTable({
             aria-modal="true"
             aria-label={open.title ?? open.label}
             className="fixed inset-0 z-50"
+            style={teamVars}
           >
             <button
               type="button"

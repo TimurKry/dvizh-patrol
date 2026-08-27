@@ -8,32 +8,43 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
-import { Backdrop, Caption, Detail, Note, Phone, Route, SAFE } from './parts.jsx';
+import { Backdrop, Caption, Detail, Note, Phone, Polaroid, Route } from './parts.jsx';
 import { C, FONT_BODY, FONT_DISPLAY } from './theme.js';
 
 /**
  * App Preview «Движ-Патруля» — 36 секунд.
  *
- * Порядок сцен повторяет порядок игры: код → команда → карточки →
- * карта → выполнение → отправка → баллы → история → рейтинг →
- * финал. Каждый следующий кадр отвечает на вопрос предыдущего.
+ * Вторая редакция. Первая перебирала экраны; владелец попросил
+ * показать одну партию целиком, чтобы после просмотра не осталось
+ * вопросов. Поэтому весь ролик идёт по одному заданию — №42
+ * «Круглый камень» — от рубашки карты до исторической справки:
  *
- * Все экраны — настоящие снимки приложения на 390×844 при
- * плотности 3. Ничего не перерисовано: где текст надо прочитать,
- * кадр укрупняется до нужного куска, а не подменяет его версткой.
+ *   код → рука → карта переворачивается → условие → «пока идёте»
+ *   → где искать → снимок → отправка → баллы → «что это было»
+ *   → карточка ушла из руки, рейтинг вырос.
+ *
+ * Задание выбрано из тех, что заполнены полностью: условие,
+ * критерий, точка на карте, справка в дорогу и материал после
+ * отправки. Показывать наполовину заведённое нельзя — ролик
+ * обещал бы то, чего команда не увидит.
+ *
+ * Все кадры интерфейса — настоящие снимки приложения. Где текст
+ * надо прочитать, кадр укрупняется до нужного куска снимка.
  */
 
 const S = {
-  hook: [0, 90],
-  join: [90, 180],
-  team: [180, 270],
-  cards: [270, 420],
-  map: [420, 540],
-  city: [540, 660],
-  send: [660, 810],
-  story: [810, 900],
-  rank: [900, 990],
-  final: [990, 1080],
+  hook: [0, 75],
+  join: [75, 165],
+  hand: [165, 255],
+  flip: [255, 345],
+  task: [345, 465],
+  road: [465, 555],
+  where: [555, 645],
+  shoot: [645, 735],
+  send: [735, 855],
+  story: [855, 945],
+  after: [945, 1005],
+  final: [1005, 1080],
 };
 
 const len = ([a, b]) => b - a;
@@ -42,74 +53,45 @@ export const Preview = () => (
   <Backdrop>
     <Sequence from={S.hook[0]} durationInFrames={len(S.hook)}><Hook /></Sequence>
     <Sequence from={S.join[0]} durationInFrames={len(S.join)}><Join /></Sequence>
-    <Sequence from={S.team[0]} durationInFrames={len(S.team)}><Team /></Sequence>
-    <Sequence from={S.cards[0]} durationInFrames={len(S.cards)}><Cards /></Sequence>
-    <Sequence from={S.map[0]} durationInFrames={len(S.map)}><MapScene /></Sequence>
-    <Sequence from={S.city[0]} durationInFrames={len(S.city)}><City /></Sequence>
+    <Sequence from={S.hand[0]} durationInFrames={len(S.hand)}><Hand /></Sequence>
+    <Sequence from={S.flip[0]} durationInFrames={len(S.flip)}><Flip /></Sequence>
+    <Sequence from={S.task[0]} durationInFrames={len(S.task)}><Task /></Sequence>
+    <Sequence from={S.road[0]} durationInFrames={len(S.road)}><Criteria /></Sequence>
+    <Sequence from={S.where[0]} durationInFrames={len(S.where)}><Road /></Sequence>
+    <Sequence from={S.shoot[0]} durationInFrames={len(S.shoot)}><Shoot /></Sequence>
     <Sequence from={S.send[0]} durationInFrames={len(S.send)}><Send /></Sequence>
     <Sequence from={S.story[0]} durationInFrames={len(S.story)}><Story /></Sequence>
-    <Sequence from={S.rank[0]} durationInFrames={len(S.rank)}><Rank /></Sequence>
+    <Sequence from={S.after[0]} durationInFrames={len(S.after)}><After /></Sequence>
     <Sequence from={S.final[0]} durationInFrames={len(S.final)}><Final /></Sequence>
   </Backdrop>
 );
 
-// ═══ 0:00–0:03 · Город становится игрой ════════════════════════
+// ═══ 0:00–0:02,5 · Город становится игрой ══════════════════════
 
 function Hook() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const draw = interpolate(frame, [4, 46], [0, 1], { extrapolateRight: 'clamp' });
 
-  const dot = spring({ frame, fps, config: { damping: 200 } });
-  const draw = interpolate(frame, [6, 62], [0, 1], { extrapolateRight: 'clamp' });
-  const title = interpolate(frame, [20, 34], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const logo = interpolate(frame, [62, 76], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const titleOut = interpolate(frame, [58, 72], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const p1 = spring({ frame: frame - 6, fps, config: { damping: 200, mass: 0.7 } });
+  const p2 = spring({ frame: frame - 16, fps, config: { damping: 200, mass: 0.7 } });
+  // Полароид лендинга лежит чёрно-белым и оживает при наведении.
+  // Здесь это стало приёмом монтажа: цвет возвращается сам.
+  const reveal = interpolate(frame, [26, 42], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+
+  const logo = interpolate(frame, [50, 62], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const away = interpolate(frame, [50, 64], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
     <AbsoluteFill>
       <Route progress={draw} />
 
-      <div
-        style={{
-          position: 'absolute',
-          left: 540 - 9,
-          top: 1420 - 9,
-          width: 18,
-          height: 18,
-          borderRadius: 9,
-          background: C.signal,
-          transform: `scale(${dot})`,
-          filter: `drop-shadow(0 0 26px ${C.signal})`,
-          opacity: 1 - draw,
-        }}
-      />
-
-      <div
-        style={{
-          position: 'absolute',
-          left: 80,
-          right: 80,
-          top: 720,
-          textAlign: 'center',
-          opacity: title * titleOut,
-          transform: `translateY(${interpolate(title, [0, 1], [30, 0])}px)`,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: FONT_DISPLAY,
-            fontWeight: 800,
-            fontSize: 92,
-            lineHeight: 0.98,
-            letterSpacing: '-0.02em',
-            color: C.ink,
-          }}
-        >
-          ЛЕЙПЦИГ
-          <br />
-          СТАНОВИТСЯ
-          <br />
-          <span style={{ color: C.signal }}>ИГРОЙ</span>
+      <div style={{ position: 'absolute', inset: 0, opacity: away }}>
+        <div style={{ position: 'absolute', left: 110, top: 520, opacity: p1, transform: `translateY(${interpolate(p1, [0, 1], [60, 0])}px)` }}>
+          <Polaroid src="p1.jpg" caption="ПАТРУЛЬ" tilt={-7} width={340} reveal={reveal} />
+        </div>
+        <div style={{ position: 'absolute', right: 100, top: 830, opacity: p2, transform: `translateY(${interpolate(p2, [0, 1], [60, 0])}px)` }}>
+          <Polaroid src="p2.jpg" caption="УЛИКИ" tilt={6} width={320} reveal={reveal} />
         </div>
       </div>
 
@@ -118,247 +100,228 @@ function Hook() {
           position: 'absolute',
           left: 0,
           right: 0,
-          top: 830,
+          top: 860,
           display: 'flex',
           justifyContent: 'center',
           opacity: logo,
-          transform: `scale(${interpolate(logo, [0, 1], [0.86, 1])})`,
+          transform: `scale(${interpolate(logo, [0, 1], [0.88, 1])})`,
         }}
       >
-        <Img src={staticFile('logo.png')} style={{ width: 560 }} />
+        <Img src={staticFile('logo.png')} style={{ width: 520 }} />
       </div>
+
+      <Caption text="ЛЕЙПЦИГ СТАНОВИТСЯ ИГРОЙ" at={0} delay={10} />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:03–0:06 · Вход без регистрации ══════════════════════════
+// ═══ 0:02,5–0:05,5 · Вход по коду ══════════════════════════════
 
 function Join() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const rise = spring({ frame, fps, config: { damping: 200, mass: 0.7 } });
-
-  // Пустое поле сменяется заполненным на 34-м кадре: так виден
-  // сам факт ввода, а не только результат.
-  const filled = frame >= 34;
-  const flash = interpolate(frame, [34, 40], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const filled = frame >= 36;
 
   return (
     <AbsoluteFill>
-      <Route progress={1} opacity={0.14} />
+      <Route progress={1} opacity={0.12} />
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ transform: `translateY(${interpolate(rise, [0, 1], [70, 0])}px)`, position: 'relative' }}>
-          <Detail
-            src={filled ? '02-join-filled' : '01-join-empty'}
-            crop={[40, 620, 1090, 900]}
-            width={880}
-          />
-          <AbsoluteFill style={{ background: C.signal, opacity: flash * 0.12, borderRadius: 22 }} />
+        <div style={{ transform: `translateY(${interpolate(rise, [0, 1], [70, 0])}px)`, marginTop: -60 }}>
+          <Detail src={filled ? '02-join-filled' : '01-join-empty'} crop={[40, 620, 1090, 860]} width={880} />
         </div>
       </div>
-      <Caption eyebrow="КОД КОМАНДЫ" text="БЕЗ РЕГИСТРАЦИИ" at={0} delay={8} />
+      <Caption eyebrow="ШЕСТЬ СИМВОЛОВ ОТ КАПИТАНА" text="ВХОД БЕЗ РЕГИСТРАЦИИ" at={0} delay={8} />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:06–0:09 · Команда в игре ════════════════════════════════
+// ═══ 0:05,5–0:08,5 · Рука команды ══════════════════════════════
 
-function Team() {
+function Hand() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const rise = spring({ frame, fps, config: { damping: 200, mass: 0.8 } });
-  const scale = interpolate(frame, [0, 90], [1.04, 1.0]);
+  const scale = interpolate(frame, [0, 90], [1.05, 1.0]);
 
   return (
     <AbsoluteFill>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Phone
-          src="03-hand"
+          src="10-hand"
           width={520}
           style={{
-            transform: `translateY(${interpolate(rise, [0, 1], [120, 0])}px) scale(${scale})`,
+            transform: `translateY(${interpolate(rise, [0, 1], [110, 0])}px) scale(${scale})`,
             marginTop: -110,
           }}
         />
       </div>
-      <Caption eyebrow="6 КАРТ НА РУКЕ" text="ВЫБИРАЙТЕ СВОЙ МАРШРУТ" at={0} delay={10} />
+      <Caption eyebrow="КАРТЫ ЛЕЖАТ РУБАШКОЙ ВВЕРХ" text="ПОРЯДОК ВЫБИРАЕТЕ ВЫ" at={0} delay={10} />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:09–0:14 · Три типа заданий ══════════════════════════════
+// ═══ 0:08,5–0:11,5 · Карта переворачивается ════════════════════
 
-const TYPES = [
-  { src: '04-card-3', label: 'РАЗГАДЫВАЙТЕ', hint: 'Загадка · 40 баллов' },
-  { src: '04-card-1', label: 'ДЕЙСТВУЙТЕ', hint: 'Актив · 60 баллов' },
-  { src: '04-card-4', label: 'ПОВТОРЯЙТЕ ФОТО', hint: 'Фото-повтор · 70 баллов' },
-];
+/** Настоящие кадры анимации, снятые по ходу открытия карточки. */
+const FLIP = ['11-flip-a', '11-flip-b', '11-flip-c'];
 
-function Cards() {
+function Flip() {
   const frame = useCurrentFrame();
-  const step = Math.min(2, Math.floor(frame / 50));
-  const local = frame - step * 50;
+  const step = frame < 9 ? 0 : frame < 15 ? 1 : frame < 22 ? 2 : 3;
+  const open = step === 3;
   const { fps } = useVideoConfig();
-  const enter = spring({ frame: local, fps, config: { damping: 200, mass: 0.7 } });
-  const card = TYPES[step];
+  const settle = spring({ frame: frame - 22, fps, config: { damping: 200, mass: 0.6 } });
+
+  return (
+    <AbsoluteFill>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {open ? (
+          <div style={{ marginTop: -90, transform: `scale(${interpolate(settle, [0, 1], [0.96, 1])})` }}>
+            <Detail src="12-card-open" crop={[95, 300, 985, 660]} width={880} />
+          </div>
+        ) : (
+          <Phone src={FLIP[step]} width={520} style={{ marginTop: -110 }} />
+        )}
+      </div>
+      <Caption text="КАРТА ОТКРЫВАЕТСЯ" at={0} delay={4} />
+      {open && <Note at={22} delay={6}>Фото-повтор · 70 баллов · точка на карте</Note>}
+    </AbsoluteFill>
+  );
+}
+
+// ═══ 0:11,5–0:15,5 · Условие задания ═══════════════════════════
+
+function Task() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const rise = spring({ frame, fps, config: { damping: 200, mass: 0.8 } });
+  const body = frame >= 58;
+
+  return (
+    <AbsoluteFill>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ marginTop: -90, transform: `translateY(${interpolate(rise, [0, 1], [40, 0])}px)` }}>
+          {body ? (
+            <Detail src="14-task-road" crop={[40, 320, 1090, 380]} width={920} />
+          ) : (
+            <Detail src="13-task-top" crop={[40, 440, 1090, 500]} width={920} />
+          )}
+        </div>
+      </div>
+      <Caption
+        eyebrow={body ? 'УСЛОВИЕ ЦЕЛИКОМ' : 'ЗАДАНИЕ 42'}
+        text={body ? 'ЧТО НУЖНО СДЕЛАТЬ' : 'КРУГЛЫЙ КАМЕНЬ · 70 БАЛЛОВ'}
+        at={body ? 58 : 0}
+        delay={6}
+      />
+    </AbsoluteFill>
+  );
+}
+
+// ═══ 0:15,5–0:18,5 · Пока идёте ════════════════════════════════
+
+function Road() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const open = spring({ frame, fps, config: { damping: 200, mass: 0.9 } });
+
+  return (
+    <AbsoluteFill>
+      <Route progress={1} opacity={0.14} />
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            marginTop: -80,
+            transform: `scaleY(${interpolate(open, [0, 1], [0.85, 1])})`,
+            transformOrigin: 'top center',
+            opacity: interpolate(frame, [0, 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+          }}
+        >
+          <Detail src="14-task-road" crop={[40, 930, 1090, 420]} width={920} />
+        </div>
+      </div>
+      <Caption eyebrow="ВИДНО СРАЗУ, ЕЩЁ ПО ДОРОГЕ" text="ПОДСКАЗКА, КУДА СМОТРЕТЬ" at={0} delay={8} />
+    </AbsoluteFill>
+  );
+}
+
+// ═══ 0:15,5–0:18,5 · Что должно быть в кадре ═══════════════════
+
+/**
+ * На этом месте по сценарию была карта задания — «Где искать», один
+ * крест с номером. Кадр снят и лежит в `13-task-top`, но плитки
+ * OpenStreetMap в песочнице не грузятся, и карта выходит пустой
+ * серой плашкой. Владелец просил, чтобы после просмотра не
+ * оставалось вопросов, а пустая карта — это ровно вопрос.
+ *
+ * Поэтому здесь критерий: он отвечает на «а что засчитают» и
+ * читается без оговорок. Карту вернуть — дело одного снимка,
+ * сделанного на машине с интернетом.
+ */
+function Criteria() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const rise = spring({ frame, fps, config: { damping: 200, mass: 0.8 } });
 
   return (
     <AbsoluteFill>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div
           style={{
-            transform: `translateY(${interpolate(enter, [0, 1], [50, 0])}px) scale(${interpolate(enter, [0, 1], [0.94, 1])})`,
-            opacity: interpolate(local, [0, 7], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
-            marginTop: -70,
+            marginTop: -80,
+            transform: `translateY(${interpolate(rise, [0, 1], [40, 0])}px)`,
+            opacity: interpolate(frame, [0, 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
           }}
         >
-          <Detail src={card.src} crop={[95, 300, 985, 640]} width={880} />
+          <Detail src="14-task-road" crop={[40, 570, 1090, 340]} width={920} />
         </div>
       </div>
-      <Caption text={card.label} at={step * 50} delay={6} />
-      <Note at={step * 50} delay={10}>{card.hint}</Note>
+      <Caption eyebrow="ВИДНО ДО ОТПРАВКИ" text="ЗА ЧТО ЗАСЧИТАЮТ" at={0} delay={8} />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:14–0:18 · Выбор точки и карта ═══════════════════════════
+// ═══ 0:21,5–0:24,5 · Дошли и сняли ═════════════════════════════
 
-function MapScene() {
+function Shoot() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-
-  // Первая половина — страница задания, вторая — карта.
-  const toMap = interpolate(frame, [52, 66], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const rise = spring({ frame, fps, config: { damping: 200 } });
-  const zoom = interpolate(frame, [60, 120], [1.12, 1.0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const p1 = spring({ frame: frame - 4, fps, config: { damping: 200, mass: 0.7 } });
+  const p2 = spring({ frame: frame - 16, fps, config: { damping: 200, mass: 0.7 } });
+  const reveal = interpolate(frame, [30, 48], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
     <AbsoluteFill>
-      <Route progress={1} opacity={0.16} />
-
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'relative', marginTop: -110 }}>
-          <div style={{ opacity: 1 - toMap, transform: `translateY(${interpolate(rise, [0, 1], [60, 0])}px)` }}>
-            <Phone src="05-task-top" width={520} />
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              opacity: toMap,
-              transform: `scale(${zoom})`,
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
-            <Phone src="08-map" width={520} />
-          </div>
-        </div>
+      <div style={{ position: 'absolute', left: 80, top: 470, opacity: p1, transform: `translateY(${interpolate(p1, [0, 1], [50, 0])}px)` }}>
+        <Polaroid src="p2.jpg" caption="ДОШЛИ" tilt={-6} width={360} reveal={reveal} />
       </div>
-
-      <Caption text="МАРШРУТ ВЫБИРАЕТЕ ВЫ" at={0} delay={10} />
+      <div style={{ position: 'absolute', right: 70, top: 800, opacity: p2, transform: `translateY(${interpolate(p2, [0, 1], [50, 0])}px)` }}>
+        <Polaroid src="p1.jpg" caption="СНЯЛИ" tilt={7} width={340} reveal={reveal} />
+      </div>
+      <Caption eyebrow="ФОТОГРАФИЯ И ЕСТЬ ОТВЕТ" text="НАШЛИ И СНЯЛИ" at={0} delay={10} />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:18–0:22 · Выполнение в городе ═══════════════════════════
-
-/**
- * Здесь по сценарию должна быть съёмка команды у памятника.
- * Настоящих кадров города нет и придумывать их нельзя, поэтому
- * место занимает то, что в этот момент действительно перед
- * глазами участника: условие задания крупно и рамка видоискателя.
- */
-function City() {
-  const frame = useCurrentFrame();
-  const steps = ['НАШЛИ', 'ВЫПОЛНИЛИ', 'СНЯЛИ'];
-  const kb = interpolate(frame, [0, 120], [1.0, 1.09]);
-
-  return (
-    <AbsoluteFill>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ transform: `scale(${kb})`, marginTop: -80 }}>
-          <Detail src="05-task-top" crop={[40, 440, 1090, 760]} width={900} />
-        </div>
-      </div>
-
-      <Viewfinder />
-
-      <div
-        style={{
-          position: 'absolute',
-          left: 90,
-          right: 90,
-          bottom: SAFE.bottom,
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 16,
-          alignItems: 'center',
-        }}
-      >
-        {steps.map((s, i) => {
-          const on = interpolate(frame, [i * 26 + 8, i * 26 + 20], [0, 1], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          });
-          return (
-            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              {i > 0 && <span style={{ color: C.signal, fontSize: 30, opacity: on }}>→</span>}
-              <span
-                style={{
-                  fontFamily: FONT_DISPLAY,
-                  fontWeight: 800,
-                  fontSize: 36,
-                  color: C.ink,
-                  opacity: 0.25 + on * 0.75,
-                }}
-              >
-                {s}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </AbsoluteFill>
-  );
-}
-
-function Viewfinder() {
-  const frame = useCurrentFrame();
-  const o = interpolate(frame, [10, 26], [0, 0.75], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const corner = (style) => (
-    <div style={{ position: 'absolute', width: 74, height: 74, border: `4px solid ${C.signal}`, ...style }} />
-  );
-  return (
-    <AbsoluteFill style={{ opacity: o, pointerEvents: 'none' }}>
-      {corner({ left: 90, top: 420, borderRight: 'none', borderBottom: 'none' })}
-      {corner({ right: 90, top: 420, borderLeft: 'none', borderBottom: 'none' })}
-      {corner({ left: 90, bottom: 620, borderRight: 'none', borderTop: 'none' })}
-      {corner({ right: 90, bottom: 620, borderLeft: 'none', borderTop: 'none' })}
-    </AbsoluteFill>
-  );
-}
-
-// ═══ 0:22–0:27 · Загрузка и проверка ═══════════════════════════
+// ═══ 0:24,5–0:28,5 · Отправка и проверка ═══════════════════════
 
 const STATES = [
-  { at: 0, src: '05-task-top', crop: [40, 1660, 1090, 300], label: 'ЗАГРУЗКА' },
-  { at: 34, src: '21-submission-pending', crop: [40, 610, 1090, 400], label: 'ОТПРАВЛЕНО' },
-  { at: 68, src: '22-submission-checking', crop: [40, 610, 1090, 400], label: 'НА ПРОВЕРКЕ' },
-  { at: 104, src: '23-submission-accepted', crop: [40, 610, 1090, 400], label: 'ЗАСЧИТАНО' },
+  { at: 0, src: '14-task-road', crop: [40, 1620, 1090, 260], label: 'ОТПРАВЛЯЕМ' },
+  { at: 30, src: '20-sent', crop: [40, 610, 1090, 400], label: 'ОЖИДАЕТ ПРОВЕРКИ' },
+  { at: 58, src: '21-checking', crop: [40, 610, 1090, 400], label: 'ПРОВЕРЯЕТСЯ' },
+  { at: 86, src: '22-accepted', crop: [40, 610, 1090, 400], label: 'ЗАСЧИТАНО' },
 ];
 
 function Send() {
   const frame = useCurrentFrame();
   const active = [...STATES].reverse().find((s) => frame >= s.at) ?? STATES[0];
   const local = frame - active.at;
-  const accepted = active.label === 'ЗАСЧИТАНО';
+  const done = active.label === 'ЗАСЧИТАНО';
 
-  const pulse = accepted
-    ? interpolate(local, [0, 10, 26], [0, 0.16, 0], { extrapolateRight: 'clamp' })
-    : 0;
-  const points = accepted
-    ? Math.round(interpolate(local, [4, 26], [0, 120], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }))
+  const pulse = done ? interpolate(local, [0, 8, 24], [0, 0.14, 0], { extrapolateRight: 'clamp' }) : 0;
+  const points = done
+    ? Math.round(interpolate(local, [4, 24], [0, 70], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }))
     : null;
 
   return (
@@ -366,17 +329,16 @@ function Send() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div
           style={{
-            marginTop: -120,
+            marginTop: -110,
             opacity: interpolate(local, [0, 6], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
-            transform: `translateY(${interpolate(local, [0, 10], [22, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })}px)`,
+            transform: `translateY(${interpolate(local, [0, 10], [20, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })}px)`,
           }}
         >
           <Detail src={active.src} crop={active.crop} width={900} />
         </div>
       </div>
 
-      <AbsoluteFill style={{ background: C.signal, opacity: pulse * 0.1 }} />
-
+      <AbsoluteFill style={{ background: C.signal, opacity: pulse }} />
       <Caption text={active.label} at={active.at} delay={4} />
 
       {points !== null && (
@@ -385,25 +347,25 @@ function Send() {
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 470,
+            top: 500,
             textAlign: 'center',
             fontFamily: FONT_DISPLAY,
             fontWeight: 800,
-            fontSize: 130,
+            fontSize: 120,
             color: C.signal,
             letterSpacing: '-0.02em',
             filter: `drop-shadow(0 0 40px ${C.signal}55)`,
           }}
         >
           +{points}
-          <span style={{ fontSize: 52, marginLeft: 14, color: C.ink }}>БАЛЛОВ</span>
+          <span style={{ fontSize: 46, marginLeft: 14, color: C.ink }}>БАЛЛОВ</span>
         </div>
       )}
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:27–0:30 · История открывается ═══════════════════════════
+// ═══ 0:28,5–0:31,5 · Что это было ══════════════════════════════
 
 function Story() {
   const frame = useCurrentFrame();
@@ -415,63 +377,72 @@ function Story() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div
           style={{
-            marginTop: -90,
-            transform: `scaleY(${interpolate(open, [0, 1], [0.82, 1])})`,
+            marginTop: -80,
+            transform: `scaleY(${interpolate(open, [0, 1], [0.8, 1])})`,
             transformOrigin: 'top center',
             opacity: interpolate(frame, [0, 8], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
           }}
         >
-          <Detail src="25-afterword" crop={[40, 600, 1090, 740]} width={920} />
+          <Detail src="24-afterword" crop={[40, 1560, 1090, 620]} width={920} />
         </div>
       </div>
-      <Caption eyebrow="ОТКРЫЛОСЬ ПОСЛЕ ОТПРАВКИ" text="ГОРОД РАСКРЫВАЕТ СВОИ ИСТОРИИ" at={0} delay={10} />
+      <Caption eyebrow="ОТКРЫЛОСЬ ТОЛЬКО ПОСЛЕ ОТПРАВКИ" text="ГОРОД РАССКАЗЫВАЕТ" at={0} delay={8} />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:30–0:33 · Рейтинг ═══════════════════════════════════════
+// ═══ 0:31,5–0:33,5 · Карта ушла, рейтинг вырос ═════════════════
 
-function Rank() {
+function After() {
   const frame = useCurrentFrame();
-  const after = frame >= 40;
-  const flash = interpolate(frame, [40, 52], [0.3, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const rank = frame >= 30;
 
   return (
     <AbsoluteFill>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ marginTop: -100, position: 'relative' }}>
-          <Detail
-            src={after ? '27-leaderboard-after' : '20-leaderboard-before'}
-            crop={[40, 600, 1090, 560]}
-            width={920}
-          />
-          <AbsoluteFill style={{ background: C.signal, opacity: flash * 0.2, borderRadius: 22 }} />
+        <div
+          style={{
+            marginTop: -100,
+            opacity: interpolate(frame % 30, [0, 6], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+          }}
+        >
+          {rank ? (
+            <Detail src="27-rank-after" crop={[40, 600, 1090, 540]} width={920} />
+          ) : (
+            <Detail src="26-hand-after" crop={[40, 640, 1090, 860]} width={860} />
+          )}
         </div>
       </div>
-      <Caption text="РЕЙТИНГ МЕНЯЕТСЯ В РЕАЛЬНОМ ВРЕМЕНИ" at={0} delay={8} />
+      <Caption
+        text={rank ? 'РЕЙТИНГ ОБНОВЛЯЕТСЯ СРАЗУ' : 'КАРТА УХОДИТ ИЗ РУКИ'}
+        at={rank ? 30 : 0}
+        delay={5}
+      />
     </AbsoluteFill>
   );
 }
 
-// ═══ 0:33–0:36 · Финал ═════════════════════════════════════════
+// ═══ 0:33,5–0:36 · Финал ═══════════════════════════════════════
 
-const FACTS = [
-  '05.09.2026 · 14:00',
-  'LEIPZIG',
-  '15 € С УЧАСТНИКА',
-  'КОМАНДА ДО 5 ЧЕЛОВЕК',
-  '3–4 ЧАСА ИГРЫ + BBQ',
-];
+const FACTS = ['05.09.2026 · 14:00', 'LEIPZIG', '15 € С УЧАСТНИКА', 'КОМАНДА ДО 5 ЧЕЛОВЕК', '3–4 ЧАСА ИГРЫ + BBQ'];
 
 function Final() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const logo = spring({ frame, fps, config: { damping: 200, mass: 0.8 } });
-  const flash = interpolate(frame, [78, 84, 90], [0, 0.9, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const flash = interpolate(frame, [64, 70, 75], [0, 0.85, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const p = (i) => spring({ frame: frame - 2 - i * 5, fps, config: { damping: 200, mass: 0.7 } });
 
   return (
     <AbsoluteFill>
-      <Route progress={1} opacity={0.2} />
+      <Route progress={1} opacity={0.18} />
+
+      <div style={{ position: 'absolute', left: 50, top: 300, opacity: p(0) * 0.92, transform: `rotate(-8deg) scale(${interpolate(p(0), [0, 1], [0.9, 1])})` }}>
+        <Polaroid src="p1.jpg" caption="" width={240} reveal={1} />
+      </div>
+      <div style={{ position: 'absolute', right: 50, top: 270, opacity: p(1) * 0.92, transform: `rotate(9deg) scale(${interpolate(p(1), [0, 1], [0.9, 1])})` }}>
+        <Polaroid src="p2.jpg" caption="" width={230} reveal={1} />
+      </div>
 
       <div
         style={{
@@ -481,32 +452,26 @@ function Final() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 40,
-          paddingTop: 40,
+          gap: 30,
+          paddingTop: 150,
         }}
       >
-        <Img
-          src={staticFile('logo.png')}
-          style={{ width: 520, opacity: logo, transform: `scale(${interpolate(logo, [0, 1], [0.9, 1])})` }}
-        />
+        <Img src={staticFile('logo.png')} style={{ width: 440, opacity: logo, transform: `scale(${interpolate(logo, [0, 1], [0.9, 1])})` }} />
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           {FACTS.map((f, i) => {
-            const o = interpolate(frame, [10 + i * 6, 20 + i * 6], [0, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
-            });
+            const o = interpolate(frame, [8 + i * 5, 18 + i * 5], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
             return (
               <div
                 key={f}
                 style={{
                   fontFamily: FONT_DISPLAY,
                   fontWeight: 600,
-                  fontSize: 34,
+                  fontSize: 32,
                   letterSpacing: '0.06em',
                   color: i === 0 ? C.ink : C.muted,
                   opacity: o,
-                  transform: `translateY(${interpolate(o, [0, 1], [12, 0])}px)`,
+                  transform: `translateY(${interpolate(o, [0, 1], [10, 0])}px)`,
                 }}
               >
                 {f}
@@ -517,12 +482,12 @@ function Final() {
 
         <div
           style={{
-            marginTop: 30,
+            marginTop: 20,
             fontFamily: FONT_DISPLAY,
             fontWeight: 800,
-            fontSize: 64,
+            fontSize: 62,
             color: C.ink,
-            opacity: interpolate(frame, [46, 58], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+            opacity: interpolate(frame, [40, 52], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
           }}
         >
           СОБИРАЙ КОМАНДУ
@@ -531,10 +496,10 @@ function Final() {
         <div
           style={{
             fontFamily: FONT_BODY,
-            fontSize: 32,
+            fontSize: 30,
             letterSpacing: '0.08em',
-            color: C.ink,
-            opacity: interpolate(frame, [54, 66], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+            color: C.signal,
+            opacity: interpolate(frame, [48, 58], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
           }}
         >
           DVIZH-PATROL.VERCEL.APP

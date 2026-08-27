@@ -277,3 +277,62 @@ export function Route({ progress, opacity = 1, stroke = C.signal, width = 5 }) {
     </svg>
   );
 }
+
+// ═══ Полароид ══════════════════════════════════════════════════
+
+/**
+ * Снимок-улика со стиля лендинга.
+ *
+ * Те же значения, что в `components/landing/polaroid.tsx` и
+ * `.polaroid` в `app/globals.css`: подложка #f7f7f5, рамка
+ * #38383d, поле 5 px, кадр 106×116. На лендинге снимок лежит
+ * чёрно-белым и возвращает цвет при наведении — здесь это
+ * превращено в приём монтажа: кадр оживает на акценте.
+ */
+export function Polaroid({ src, caption, tilt = 0, width = 300, reveal = 0, style }) {
+  const photoW = width - 10;
+  const photoH = photoW * (116 / 106);
+
+  return (
+    <div
+      style={{
+        width,
+        padding: 5,
+        paddingBottom: 46,
+        background: '#f7f7f5',
+        border: '1px solid #38383d',
+        transform: `rotate(${tilt}deg)`,
+        boxShadow: '0 30px 70px rgba(0,0,0,0.55)',
+        ...style,
+      }}
+    >
+      <div style={{ width: photoW, height: photoH, overflow: 'hidden', position: 'relative' }}>
+        <Img
+          src={staticFile(`photos/${src}`)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+            filter: `grayscale(${1 - reveal}) contrast(${1.12 - reveal * 0.12})`,
+          }}
+        />
+      </div>
+      {caption && (
+        <div
+          style={{
+            marginTop: 12,
+            textAlign: 'center',
+            fontFamily: FONT_BODY,
+            fontWeight: 500,
+            fontSize: Math.round(width * 0.062),
+            letterSpacing: '0.04em',
+            color: '#2a2a2f',
+          }}
+        >
+          {caption}
+        </div>
+      )}
+    </div>
+  );
+}

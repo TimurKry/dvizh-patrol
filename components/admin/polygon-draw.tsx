@@ -211,7 +211,7 @@ export function PolygonDraw({
     <div className="flex flex-col gap-3">
       <div
         ref={hostRef}
-        className={`${height} w-full border border-hairline bg-canvas-deep [&_.leaflet-container]:bg-canvas-deep [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:grayscale-[0.35] [&_.leaflet-tile-pane]:brightness-[0.92] [&_.leaflet-tile-pane]:contrast-[0.9]`}
+        className={`${height} w-full border border-hairline bg-canvas-deep [&_.leaflet-tile]:invert [&_.leaflet-tile]:hue-rotate-180 [&_.leaflet-tile]:grayscale-[0.35] [&_.leaflet-tile]:brightness-[0.92] [&_.leaflet-tile]:contrast-[0.9]`}
         role="presentation"
       />
 

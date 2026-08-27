@@ -394,10 +394,18 @@ function LeafletMap({
           ночью, а сигнальные метки на нём теряются. Инверсия с
           коррекцией тона даёт тёмную карту, не требуя платного
           поставщика тайлов. Фильтр применяется только к слою
-          подложки — метки, круги и подписи остаются как есть. */}
+          подложки — метки, круги и подписи остаются как есть.
+
+          Фильтр висит на самих тайлах, а не на слое `tile-pane`.
+          Разница видна ровно тогда, когда она важна: в городе со
+          слабой связью тайлы приходят долго или не приходят вовсе.
+          Слой с фильтром инвертирует и собственный тёмный фон —
+          и вместо карты человек получает белый прямоугольник во
+          весь экран. Отдельные тайлы такого фона не имеют: пока
+          их нет, сквозь пустой слой видно тёмную подложку. */}
       <div
         ref={hostRef}
-        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep [&_.leaflet-container]:bg-canvas-deep [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-[0.92] [&_.leaflet-tile-pane]:contrast-[0.9] [&_.leaflet-tile-pane]:grayscale-[0.35]`}
+        className={`${className} w-full overflow-hidden border border-hairline bg-canvas-deep [&_.leaflet-tile]:invert [&_.leaflet-tile]:hue-rotate-180 [&_.leaflet-tile]:brightness-[0.92] [&_.leaflet-tile]:contrast-[0.9] [&_.leaflet-tile]:grayscale-[0.35]`}
         // Карта — интерактивный виджет. Скринридеру от неё пользы
         // нет, весь смысл продублирован списком заданий рядом.
         role="presentation"

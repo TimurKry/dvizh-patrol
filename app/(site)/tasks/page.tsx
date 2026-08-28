@@ -167,7 +167,7 @@ export default async function TasksPage() {
             description="Все карточки этого типа уже забраны другими командами или отыграны вами. Загляните в рейтинг — квест на финишной прямой."
           />
         ) : (
-          <TaskHand items={hand} />
+          <TaskHand items={hand} frozen={teamAccess(session.team) === 'alpha'} />
         )}
       </div>
 

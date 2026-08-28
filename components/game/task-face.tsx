@@ -64,7 +64,16 @@ export function TaskFace({
   /** Что показать вместо фото: обычно номер задания. */
   placeholder?: string;
   attemptsLine?: string | null;
-  status: { icon: IconName; text: string; tone: FaceTone };
+  /**
+   * Плашка состояния внизу карточки.
+   *
+   * `null` — плашки нет вовсе. Так показывается обычная
+   * доступная карточка: подпись «доступно» ничего не сообщала,
+   * потому что недоступных карточек на руке не бывает — они с
+   * неё уходят. Оставались только состояния, которые правда
+   * что-то значат: на проверке, забрали, не приняли.
+   */
+  status: { icon: IconName; text: string; tone: FaceTone } | null;
   /**
    * Карта прямо на карточке.
    *
@@ -172,17 +181,19 @@ export function TaskFace({
       <div className="mt-auto flex flex-col gap-2">
         {attemptsLine && <p className="signal-label text-micro text-[#66666d]">{attemptsLine}</p>}
 
-        <p
-          className={cn(
-            'flex min-h-[44px] items-center justify-center gap-2 border',
-            TONE_FOOTER[status.tone],
-          )}
-        >
-          <span className={cn(status.tone === 'checking' && 'anim-tick')}>
-            <Icon name={status.icon} size={15} />
-          </span>
-          <span className="signal-label text-micro">{status.text}</span>
-        </p>
+        {status && (
+          <p
+            className={cn(
+              'flex min-h-[44px] items-center justify-center gap-2 border',
+              TONE_FOOTER[status.tone],
+            )}
+          >
+            <span className={cn(status.tone === 'checking' && 'anim-tick')}>
+              <Icon name={status.icon} size={15} />
+            </span>
+            <span className="signal-label text-micro">{status.text}</span>
+          </p>
+        )}
 
         {actions}
       </div>

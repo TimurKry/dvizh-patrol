@@ -37,11 +37,30 @@ const STATE: Record<TaskWithState['state'], { text: string; icon: IconName; tone
   attempts_exhausted: { text: 'Попытки кончились', icon: 'exhausted', tone: 'dim' },
 };
 
-export function TaskHand({ items }: { items: TaskWithState[] }) {
+export function TaskHand({
+  items,
+  frozen = false,
+}: {
+  items: TaskWithState[];
+  /**
+   * Рука альфа-теста: карточки не меняются, отыгранные остаются.
+   *
+   * Нужно ради одного слова. «Забрали» на настоящей игре значит
+   * «это задание теперь наше, у остальных его нет» — там это и
+   * есть главное. У альфы задание из пула не уходит, и то же
+   * слово стало бы неправдой; ей карточка помечается просто
+   * выполненной.
+   */
+  frozen?: boolean;
+}) {
   const cards: TableCard[] = items.map((item) => {
     const { task, state, attemptsLeft, referenceImageUrl, referenceFraming } = item;
     const type = TASK_CARD_TYPE_TEXT[task.card_type];
     const gone = state === 'claimed_by_other';
+    const shown =
+      frozen && state === 'accepted'
+        ? { ...STATE.accepted, text: 'Выполнено' }
+        : STATE[state];
 
     return {
       id: task.id,
@@ -51,7 +70,7 @@ export function TaskHand({ items }: { items: TaskWithState[] }) {
         <CardBack
           className={cn('h-full', gone && 'opacity-60')}
           mark={<TaskTypeIcon type={task.card_type} size={38} />}
-          hint={state === 'available' ? undefined : STATE[state].text}
+          hint={state === 'available' ? undefined : shown.text}
         />
       ),
       front: (
@@ -78,7 +97,10 @@ export function TaskHand({ items }: { items: TaskWithState[] }) {
               ? `${attemptsLeft} ${attemptsWord(attemptsLeft)}`
               : null
           }
-          status={STATE[state]}
+          // «Доступно» не пишем: на руке недоступных карточек не
+          // бывает, они с неё уходят. Плашка появляется только
+          // там, где состояние правда что-то меняет.
+          status={state === 'available' ? null : shown}
           accepted={state === 'accepted'}
           actions={
             gone ? null : (

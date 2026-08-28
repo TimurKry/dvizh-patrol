@@ -431,10 +431,10 @@ export async function updateTeamAction(
       // Через функцию, а не патчем: `is_test` и `full_pool`
       // связаны ограничением, порядок их обновления имеет
       // значение, и рука должна пересобраться под новый режим.
-      const result = await callRpc<{ access: string }>('set_team_access', {
-        p_team_id: teamId,
-        p_access: access,
-      });
+      const result = await callRpc<{ access: string; wipedSubmissions?: number }>(
+        'set_team_access',
+        { p_team_id: teamId, p_access: access },
+      );
 
       if (!result.ok) {
         return { ok: false, message: errorMessage(result.error) };
@@ -450,12 +450,25 @@ export async function updateTeamAction(
         entityType: 'team',
         entityId: teamId,
         before: { is_test: before.is_test, full_pool: before.full_pool },
-        after: { access },
+        after: { access, wiped_submissions: result.data.wipedSubmissions ?? 0 },
       });
 
       revalidatePath('/admin/teams');
       revalidatePath(`/admin/teams/${teamId}`);
-      return { ok: true, message: `Доступ команды: ${teamAccessSpec(access).label.toLowerCase()}.` };
+
+      // Про удалённые отправки говорим прямо: организатор нажал
+      // «сделать обычной», а вместе с режимом ушла часть истории
+      // команды. Молча такое не делают.
+      const wiped = result.data.wipedSubmissions ?? 0;
+      const wipedNote =
+        wiped > 0
+          ? ` Служебных отправок удалено: ${wiped} — вместе с баллами по ним.`
+          : '';
+
+      return {
+        ok: true,
+        message: `Доступ команды: ${teamAccessSpec(access).label.toLowerCase()}.${wipedNote}`,
+      };
     }
     case 'set_color': {
       const color = String(formData.get('color') ?? '');

@@ -94,6 +94,12 @@ export const submissionConfirmSchema = z.object({
   locationAccuracy: z.number().nonnegative().optional(),
 });
 
+// ═══ Отказ от карточки ═════════════════════════════════════════
+
+export const declineTaskSchema = z.object({
+  taskId: z.string().uuid('Некорректное задание'),
+});
+
 // ═══ Мероприятие ═══════════════════════════════════════════════
 
 export const eventSettingsSchema = z

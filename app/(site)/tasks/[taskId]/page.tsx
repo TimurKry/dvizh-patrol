@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { PhotoUpload } from '@/components/game/photo-upload';
 import { LiveRefresh } from '@/components/game/live-refresh';
+import { DeclineTask } from '@/components/game/decline-task';
 import { ButtonLink } from '@/components/ui/button';
 import { Card } from '@/components/ui/surface';
 import { EmptyState, Notice } from '@/components/ui/feedback';
@@ -74,6 +75,12 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
   const { task, state, attemptsLeft, latestSubmission, canSubmit } = item;
   const references = await getTaskReferences(task.id);
   const config = env();
+
+  // Отказаться можно от нетронутой карточки на руке, пока квест
+  // идёт. Отправленное назад не берут: иначе отказ стал бы
+  // способом стереть неудачную попытку. Сервер проверяет это же
+  // ещё раз — здесь мы решаем только, показывать ли кнопку.
+  const canDecline = eventLive && state === 'available' && latestSubmission === null;
 
   // Центр карточки: у области — центр нарисованного контура, у
   // точки — её координаты. Без центра карту рисовать не на чем,
@@ -290,6 +297,14 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
             </Card>
           )}
         </div>
+
+        {/* ═══ Отказ от карточки ════════════════════════════
+            Отдельно от блока отправки и ниже него: действие
+            необратимое, и соседство с «Выбрать из галереи» —
+            прямой путь к промаху пальцем. Показывается только
+            когда отказываться есть от чего: карточка на руке,
+            отправок по ней не было, квест идёт. */}
+        {canDecline && <DeclineTask taskId={task.id} taskTitle={task.title} />}
 
         {/* ═══ После отправки ═══════════════════════════════
             Открывается только когда отправка уже сделана, поэтому

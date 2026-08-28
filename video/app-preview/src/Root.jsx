@@ -1,7 +1,7 @@
 import { Composition, Sequence, staticFile, continueRender, delayRender } from 'remotion';
 import { useEffect, useState } from 'react';
 import { Preview } from './Preview.jsx';
-import { DURATION, FPS, TEASER, TEASER_DURATION } from './theme.js';
+import { DURATION, FPS, TEASER_DURATION, TEASER_SLICES } from './theme.js';
 
 /**
  * Шрифты подкладываются из файлов, а не из сети: рендер идёт в
@@ -41,20 +41,15 @@ const Full = () => {
  */
 const Teaser = () => {
   useFonts();
-  let at = 0;
   return (
     <>
-      {TEASER.map(([from, length]) => {
-        const seq = (
-          <Sequence key={from} from={at} durationInFrames={length}>
-            <Sequence from={-from} durationInFrames={from + length}>
-              <Preview />
-            </Sequence>
+      {TEASER_SLICES.map(({ from, length, at }) => (
+        <Sequence key={from} from={at} durationInFrames={length}>
+          <Sequence from={-from} durationInFrames={from + length}>
+            <Preview />
           </Sequence>
-        );
-        at += length;
-        return seq;
-      })}
+        </Sequence>
+      ))}
     </>
   );
 };

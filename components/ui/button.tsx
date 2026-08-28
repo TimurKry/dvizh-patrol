@@ -17,7 +17,7 @@ import { cn } from '@/lib/cn';
  * Надписи набраны Unbounded в капители. Углы прямые, теней нет.
  */
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'alert';
 type Size = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<Variant, string> = {
@@ -34,6 +34,12 @@ const VARIANTS: Record<Variant, string> = {
   // Разрушающее действие: контур сигналом, заливка — только при
   // наведении. Иначе оно спорило бы с основной кнопкой за внимание.
   danger: 'bg-canvas text-signal border border-signal hover:bg-signal hover:text-canvas',
+  // Необратимое действие. Тревожный красный, но контуром: залитая
+  // красная кнопка на экране с залитой пурпурной — две кнопки,
+  // одинаково зовущие нажать. Здесь нужно ровно обратное.
+  alert:
+    'bg-canvas text-alert border border-alert ' +
+    'hover:bg-alert hover:text-canvas active:bg-alert-deep active:border-alert-deep',
 };
 
 const SIZES: Record<Size, string> = {

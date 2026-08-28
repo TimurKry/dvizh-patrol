@@ -93,7 +93,7 @@ export default function DesignSystemPage() {
           карточек, орнаменты и командные маркеры. */}
       <Block title="Цвета команд">
         <p className="max-w-prose text-body text-muted">
-          Шесть значений хранятся в базе как enum, а hex живут в{' '}
+          Десять значений хранятся в базе как enum, а hex живут в{' '}
           <code className="font-mono text-caption">lib/team-colors.ts</code>. В интерфейс эти цвета
           не попадают — только на рубашку карточки, орнамент и маркер команды.
         </p>

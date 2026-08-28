@@ -65,4 +65,17 @@ export const TEASER = [
   [1239, 66], // архив и призыв
 ];
 
+/**
+ * Те же куски, но уже с местом в тизере.
+ *
+ * Смещения считаются один раз здесь, на уровне модуля, а не в
+ * компоненте: накапливать сумму прямо в разметке значит писать в
+ * переменную во время отрисовки.
+ */
+export const TEASER_SLICES = TEASER.map(([from, length], index) => ({
+  from,
+  length,
+  at: TEASER.slice(0, index).reduce((sum, [, previous]) => sum + previous, 0),
+}));
+
 export const TEASER_DURATION = TEASER.reduce((n, [, length]) => n + length, 0);

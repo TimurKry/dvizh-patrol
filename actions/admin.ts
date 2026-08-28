@@ -4,6 +4,8 @@ import { randomBytes } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { isTeamColor, teamColorLabel } from '@/lib/team-colors';
+import { isTeamAccess, teamAccessSpec } from '@/lib/team-access';
+import { errorMessage } from '@/lib/messages';
 import { asAreaPolygon } from '@/lib/geo';
 import { audit, requireAdmin } from '@/lib/auth/admin';
 import { allowedNextStatuses } from '@/lib/event-status';
@@ -422,13 +424,38 @@ export async function updateTeamAction(
       message = `Размер команды: ${size}.`;
       break;
     }
-    case 'set_test': {
-      const on = formData.get('isTest') === 'true';
-      patch = { is_test: on };
-      message = on
-        ? 'Команда стала тестовой: все задания открыты, из пула она ничего не забирает.'
-        : 'Команда снова обычная.';
-      break;
+    case 'set_access': {
+      const access = String(formData.get('access') ?? '');
+      if (!isTeamAccess(access)) return { ok: false, message: 'Неизвестный режим доступа.' };
+
+      // Через функцию, а не патчем: `is_test` и `full_pool`
+      // связаны ограничением, порядок их обновления имеет
+      // значение, и рука должна пересобраться под новый режим.
+      const result = await callRpc<{ access: string }>('set_team_access', {
+        p_team_id: teamId,
+        p_access: access,
+      });
+
+      if (!result.ok) {
+        return { ok: false, message: errorMessage(result.error) };
+      }
+
+      // Смена доступа пишется в журнал наравне с остальными
+      // действиями: команда, у которой зачёты не забирают задания
+      // и которой не видно в рейтинге, — не мелочь, и вопрос
+      // «кто и когда это включил» должен иметь ответ.
+      await audit({
+        admin,
+        action: 'team_access_changed',
+        entityType: 'team',
+        entityId: teamId,
+        before: { is_test: before.is_test, full_pool: before.full_pool },
+        after: { access },
+      });
+
+      revalidatePath('/admin/teams');
+      revalidatePath(`/admin/teams/${teamId}`);
+      return { ok: true, message: `Доступ команды: ${teamAccessSpec(access).label.toLowerCase()}.` };
     }
     case 'set_color': {
       const color = String(formData.get('color') ?? '');

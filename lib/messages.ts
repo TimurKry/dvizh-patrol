@@ -45,6 +45,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   task_claimed_by_other_team:
     'Это задание успела забрать другая команда. Карточка уходит из руки, вместо неё придёт новая.',
 
+  unknown_access: 'Неизвестный режим доступа команды.',
+
   // Отказ от карточки
   task_not_on_hand: 'Этой карточки нет у вас на руке.',
   task_already_attempted:

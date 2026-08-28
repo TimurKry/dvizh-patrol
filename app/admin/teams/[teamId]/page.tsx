@@ -11,6 +11,7 @@ import { requireAdmin } from '@/lib/auth/admin';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { TEAM_STATUS_TEXT, pointsWord } from '@/lib/messages';
 import { TEAM_COLOR_OPTIONS, teamColorLabel } from '@/lib/team-colors';
+import { TEAM_ACCESS_OPTIONS, teamAccess, teamAccessSpec } from '@/lib/team-access';
 import type {
   ConsentRow,
   EventRow,
@@ -91,6 +92,9 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
   const canDelete = event?.status === 'registration' || event?.status === 'draft';
   const socialAllowed = consents.filter((c) => c.social_publication_consent).length;
 
+  const access = teamAccess(team);
+  const spec = teamAccessSpec(access);
+
   return (
     <div className="page-well flex max-w-4xl flex-col gap-8 py-8">
       <div>
@@ -99,7 +103,7 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
         </Link>
         <Eyebrow className="mt-4">
           {TEAM_STATUS_TEXT[team.status]}
-          {team.is_test && ' · для тестов'}
+          {access !== 'normal' && ` · ${spec.label.toLowerCase()}`}
         </Eyebrow>
         <h1 className="mt-2 text-headline">{team.name}</h1>
         <p className="mt-1 text-body text-muted">
@@ -108,11 +112,9 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
         </p>
       </div>
 
-      {team.is_test && (
+      {access !== 'normal' && (
         <Notice tone="strong" icon="info">
-          Команда для тестов. Видит все задания сразу и играет в любом статусе мероприятия; принятое
-          у неё не уходит из общего пула, и в рейтинге её нет. Баллы ниже настоящие — они просто
-          никуда не идут.
+          {spec.admin}
         </Notice>
       )}
 
@@ -166,6 +168,39 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
         </div>
       </Card>
 
+      {/* ═══ Доступ ═════════════════════════════════════════
+          Три режима вместо прежнего тумблера «тестовая да/нет».
+          Служебных команд оказалось две разновидности, и они
+          отличаются ровно размером руки: проверке контента нужен
+          весь пул, альфа-тесту — настоящие шесть карточек.
+          Переключается на ходу: рука пересобирается под новый
+          режим внутри `set_team_access`. */}
+      <Card className="flex flex-col gap-4 p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-body-lg">Доступ</h2>
+          <p className="text-caption text-muted">{spec.label.toLowerCase()}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {TEAM_ACCESS_OPTIONS.map((option) => (
+            <ActionButton
+              key={option.value}
+              action={updateTeamAction}
+              values={{ teamId: team.id, action: 'set_access', access: option.value }}
+              disabled={access === option.value}
+              variant={access === option.value ? 'primary' : 'secondary'}
+              confirm={access === option.value ? undefined : option.confirm}
+            >
+              {option.label}
+            </ActionButton>
+          ))}
+        </div>
+
+        {/* У служебной команды то же самое уже сказано кричащей
+            плашкой наверху страницы — второй раз не повторяем. */}
+        {access === 'normal' && <p className="text-caption text-muted">{spec.admin}</p>}
+      </Card>
+
       {/* ═══ Быстрые действия ═══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
         <h2 className="text-body-lg">Действия</h2>
@@ -202,25 +237,6 @@ export default async function AdminTeamPage({ params }: { params: Promise<{ team
             confirm="Отозвать все сессии команды? Участникам придётся войти заново."
           >
             Сбросить сессии
-          </ActionButton>
-
-          {/* Тестовый доступ включается и выключается на ходу:
-              проверили задания — сняли галочку, и команда стала
-              обычной. */}
-          <ActionButton
-            action={updateTeamAction}
-            values={{
-              teamId: team.id,
-              action: 'set_test',
-              isTest: team.is_test ? 'false' : 'true',
-            }}
-            confirm={
-              team.is_test
-                ? 'Сделать команду обычной? Она снова будет играть по правилам: рука из шести и захват заданий.'
-                : 'Сделать команду тестовой? Она увидит все задания сразу и перестанет забирать их из общего пула.'
-            }
-          >
-            {team.is_test ? 'Сделать обычной' : 'Сделать тестовой'}
           </ActionButton>
 
           {team.status === 'cancelled' ? (

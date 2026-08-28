@@ -12,6 +12,7 @@ import { requireTeamSession } from '@/lib/session/require';
 import { TASK_CARD_TYPE_TEXT } from '@/lib/messages';
 import { TaskTypeIcon } from '@/components/game/task-type-icon';
 import { teamColorVars } from '@/lib/team-colors';
+import { teamAccess, teamAccessSpec } from '@/lib/team-access';
 import { TASK_CARD_TYPES } from '@/types/database';
 import { Icon } from '@/components/ui/icon';
 
@@ -71,6 +72,7 @@ export default async function TasksPage() {
   const eventLive = submissionsOpen(session.event) || session.team.is_test;
   const over = questOver(session.event) && !session.team.is_test;
   const hand = await getTeamHand(session.event.id, session.teamId, { eventLive });
+  const access = teamAccessSpec(teamAccess(session.team));
 
   const waiting = hand.some((item) => item.state === 'in_review');
   const counts = Object.fromEntries(
@@ -90,15 +92,15 @@ export default async function TasksPage() {
       </p>
 
       {/* ═══ Тестовый доступ ════════════════════════════════
-          Плашка нарочно кричащая. Организатор проверяет задания с
-          нескольких телефонов и легко перепутает тестовый вход с
-          настоящим — а разница в том, что отсюда игра не влияет
-          ни на пул, ни на рейтинг. */}
-      {session.team.is_test && (
+          Плашка нарочно кричащая. И проверку контента, и альфу
+          гоняют с нескольких телефонов вперемешку с настоящим
+          входом, а разница в том, что отсюда игра не влияет ни на
+          пул, ни на рейтинг. Текст — из `lib/team-access.ts`,
+          чтобы режим объяснялся одинаково здесь и в админке. */}
+      {access.player && (
         <div className="mt-6">
           <Notice tone="strong" icon="info">
-            Тестовый доступ. Видны все задания сразу, отправлять можно в любом статусе мероприятия.
-            Принятое здесь не забирает задание из общего пула, и в рейтинг эта команда не попадает.
+            {access.player}
           </Notice>
         </div>
       )}
@@ -106,7 +108,7 @@ export default async function TasksPage() {
       {/* ═══ Правило руки · Figma 103:51 ══════════════════════ */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-hairline bg-panel px-4 py-4">
         <span className="signal-label text-micro text-ink">
-          {session.team.is_test ? `Все задания: ${hand.length}` : `Рука ${hand.length} / 6`}
+          {session.team.full_pool ? `Все задания: ${hand.length}` : `Рука ${hand.length} / 6`}
         </span>
 
         {/* Сколько осталось — рядом с составом руки, а не

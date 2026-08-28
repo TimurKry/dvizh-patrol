@@ -6,6 +6,7 @@ import { Eyebrow } from '@/components/ui/surface';
 import { EmptyState } from '@/components/ui/feedback';
 import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { requireAdmin } from '@/lib/auth/admin';
+import { teamAccess, teamAccessSpec } from '@/lib/team-access';
 import { getCurrentEvent } from '@/lib/data/event';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { BUCKETS, createSignedUrls } from '@/lib/storage';
@@ -55,7 +56,7 @@ export default async function AdminSubmissionsPage({
 
   let query = db
     .from('submissions')
-    .select('*, tasks:task_id (number, title), teams:team_id (name, is_test)', { count: 'exact' })
+    .select('*, tasks:task_id (number, title), teams:team_id (name, is_test, full_pool)', { count: 'exact' })
     .eq('event_id', event.id)
     .not('status', 'in', '("draft","uploading")');
 
@@ -84,7 +85,7 @@ export default async function AdminSubmissionsPage({
     (data as Array<
       SubmissionRow & {
         tasks: Pick<TaskRow, 'number' | 'title'> | null;
-        teams: { name: string; is_test: boolean } | null;
+        teams: { name: string; is_test: boolean; full_pool: boolean } | null;
       }
     > | null) ?? [];
 
@@ -201,7 +202,11 @@ export default async function AdminSubmissionsPage({
                       {/* Тестовые отправки идут в ту же очередь: они
                           и нужны, чтобы проверить проверку. Но
                           спутать их с настоящими вечером нельзя. */}
-                      {row.teams?.is_test && <span className="ml-2 text-signal">тест</span>}
+                      {row.teams && teamAccessSpec(teamAccess(row.teams)).tag && (
+                        <span className="ml-2 text-signal">
+                          {teamAccessSpec(teamAccess(row.teams)).tag}
+                        </span>
+                      )}
                     </p>
                   </div>
 

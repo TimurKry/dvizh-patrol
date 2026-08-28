@@ -38,8 +38,6 @@ const OUT = process.argv[2] ?? 'brand/telegram';
 const SIZE = 1024;
 
 const CANVAS = '#060609';
-const SIGNAL = '#FF00B3';
-const INK = '#F5F5F1';
 
 /** Картинки уходят в страницу как data:, иначе браузеру негде их взять. */
 async function dataUrl(path) {

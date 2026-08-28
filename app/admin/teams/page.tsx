@@ -7,6 +7,7 @@ import { Checkbox, Field, TextInput } from '@/components/ui/field';
 import { EmptyState } from '@/components/ui/feedback';
 import { Tag } from '@/components/ui/status-badge';
 import { requireAdmin } from '@/lib/auth/admin';
+import { teamAccess, teamAccessSpec } from '@/lib/team-access';
 import { getCurrentEvent, getRegistrationStats } from '@/lib/data/event';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { TEAM_STATUS_TEXT, membersWord, pointsWord } from '@/lib/messages';
@@ -121,7 +122,9 @@ export default async function AdminTeamsPage() {
                       >
                         {team.name}
                       </Link>
-                      {team.is_test && <Tag className="ml-2">тест</Tag>}
+                      {teamAccessSpec(teamAccess(team)).tag && (
+                        <Tag className="ml-2">{teamAccessSpec(teamAccess(team)).tag}</Tag>
+                      )}
                     </td>
                     <td className="py-3 pr-4 font-mono text-caption tabular-nums">
                       {team.join_code}

@@ -95,7 +95,20 @@ export async function getLeaderboard(
   return { mode: 'public', entries, frozenAt: null };
 }
 
-/** Место команды — для карточки на её главной странице. */
+/**
+ * Место команды — для карточки на её главной странице.
+ *
+ * Заморозку эта карточка обязана уважать наравне с общей таблицей.
+ * Включают её ради развязки: таблица замирает, дальше идут показ и
+ * начисления, и только потом рейтинг открывают заново. Пока место
+ * читалось из живого рейтинга, страница команды выдавала результат
+ * по ходу — то есть ровно то, ради чего заморозку и включали.
+ *
+ * Закрытый рейтинг здесь не обрабатывается намеренно. Место при нём
+ * прячет сама страница, а свои баллы команда видит всегда: они
+ * ничего не говорят о чужих, а счётчик, замерший на нуле, читался бы
+ * как поломка.
+ */
 export async function getTeamStanding(
   event: EventRow,
   teamId: string,
@@ -105,7 +118,28 @@ export async function getTeamStanding(
   totalPoints: number;
   acceptedCount: number;
 } | null> {
-  const { data } = await supabaseAdmin()
+  const db = supabaseAdmin();
+
+  if (event.leaderboard_mode === 'frozen') {
+    const { data } = await db
+      .from('leaderboard_snapshots')
+      .select('*')
+      .eq('event_id', event.id)
+      .order('position', { ascending: true });
+
+    const rows = data ?? [];
+    const own = rows.find((row) => row.team_id === teamId);
+    if (!own) return null;
+
+    return {
+      position: own.position,
+      totalTeams: rows.length,
+      totalPoints: own.total_points,
+      acceptedCount: own.accepted_count,
+    };
+  }
+
+  const { data } = await db
     .from('leaderboard')
     .select('*')
     .eq('event_id', event.id)

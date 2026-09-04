@@ -6,6 +6,7 @@ import {
   getCurrentEvent,
 } from '@/lib/data/event';
 import { Onest, Unbounded } from 'next/font/google';
+import { appUrl } from '@/lib/env';
 import { ServiceWorkerRegistration } from '@/components/pwa/service-worker';
 import './globals.css';
 
@@ -59,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
     : 'Городской фото-квест по центру Лейпцига.';
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+    metadataBase: new URL(appUrl()),
     title: {
       default: 'Движ-Патруль — городской фото-квест',
       template: '%s · Движ-Патруль',

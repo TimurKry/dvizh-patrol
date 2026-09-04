@@ -50,7 +50,7 @@ export function JoinForm({ defaultCode }: { defaultCode?: string }) {
           inputMode="text"
           invalid={Boolean(fields.joinCode)}
           placeholder="A1B2C3"
-          className="text-center text-heading-sm tracking-[0.3em] uppercase"
+          className="text-center text-title tracking-[0.3em] uppercase"
         />
       </Field>
 
@@ -73,7 +73,7 @@ export function JoinForm({ defaultCode }: { defaultCode?: string }) {
         />
       </Field>
 
-      <div className="flex flex-col gap-4 rounded-[16px] border border-hairline bg-paper p-4">
+      <div className="flex flex-col gap-4 border border-hairline bg-panel p-4">
         <Checkbox
           name="acceptRules"
           required

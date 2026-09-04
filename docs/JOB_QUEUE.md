@@ -154,8 +154,15 @@ curl -X POST https://ваш-домен/api/worker/validate \
 Ответ:
 
 ```json
-{"ok":true,"claimed":4,"accepted":3,"manualReview":1,
- "failed":0,"skipped":0,"durationMs":5230}
+{
+  "ok": true,
+  "claimed": 4,
+  "accepted": 3,
+  "manualReview": 1,
+  "failed": 0,
+  "skipped": 0,
+  "durationMs": 5230
+}
 ```
 
 Запрос без секрета отклоняется с кодом 403. Если `WORKER_SECRET`

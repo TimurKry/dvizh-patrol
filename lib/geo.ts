@@ -21,8 +21,7 @@ export function distanceMeters(
   const lat1 = toRad(a.latitude);
   const lat2 = toRad(b.latitude);
 
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
 
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
 }
@@ -78,11 +77,17 @@ export function checkLocation(params: {
 
 // ═══ Игровое поле ═══════════════════════════════════════════
 
-export interface PlayArea {
-  latitude: number;
-  longitude: number;
-  radiusMeters: number;
+/** Кольцо GeoJSON: пары [долгота, широта], замкнутые по кругу. */
+export type PolygonRing = Array<[number, number]>;
+
+export interface AreaPolygon {
+  type: 'Polygon';
+  coordinates: [PolygonRing];
 }
+
+export type PlayArea =
+  | { shape: 'circle'; latitude: number; longitude: number; radiusMeters: number }
+  | { shape: 'polygon'; polygon: AreaPolygon; center: { latitude: number; longitude: number } };
 
 /**
  * Игровое поле мероприятия, если оно задано.
@@ -96,16 +101,116 @@ export function toPlayArea(event: {
   area_latitude: number | null;
   area_longitude: number | null;
   area_radius_meters: number | null;
+  area_polygon?: unknown;
 }): PlayArea | null {
+  // Полигон точнее круга и потому важнее: если организатор
+  // обвёл границу по улицам, круг рядом с ней — пережиток.
+  const polygon = asAreaPolygon(event.area_polygon);
+  if (polygon) {
+    return { shape: 'polygon', polygon, center: ringCenter(polygon.coordinates[0]) };
+  }
+
   const { area_latitude, area_longitude, area_radius_meters } = event;
   if (area_latitude == null || area_longitude == null || area_radius_meters == null) {
     return null;
   }
   return {
+    shape: 'circle',
     latitude: area_latitude,
     longitude: area_longitude,
     radiusMeters: area_radius_meters,
   };
+}
+
+/**
+ * Разбор значения из колонки `area_polygon`.
+ *
+ * Тот же набор требований, что и у SQL-функции
+ * `is_valid_area_polygon`: испорченная граница означает, что
+ * отправки перестанут приниматься у всех сразу, поэтому она
+ * проверяется с обеих сторон.
+ */
+export function asAreaPolygon(value: unknown): AreaPolygon | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const candidate = value as { type?: unknown; coordinates?: unknown };
+  if (candidate.type !== 'Polygon' || !Array.isArray(candidate.coordinates)) return null;
+  if (candidate.coordinates.length !== 1) return null;
+
+  const ring = candidate.coordinates[0];
+  if (!Array.isArray(ring) || ring.length < 4 || ring.length > 500) return null;
+
+  for (const point of ring) {
+    if (!Array.isArray(point) || point.length !== 2) return null;
+    const [lon, lat] = point;
+    if (typeof lon !== 'number' || typeof lat !== 'number') return null;
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) return null;
+  }
+
+  const first = ring[0] as [number, number];
+  const last = ring[ring.length - 1] as [number, number];
+  if (first[0] !== last[0] || first[1] !== last[1]) return null;
+
+  return { type: 'Polygon', coordinates: [ring as PolygonRing] };
+}
+
+/** Центр описанного прямоугольника — куда наводить карту. */
+export function ringCenter(ring: PolygonRing): { latitude: number; longitude: number } {
+  let minLon = Infinity;
+  let maxLon = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+
+  for (const [lon, lat] of ring) {
+    minLon = Math.min(minLon, lon);
+    maxLon = Math.max(maxLon, lon);
+    minLat = Math.min(minLat, lat);
+    maxLat = Math.max(maxLat, lat);
+  }
+
+  return { latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2 };
+}
+
+/**
+ * Точка внутри полигона — ray casting.
+ *
+ * Тот же алгоритм, что и в SQL-функции `point_in_area_polygon`.
+ * Дублирование намеренное: клиент рисует границу и должен
+ * показать вердикт сразу, а сервер обязан его перепроверить и
+ * не может доверять браузеру.
+ *
+ * Координаты считаются плоскими: на масштабе городского центра
+ * ошибка — единицы метров, меньше погрешности телефона.
+ */
+export function pointInPolygon(ring: PolygonRing, latitude: number, longitude: number): boolean {
+  let inside = false;
+
+  for (let i = 0; i < ring.length - 1; i += 1) {
+    const [x1, y1] = ring[i]!;
+    const [x2, y2] = ring[i + 1]!;
+
+    if (y1 === y2) continue;
+
+    if (y1 > latitude !== y2 > latitude) {
+      const crossing = ((x2 - x1) * (latitude - y1)) / (y2 - y1) + x1;
+      if (longitude < crossing) inside = !inside;
+    }
+  }
+
+  return inside;
+}
+
+/** Насколько далеко точка от границы полигона, в метрах. */
+function distanceToRing(ring: PolygonRing, latitude: number, longitude: number): number {
+  let best = Infinity;
+  for (const [lon, lat] of ring) {
+    best = Math.min(
+      best,
+      distanceMeters({ latitude, longitude }, { latitude: lat, longitude: lon }),
+    );
+  }
+  return best;
 }
 
 export type AreaVerdict =
@@ -134,8 +239,30 @@ export function checkPlayArea(params: {
   const { area, latitude, longitude } = params;
   if (!area || latitude == null || longitude == null) return { status: 'unknown' };
 
-  const distance = distanceMeters({ latitude, longitude }, area);
   const tolerance = Math.min(params.accuracy ?? 0, 150);
+
+  if (area.shape === 'polygon') {
+    const ring = area.polygon.coordinates[0];
+    const toBorder = distanceToRing(ring, latitude, longitude);
+
+    if (pointInPolygon(ring, latitude, longitude)) {
+      return { status: 'inside', distance: Math.round(toBorder) };
+    }
+
+    // Погрешность телефона работает и на полигоне: точка в паре
+    // десятков метров снаружи с точностью ±80 м могла быть внутри.
+    if (toBorder <= tolerance) {
+      return { status: 'inside', distance: Math.round(toBorder) };
+    }
+
+    return {
+      status: 'outside',
+      distance: Math.round(toBorder),
+      overshoot: Math.round(toBorder - tolerance),
+    };
+  }
+
+  const distance = distanceMeters({ latitude, longitude }, area);
   const limit = area.radiusMeters + tolerance;
 
   if (distance > limit) {

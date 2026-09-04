@@ -30,6 +30,7 @@ export async function resetData(): Promise<void> {
       public.team_members,
       public.teams,
       public.task_reference_images,
+      public.team_hand,
       public.tasks,
       public.leaderboard_snapshots,
       public.admin_audit_log,
@@ -46,6 +47,9 @@ export interface TestEventOptions {
   teamSize?: number;
   registrationOpen?: boolean;
   aiEnabled?: boolean;
+  /** Смещения от «сейчас» в интервалах Postgres: '-2 hours', '3 hours'. */
+  startsIn?: string;
+  endsIn?: string | null;
 }
 
 export async function createEvent(options: TestEventOptions = {}): Promise<string> {
@@ -56,16 +60,20 @@ export async function createEvent(options: TestEventOptions = {}): Promise<strin
     teamSize = 4,
     registrationOpen = true,
     aiEnabled = true,
+    startsIn = '1 day',
+    endsIn = null,
   } = options;
 
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO public.events
-       (slug, title, city, timezone, starts_at, status, price_cents,
+       (slug, title, city, timezone, starts_at, ends_at, status, price_cents,
         max_teams, team_size, registration_open, ai_validation_enabled)
-     VALUES ($1, 'Тестовый квест', 'Leipzig', 'Europe/Berlin', now() + interval '1 day',
+     VALUES ($1, 'Тестовый квест', 'Leipzig', 'Europe/Berlin',
+             now() + $7::interval,
+             CASE WHEN $8::text IS NULL THEN NULL ELSE now() + $8::interval END,
              $2, 1500, $3, $4, $5, $6)
      RETURNING id`,
-    [slug, status, maxTeams, teamSize, registrationOpen, aiEnabled],
+    [slug, status, maxTeams, teamSize, registrationOpen, aiEnabled, startsIn, endsIn],
   );
 
   return rows[0]!.id;
@@ -78,12 +86,10 @@ export interface TestTaskOptions {
   maxAttempts?: number;
   criteria?: string[];
   active?: boolean;
+  cardType?: 'riddle' | 'photo' | 'active';
 }
 
-export async function createTask(
-  eventId: string,
-  options: TestTaskOptions = {},
-): Promise<string> {
+export async function createTask(eventId: string, options: TestTaskOptions = {}): Promise<string> {
   const {
     number = 1,
     points = 50,
@@ -91,14 +97,15 @@ export async function createTask(
     maxAttempts = 2,
     criteria = ['Тестовый критерий'],
     active = true,
+    cardType = 'riddle',
   } = options;
 
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO public.tasks
        (event_id, number, title, description, points, category, difficulty,
-        validation_mode, criteria, max_attempts, active, sort_order)
+        validation_mode, criteria, max_attempts, active, sort_order, card_type)
      VALUES ($1, $2, $3, 'Описание тестового задания', $4, 'object_search', 'easy',
-             $5, $6::jsonb, $7, $8, $2)
+             $5, $6::jsonb, $7, $8, $2, $9)
      RETURNING id`,
     [
       eventId,
@@ -109,10 +116,40 @@ export async function createTask(
       JSON.stringify(criteria),
       maxAttempts,
       active,
+      cardType,
     ],
   );
 
   return rows[0]!.id;
+}
+
+export type CardType = 'riddle' | 'photo' | 'active';
+
+/** Рука команды: то же, что видит интерфейс, и ничего сверх. */
+export async function teamHand(
+  teamId: string,
+): Promise<Array<{ taskId: string; cardType: CardType; attemptsUsed: number; points: number }>> {
+  const { rows } = await pool.query<{
+    r: {
+      ok: boolean;
+      hand: Array<{ taskId: string; cardType: CardType; attemptsUsed: number; points: number }>;
+    };
+  }>(`SELECT public.get_team_hand($1) AS r`, [teamId]);
+  return rows[0]!.r.hand;
+}
+
+/** Кто забрал задание. NULL — задание ещё в общем пуле. */
+export async function taskClaim(
+  taskId: string,
+): Promise<{ teamId: string | null; submissionId: string | null }> {
+  const { rows } = await pool.query<{
+    claimed_by_team_id: string | null;
+    claimed_submission_id: string | null;
+  }>(`SELECT claimed_by_team_id, claimed_submission_id FROM public.tasks WHERE id = $1`, [taskId]);
+  return {
+    teamId: rows[0]?.claimed_by_team_id ?? null,
+    submissionId: rows[0]?.claimed_submission_id ?? null,
+  };
 }
 
 /** Хэш сессии нужного формата: 64 шестнадцатеричных символа. */
@@ -263,4 +300,31 @@ export async function teamScore(teamId: string): Promise<number> {
     [teamId],
   );
   return Number(rows[0]?.total_points ?? 0);
+}
+
+/** Удаление команды со всем следом. Только до старта квеста. */
+export async function deleteTeam(teamId: string): Promise<{
+  ok: boolean;
+  error?: string;
+  teamName?: string;
+  members?: number;
+  submissions?: number;
+  releasedTasks?: number;
+  imagePaths?: string[];
+}> {
+  const { rows } = await pool.query<{ r: Record<string, unknown> }>(
+    `SELECT public.delete_team($1) AS r`,
+    [teamId],
+  );
+  return rows[0]!.r as never;
+}
+
+/** Пометить команду тестовой (или снять пометку). */
+export async function setTeamTest(teamId: string, isTest: boolean): Promise<void> {
+  await pool.query(`UPDATE public.teams SET is_test = $2 WHERE id = $1`, [teamId, isTest]);
+}
+
+/** Свой потолок участников у команды. NULL — общий из мероприятия. */
+export async function setTeamSize(teamId: string, size: number | null): Promise<void> {
+  await pool.query(`UPDATE public.teams SET size_limit = $2 WHERE id = $1`, [teamId, size]);
 }

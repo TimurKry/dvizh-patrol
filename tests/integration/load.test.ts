@@ -102,9 +102,13 @@ describe('масштаб мероприятия', () => {
     );
     expect(Number(total[0]!.count)).toBe(TEAMS * TASKS);
 
-    // Половину принимаем — это 250 начислений.
-    const { rows: toAccept } = await pool.query<{ id: string }>(
-      `SELECT id FROM public.submissions
+    // Принимаем половину отправок подряд. Задание глобальное:
+    // сколько бы команд его ни прислало, забирает первая, а
+    // остальные получают отказ. Поэтому принятых будет ровно
+    // столько, сколько разных заданий попало в эту половину, —
+    // не 250, как было при правиле «одно задание на команду».
+    const { rows: toAccept } = await pool.query<{ id: string; task_id: string }>(
+      `SELECT id, task_id FROM public.submissions
        WHERE event_id = $1 ORDER BY submitted_at LIMIT $2`,
       [eventId, (TEAMS * TASKS) / 2],
     );
@@ -115,11 +119,21 @@ describe('масштаб мероприятия', () => {
       ]);
     }
 
+    const distinctTasks = new Set(toAccept.map((row) => row.task_id)).size;
+
     const { rows: accepted } = await pool.query<{ count: string }>(
       `SELECT count(*) FROM public.submissions WHERE event_id = $1 AND status = 'accepted'`,
       [eventId],
     );
-    expect(Number(accepted[0]!.count)).toBe((TEAMS * TASKS) / 2);
+    expect(Number(accepted[0]!.count)).toBe(distinctTasks);
+
+    // И ни одно задание не забрали дважды.
+    const { rows: claimed } = await pool.query<{ count: string }>(
+      `SELECT count(*) FROM public.tasks
+       WHERE event_id = $1 AND claimed_by_team_id IS NOT NULL`,
+      [eventId],
+    );
+    expect(Number(claimed[0]!.count)).toBe(distinctTasks);
 
     // Сумма баллов по журналу совпадает с суммой по отправкам.
     const { rows: check } = await pool.query<{ from_log: string; from_submissions: string }>(
@@ -150,12 +164,14 @@ describe('масштаб мероприятия', () => {
   });
 
   it('не допускает двух принятых отправок по одному заданию', async () => {
+    // Группировка по одному task_id, без team_id: задание
+    // забирает ровно одна команда во всём мероприятии.
     const { rows } = await pool.query<{ count: string }>(
       `SELECT count(*) FROM (
-         SELECT team_id, task_id
+         SELECT task_id
          FROM public.submissions
          WHERE status = 'accepted'
-         GROUP BY team_id, task_id
+         GROUP BY task_id
          HAVING count(*) > 1
        ) AS duplicates`,
     );

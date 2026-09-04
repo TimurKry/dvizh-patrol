@@ -1,3 +1,4 @@
+import type { IconName } from '@/components/ui/icon';
 /**
  * Тексты для пользователя. Все — на русском.
  *
@@ -7,7 +8,13 @@
  * не показываем: участник на улице ничего не может с ними сделать.
  */
 
-import type { SubmissionStatus, TaskCategory, TaskDifficulty } from '@/types/database';
+import type {
+  SubmissionStatus,
+  TaskCardType,
+  TaskCategory,
+  TaskDifficulty,
+  TaskMapMode,
+} from '@/types/database';
 
 export const ERROR_MESSAGES: Record<string, string> = {
   // Регистрация и вход
@@ -30,10 +37,23 @@ export const ERROR_MESSAGES: Record<string, string> = {
   task_no_longer_available: 'Время выполнения этого задания истекло.',
   event_not_live: 'Квест ещё не начался или уже завершён.',
   event_paused: 'Квест приостановлен организатором. Отправки временно недоступны.',
+  event_over: 'Время вышло — отправки закрыты. Идите к месту сбора.',
   already_accepted: 'Это задание уже засчитано вашей команде.',
   attempt_limit_reached: 'Попытки по этому заданию закончились.',
   submission_not_found: 'Отправка не найдена.',
   task_already_accepted: 'По этому заданию уже принята другая фотография.',
+  task_claimed_by_other_team:
+    'Это задание успела забрать другая команда. Карточка уходит из руки, вместо неё придёт новая.',
+
+  unknown_access: 'Неизвестный режим доступа команды.',
+  decline_unavailable: 'В этом режиме карточку вернуть нельзя.',
+
+  // Отказ от карточки
+  task_not_on_hand: 'Этой карточки нет у вас на руке.',
+  task_already_attempted:
+    'По этому заданию уже отправлена фотография — вернуть карточку в колоду больше нельзя.',
+  no_replacement:
+    'Свободных заданий этого типа не осталось: менять карточку не на что, поэтому она остаётся у вас.',
 
   // Файлы
   invalid_file_type: 'Можно загружать только изображения.',
@@ -75,56 +95,54 @@ interface StatusPresentation {
   /** Что это означает для участника. */
   hint: string;
   /** Значок — статус не должен различаться только цветом. */
-  icon: string;
+  icon: IconName;
 }
 
 export const SUBMISSION_STATUS_TEXT: Record<SubmissionStatus, StatusPresentation> = {
   draft: {
     label: 'Черновик',
     hint: 'Фотография выбрана, но ещё не отправлена.',
-    icon: '○',
+    icon: 'draft',
   },
   uploading: {
     label: 'Загружается',
     hint: 'Идёт загрузка. Не закрывайте страницу.',
-    icon: '↑',
+    icon: 'uploading',
   },
   pending: {
     label: 'Ожидает проверки',
     hint: 'Фото загружено и отправлено на проверку. Можно продолжать квест.',
-    icon: '•',
+    icon: 'pending',
   },
   checking: {
     label: 'Проверяется',
     hint: 'Идёт автоматическая проверка.',
-    // ◐ отсутствует в наборе плакатного шрифта и выпадал
-    // в замену. Двойная стрелка есть везде.
-    icon: '»',
+    icon: 'checking',
   },
   accepted: {
     label: 'Принято',
     hint: 'Задание засчитано, баллы начислены.',
-    icon: '✓',
+    icon: 'accepted',
   },
   manual_review: {
     label: 'Ручная проверка',
     hint: 'Фотография ожидает решения организатора.',
-    icon: '⁂',
+    icon: 'manual-review',
   },
   rejected: {
     label: 'Отклонено',
     hint: 'Организатор не засчитал эту фотографию.',
-    icon: '×',
+    icon: 'rejected',
   },
   upload_failed: {
     label: 'Не загрузилось',
     hint: 'Файл не сохранился. Попробуйте отправить снова.',
-    icon: '!',
+    icon: 'upload-failed',
   },
   cancelled: {
     label: 'Отменено',
     hint: 'Отправка отменена организатором.',
-    icon: '−',
+    icon: 'cancelled',
   },
 };
 
@@ -140,6 +158,34 @@ export const REVIEW_REASON_TEXT: Record<string, string> = {
   area_location_required: 'Не удалось подтвердить, что снимок сделан внутри поля',
 };
 
+/**
+ * Служебные причины начисления.
+ *
+ * В журнал баллов причина пишется всегда: организатору важно
+ * знать, кто засчитал отправку — модель, человек или разбор
+ * очереди пачкой. Команде это ничего не говорит, а под строкой
+ * «Задание принято» выглядит как утёкший наружу код: на экране
+ * состава так и стояло «ai_validation».
+ *
+ * Поэтому машинные причины участнику не показываем. Всё
+ * остальное — текст, который организатор написал руками, — он
+ * писал именно для команды, и его видно.
+ */
+const MACHINE_REASONS = new Set([
+  'ai_validation',
+  'manual_review',
+  'bulk_accept',
+  'task_accepted',
+  'submission_revoked',
+  'accepted',
+  'revoked',
+]);
+
+export function participantReason(reason: string | null | undefined): string | null {
+  if (!reason) return null;
+  return MACHINE_REASONS.has(reason) ? null : reason;
+}
+
 // ═══ Задания ═══════════════════════════════════════════════════
 
 export const TASK_CATEGORY_TEXT: Record<TaskCategory, string> = {
@@ -151,6 +197,103 @@ export const TASK_CATEGORY_TEXT: Record<TaskCategory, string> = {
   team: 'Командные',
   creative: 'Творческие',
   special: 'Особые',
+};
+
+/**
+ * Тип карточки.
+ *
+ * Рисунок знака живёт в `components/game/task-type-icon`; здесь
+ * только слова. `place` — то, что тип обещает про место, и это
+ * не украшение: от типа зависит, что команда увидит на карте.
+ *
+ *   загадка   — примерный район, точки нет: иначе карта решала бы
+ *               загадку за команду;
+ *   фото      — точный крест, к нему и надо дойти;
+ *   актив     — места нет вовсе, делается где угодно в поле.
+ */
+export const TASK_CARD_TYPE_TEXT: Record<
+  TaskCardType,
+  { label: string; hint: string; place: string }
+> = {
+  riddle: {
+    label: 'Загадка',
+    hint: 'Найти объект по описанию.',
+    place: 'Примерный район',
+  },
+  photo: {
+    label: 'Фото-повтор',
+    hint: 'Повторить то, что видно.',
+    place: 'Точка на карте',
+  },
+  active: {
+    label: 'Актив',
+    hint: 'Сделать что-то в городе.',
+    place: 'Где угодно в поле',
+  },
+};
+
+/**
+ * Что задание обещает про карту.
+ *
+ * До 0014 это выводилось из типа карточки, и выбора не было.
+ * Теперь режим отдельный, а `place` из `TASK_CARD_TYPE_TEXT`
+ * остаётся только для витрины лендинга, где карты нет вовсе.
+ */
+export const TASK_MAP_MODE_TEXT: Record<
+  TaskMapMode,
+  { label: string; place: string; hint: string }
+> = {
+  none: {
+    label: 'Без карты',
+    place: 'Где угодно в поле',
+    hint: 'Задание не привязано к месту и на карте не появится.',
+  },
+  point: {
+    label: 'Точка',
+    place: 'Точка на карте',
+    hint: 'Крест по координатам: команда знает, куда идти.',
+  },
+  area: {
+    label: 'Область',
+    place: 'Обведённый район',
+    hint: 'Контур без центра: точное место остаётся ответом.',
+  },
+};
+
+/**
+ * Названия полей формы задания — для сообщения об ошибке.
+ *
+ * Форма длинная: кнопка «Создать задание» стоит внизу, а
+ * незаполненное описание — вверху, и подпись под полем оттуда не
+ * видно. Нажатие выглядело как «ничего не произошло». Поэтому
+ * ошибка называет поля по именам сразу над кнопкой.
+ *
+ * Ключи — пути из схемы, они же ключи `state.fields`.
+ */
+export const TASK_FIELD_LABELS: Record<string, string> = {
+  number: 'Номер',
+  title: 'Название',
+  shortDescription: 'Краткое описание',
+  description: 'Полное описание',
+  points: 'Баллы',
+  category: 'Категория',
+  cardType: 'Тип карточки',
+  difficulty: 'Сложность',
+  validationMode: 'Режим проверки',
+  criteria: 'Критерии проверки',
+  hiddenCriteria: 'Скрытые критерии',
+  minimumPeople: 'Минимум людей в кадре',
+  maxAttempts: 'Попыток',
+  latitude: 'Широта',
+  longitude: 'Долгота',
+  radiusMeters: 'Радиус',
+  areaPolygon: 'Область на карте',
+  imageCaption: 'Плашка над картинкой',
+  landingSlot: 'Слот на главной',
+  backstory: 'Справка о месте',
+  afterword: 'Что рассказать',
+  afterwordUrl: 'Ссылка',
+  afterwordUrlLabel: 'Подпись ссылки',
 };
 
 export const TASK_DIFFICULTY_TEXT: Record<TaskDifficulty, string> = {

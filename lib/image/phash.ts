@@ -1,5 +1,5 @@
 import 'server-only';
-import sharp from 'sharp';
+import { loadSharp } from '@/lib/image/sharp';
 
 /**
  * Перцептивный хэш (pHash) на дискретном косинусном преобразовании.
@@ -85,6 +85,11 @@ function median(values: number[]): number {
  * ронять приём отправки.
  */
 export async function computePerceptualHash(input: Buffer): Promise<string | null> {
+  // Без обработки картинок дублей мы не ищем. Это хуже, чем с
+  // ними, но несравнимо лучше, чем не принять фотографию вовсе.
+  const sharp = await loadSharp();
+  if (!sharp) return null;
+
   try {
     const raw = await sharp(input)
       // Поворот по EXIF нужен до того, как мы теряем метаданные,

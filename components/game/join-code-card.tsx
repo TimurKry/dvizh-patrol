@@ -52,8 +52,8 @@ export function JoinCodeCard({
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-subheading">Код команды</h2>
-        {full && <span className="text-caption text-sepia">состав собран</span>}
+        <h2 className="text-body-lg">Код команды</h2>
+        {full && <span className="text-caption text-muted">состав собран</span>}
       </div>
 
       {revealed ? (
@@ -74,7 +74,7 @@ export function JoinCodeCard({
             </Button>
           </div>
 
-          <p className="text-caption text-sepia">
+          <p className="text-caption text-muted">
             {full
               ? `В команде уже ${teamSize} ${membersWord(teamSize)} — больше добавить нельзя.`
               : `Передайте код остальным. Свободных мест: ${teamSize - membersCount}.`}
@@ -82,7 +82,7 @@ export function JoinCodeCard({
         </>
       ) : (
         <div className="flex flex-col gap-3">
-          <p className="text-body text-sepia">
+          <p className="text-body text-muted">
             Квест идёт — код скрыт, чтобы не мелькал на экране. Показать его может капитан.
           </p>
           <Button variant="secondary" size="sm" onClick={() => setRevealed(true)}>

@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { EmptyState, Notice } from '@/components/ui/feedback';
 import { Card, Eyebrow, Meta } from '@/components/ui/surface';
-import { getTasksForTeam } from '@/lib/data/tasks';
+import { getTeamHand } from '@/lib/data/tasks';
 import { requireTeamSession } from '@/lib/session/require';
-import { toPlayArea } from '@/lib/geo';
+import { asAreaPolygon, ringCenter, toPlayArea } from '@/lib/geo';
 import type { MapPoint } from '@/components/game/quest-map';
+import { questOver, submissionsOpen } from '@/lib/event-status';
 
 /**
  * Карта квеста.
@@ -31,7 +32,7 @@ const QuestMap = dynamicImport(
   () => import('@/components/game/quest-map').then((m) => m.QuestMap),
   {
     loading: () => (
-      <div className="h-[420px] w-full animate-pulse rounded-[16px] border border-hairline bg-canvas-deep" />
+      <div className="h-[420px] w-full animate-pulse border border-hairline bg-canvas-deep" />
     ),
   },
 );
@@ -47,26 +48,63 @@ export default async function MapPage() {
   // Та же преграда, что и на списке заданий: до старта точки
   // заданий не читаются из базы вовсе. Поле при этом показываем —
   // знать, где будет игра, полезно заранее и ничего не выдаёт.
-  const tasksOpen = ['live', 'paused', 'finished'].includes(session.event.status);
+  const tasksOpen =
+    session.team.is_test || ['live', 'paused', 'finished'].includes(session.event.status);
 
   const points: MapPoint[] = [];
 
+  // Место сбора появляется, когда игра позади. До этого оно на
+  // карте только сбивает: посреди квеста туда идти рано, а
+  // любопытным звёздочка подсказывает, в какой стороне финиш.
+  if (questOver(session.event) && session.event.finish_latitude !== null) {
+    points.push({
+      id: 'finish',
+      latitude: session.event.finish_latitude,
+      longitude: session.event.finish_longitude!,
+      label: '★',
+      title: session.event.finish_title ?? 'Место сбора',
+      kind: 'cross',
+    });
+  }
+
   if (tasksOpen) {
-    const items = await getTasksForTeam(session.event.id, session.teamId, {
-      eventLive: session.event.status === 'live',
+    // На карте только рука. Показать точки всего пула значило бы
+    // выдать содержание квеста через карту в обход раздачи —
+    // ровно то, от чего рука и защищает.
+    const items = await getTeamHand(session.event.id, session.teamId, {
+      eventLive: submissionsOpen(session.event) || session.team.is_test,
     });
 
     for (const item of items) {
       const { task } = item;
-      if (task.latitude == null || task.longitude == null) continue;
+
+      // На карту идёт то, что организатор решил показать, а не то,
+      // что следует из типа карточки. До 0014 это было одно и то
+      // же, и «загадка» означала круг независимо от того, уместен
+      // он или нет.
+      if (task.map_mode === 'none') continue;
+
+      const ring = asAreaPolygon(task.area_polygon)?.coordinates[0] ?? null;
+      const center = ring ? ringCenter(ring) : null;
+
+      const latitude = center?.latitude ?? task.latitude;
+      const longitude = center?.longitude ?? task.longitude;
+      if (latitude == null || longitude == null) continue;
+
       points.push({
         id: task.id,
-        latitude: task.latitude,
-        longitude: task.longitude,
+        latitude,
+        longitude,
         label: String(task.number),
         title: task.title,
         href: `/tasks/${task.id}`,
         radiusMeters: task.radius_meters,
+        ring,
+        // Район показывает контур без центра, точка — крест.
+        // Разница не косметическая: у загадки точное место и есть
+        // ответ, и выдать его на карте значит решить задание за
+        // команду.
+        kind: task.map_mode === 'area' ? 'zone' : 'cross',
         done: item.state === 'accepted',
       });
     }
@@ -76,7 +114,7 @@ export default async function MapPage() {
     return (
       <div className="page-well with-bottom-nav py-8 md:py-12">
         <Eyebrow>Команда «{session.team.name}»</Eyebrow>
-        <h1 className="mt-3 text-heading md:text-heading-lg">Карта</h1>
+        <h1 className="mt-3 text-headline md:text-headline">Карта</h1>
         <div className="mt-8">
           <EmptyState
             title="Карта пока пуста"
@@ -96,19 +134,21 @@ export default async function MapPage() {
     <div className="page-well with-bottom-nav py-8 md:py-12">
       <Eyebrow>Команда «{session.team.name}»</Eyebrow>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-heading md:text-heading-lg">Карта</h1>
+        <h1 className="text-headline md:text-headline">Карта</h1>
         {area && (
           <Meta>
-            поле — {formatDistance(area.radiusMeters)} вокруг центра
+            {area.shape === 'polygon'
+              ? 'поле обведено по границе'
+              : `поле — ${formatDistance(area.radiusMeters)} вокруг центра`}
           </Meta>
         )}
       </div>
 
       {area && session.event.area_enforced && (
         <div className="mt-6">
-          <Notice tone="strong" icon="!">
-            Фотографии принимаются только внутри игрового поля. Отправка попросит
-            геопозицию — без неё принять снимок не получится.
+          <Notice tone="strong" icon="upload-failed">
+            Фотографии принимаются только внутри игрового поля. Отправка попросит геопозицию — без
+            неё принять снимок не получится.
           </Notice>
         </div>
       )}
@@ -119,8 +159,8 @@ export default async function MapPage() {
 
       {points.length > 0 ? (
         <section className="mt-8">
-          <h2 className="text-subheading">Задания на карте</h2>
-          <p className="mt-1 text-caption text-sand">
+          <h2 className="text-body-lg">Задания на карте</h2>
+          <p className="mt-1 text-caption text-faint">
             Здесь только задания с заданным местом. Остальные ищутся по описанию.
           </p>
 
@@ -129,18 +169,20 @@ export default async function MapPage() {
               <li key={point.id}>
                 <Link href={point.href ?? '#'} className="block">
                   <Card interactive className="flex items-center gap-4">
-                    <span className="poster-figure shrink-0 text-heading-sm text-brick">
+                    <span className="display-figure shrink-0 text-title text-signal">
                       {point.label}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-body">{point.title}</span>
                       {point.radiusMeters && (
-                        <span className="block text-caption text-sand">
+                        <span className="block text-caption text-faint">
                           зачёт в радиусе {formatDistance(point.radiusMeters)}
                         </span>
                       )}
                     </span>
-                    {point.done && <span className="shrink-0 text-caption text-sepia">принято</span>}
+                    {point.done && (
+                      <span className="shrink-0 text-caption text-muted">принято</span>
+                    )}
                   </Card>
                 </Link>
               </li>
@@ -148,7 +190,7 @@ export default async function MapPage() {
           </ul>
         </section>
       ) : (
-        <p className="mt-6 text-body text-sepia">
+        <p className="mt-6 text-body text-muted">
           {tasksOpen
             ? 'Ни одно задание не привязано к месту — всё ищется по описанию.'
             : 'Задания откроются в момент старта квеста. Пока на карте только границы поля.'}

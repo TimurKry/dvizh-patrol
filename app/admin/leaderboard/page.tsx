@@ -60,15 +60,15 @@ export default async function AdminLeaderboardPage() {
     <div className="page-well flex max-w-3xl flex-col gap-6 py-8">
       <header>
         <Eyebrow>Управление</Eyebrow>
-        <h1 className="mt-2 text-heading">Рейтинг</h1>
-        <p className="mt-2 text-body text-sepia">
+        <h1 className="mt-2 text-headline">Рейтинг</h1>
+        <p className="mt-2 text-body text-muted">
           Текущий режим: <strong>{LEADERBOARD_MODE_TEXT[event.leaderboard_mode]}</strong>.{' '}
           {MODE_HINT[event.leaderboard_mode]}
         </p>
       </header>
 
       <Card className="flex flex-col gap-4 p-5">
-        <h2 className="text-subheading">Режим показа</h2>
+        <h2 className="text-body-lg">Режим показа</h2>
         <div className="flex flex-wrap gap-2">
           {LEADERBOARD_MODES.map((mode) => (
             <ActionButton
@@ -90,7 +90,7 @@ export default async function AdminLeaderboardPage() {
         </div>
 
         {event.leaderboard_mode === 'frozen' && event.leaderboard_frozen_at && (
-          <Notice icon="❄">
+          <Notice icon="frozen">
             Заморожено{' '}
             {new Intl.DateTimeFormat('ru-RU', {
               day: '2-digit',
@@ -106,7 +106,7 @@ export default async function AdminLeaderboardPage() {
 
       {/* ═══ Актуальный рейтинг ═════════════════════════════ */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-subheading">
+        <h2 className="text-body-lg">
           Актуальный рейтинг {event.leaderboard_mode === 'frozen' && '(участникам не виден)'}
         </h2>
 
@@ -117,18 +117,18 @@ export default async function AdminLeaderboardPage() {
             {live.map((row) => (
               <li
                 key={row.team_id}
-                className="flex items-center gap-4 rounded-[16px] border border-hairline bg-paper px-4 py-3"
+                className="flex items-center gap-4 border border-hairline bg-panel px-4 py-3"
               >
-                <span className="w-8 shrink-0 text-heading-sm tabular-nums">{row.position}</span>
+                <span className="w-8 shrink-0 text-title tabular-nums">{row.position}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-body">{row.team_name}</p>
-                  <p className="text-caption text-sepia">
+                  <p className="text-caption text-muted">
                     {row.accepted_count} {tasksWord(row.accepted_count)} принято
                   </p>
                 </div>
-                <span className="shrink-0 text-subheading tabular-nums">
+                <span className="shrink-0 text-body-lg tabular-nums">
                   {row.total_points}
-                  <span className="ml-1 text-caption text-sepia">
+                  <span className="ml-1 text-caption text-muted">
                     {pointsWord(row.total_points)}
                   </span>
                 </span>
@@ -142,16 +142,16 @@ export default async function AdminLeaderboardPage() {
       {snapshot.length > 0 && (
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-subheading">Сохранённый снимок</h2>
+            <h2 className="text-body-lg">Сохранённый снимок</h2>
             <Tag>его видят участники</Tag>
           </div>
           <ol className="flex flex-col gap-2">
             {snapshot.map((row) => (
               <li
                 key={`${row.position}-${row.team_name}`}
-                className="flex items-center gap-4 rounded-[16px] border border-dashed border-hairline-strong bg-paper px-4 py-3"
+                className="flex items-center gap-4 border border-dashed border-hairline-strong bg-panel px-4 py-3"
               >
-                <span className="w-8 shrink-0 text-heading-sm tabular-nums">{row.position}</span>
+                <span className="w-8 shrink-0 text-title tabular-nums">{row.position}</span>
                 <span className="min-w-0 flex-1 truncate text-body">{row.team_name}</span>
                 <span className="shrink-0 tabular-nums">{row.total_points}</span>
               </li>
@@ -160,7 +160,7 @@ export default async function AdminLeaderboardPage() {
         </section>
       )}
 
-      <p className="text-caption text-sepia">
+      <p className="text-caption text-muted">
         Сортировка: сумма баллов, затем число принятых заданий, затем время последнего принятого
         задания. Баллы считаются как сумма журнала начислений — отдельного счётчика в базе нет.
       </p>

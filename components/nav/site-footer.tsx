@@ -1,5 +1,13 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { DotCluster } from '@/components/ui/logo';
+import { TELEGRAM_MANAGER, TELEGRAM_MANAGER_URL } from '@/lib/links';
+
+/**
+ * Подвал · Figma 85:17…85:25.
+ *
+ * Знак и контакт менеджера слева, служебные ссылки справа,
+ * копирайт отдельной строкой под волосяной линией.
+ */
 
 const LINKS = [
   { href: '/rules', label: 'Правила' },
@@ -10,21 +18,36 @@ const LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-hairline">
-      <div className="page-well flex flex-col gap-6 py-10 md:flex-row md:items-start md:justify-between">
-        <div className="flex flex-col gap-2">
-          <DotCluster size={20} />
-          <p className="text-body font-medium">Движ-Патруль</p>
-          <p className="max-w-xs text-caption text-sepia">
-            Городской фото-квест. Лейпциг, Германия.
-          </p>
+    <footer className="border-t border-hairline">
+      <div className="page-well flex flex-col gap-8 py-10 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-3">
+          <Image
+            src="/brand/dvizh-leipzig.png"
+            alt="Dvizh Leipzig"
+            width={1200}
+            height={973}
+            className="h-auto w-[112px]"
+          />
+          <p className="font-display text-caption font-semibold uppercase">Движ-Патруль</p>
+          <a
+            href={TELEGRAM_MANAGER_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="signal-label underline-slide w-fit text-micro text-ink hover:text-signal"
+          >
+            Менеджер · @{TELEGRAM_MANAGER}
+          </a>
+          <p className="signal-label text-micro text-muted">Leipzig · Germany</p>
         </div>
 
         <nav aria-label="Дополнительные ссылки">
-          <ul className="flex flex-col gap-2 md:items-end">
+          <ul className="flex flex-col gap-3 md:items-end">
             {LINKS.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="text-caption text-sepia hover:text-ink">
+                <Link
+                  href={link.href}
+                  className="inline-flex min-h-[44px] items-center text-caption text-muted hover:text-ink"
+                >
                   {link.label}
                 </Link>
               </li>
@@ -33,11 +56,12 @@ export function SiteFooter() {
         </nav>
       </div>
 
-      <div className="page-well border-t border-hairline py-5">
-        <p className="text-caption text-sand">
+      <div className="page-well flex flex-col gap-2 border-t border-hairline py-5">
+        <p className="text-caption text-faint">
           Фотографии участников хранятся в закрытом хранилище и используются только для
           подтверждения заданий. Публикация в социальных сетях — по отдельному согласию.
         </p>
+        <p className="signal-label text-micro text-faint">© Движ Патруль</p>
       </div>
     </footer>
   );

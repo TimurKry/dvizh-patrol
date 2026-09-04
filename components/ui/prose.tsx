@@ -24,22 +24,22 @@ export function ProseSection({
 }) {
   return (
     <section id={id} className="flex flex-col gap-3">
-      <h2 className="text-heading-sm">{title}</h2>
+      <h2 className="text-title">{title}</h2>
       {children}
     </section>
   );
 }
 
 export function P({ children }: { children: ReactNode }) {
-  return <p className="text-body text-sepia">{children}</p>;
+  return <p className="text-body text-muted">{children}</p>;
 }
 
 export function List({ items }: { items: ReactNode[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {items.map((item, index) => (
-        <li key={index} className="flex gap-3 text-body text-sepia">
-          <span aria-hidden="true" className="text-sand">
+        <li key={index} className="flex gap-3 text-body text-muted">
+          <span aria-hidden="true" className="text-faint">
             —
           </span>
           <span>{item}</span>
@@ -53,8 +53,8 @@ export function NumberedList({ items }: { items: ReactNode[] }) {
   return (
     <ol className="flex flex-col gap-2">
       {items.map((item, index) => (
-        <li key={index} className="flex gap-3 text-body text-sepia">
-          <span aria-hidden="true" className="min-w-6 text-sand tabular-nums">
+        <li key={index} className="flex gap-3 text-body text-muted">
+          <span aria-hidden="true" className="min-w-6 text-faint tabular-nums">
             {index + 1}.
           </span>
           <span>{item}</span>
@@ -75,9 +75,9 @@ export function PageHeader({
 }) {
   return (
     <header className="flex flex-col gap-3">
-      <p className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">{eyebrow}</p>
-      <h1 className="text-heading md:text-heading-lg">{title}</h1>
-      {lead && <p className="max-w-[60ch] text-subheading text-sepia">{lead}</p>}
+      <p className="text-caption font-medium uppercase tracking-[0.08em] text-muted">{eyebrow}</p>
+      <h1 className="text-headline md:text-headline">{title}</h1>
+      {lead && <p className="max-w-[60ch] text-body-lg text-muted">{lead}</p>}
     </header>
   );
 }

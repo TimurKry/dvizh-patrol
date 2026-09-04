@@ -53,19 +53,23 @@ export function ReviewPanel({
 
   return (
     <Card className="flex flex-col gap-4 p-4">
-      <h2 className="text-subheading">Решение</h2>
+      <h2 className="text-body-lg">Решение</h2>
 
       {state.message && (
-        <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? '✓' : '!'} role="status">
+        <Notice
+          tone={state.ok ? 'neutral' : 'strong'}
+          icon={state.ok ? 'accepted' : 'upload-failed'}
+          role="status"
+        >
           {state.message}
           {state.ok && nextSubmissionId && ' Открываем следующую…'}
         </Notice>
       )}
 
       {alreadyAccepted && (
-        <Notice icon="•">
-          Отправка уже принята. Отклонение снимет начисленные баллы обратной транзакцией —
-          журнал сохранится.
+        <Notice icon="info">
+          Отправка уже принята. Отклонение снимет начисленные баллы обратной транзакцией — журнал
+          сохранится.
         </Notice>
       )}
 
@@ -87,10 +91,10 @@ export function ReviewPanel({
               onClick={() => setDecision(option.value as typeof decision)}
               aria-pressed={decision === option.value}
               className={
-                'min-h-[44px] rounded-[12px] border px-3 py-2 text-caption font-medium transition-colors ' +
+                'min-h-[44px] border px-3 py-2 text-caption font-medium transition-colors ' +
                 (decision === option.value
-                  ? 'border-ink bg-ink text-paper'
-                  : 'border-hairline bg-paper text-sepia hover:border-hairline-strong') +
+                  ? 'border-ink bg-ink text-canvas'
+                  : 'border-hairline bg-panel text-muted hover:border-hairline-strong') +
                 (option.disabled ? ' cursor-not-allowed opacity-50' : '')
               }
             >
@@ -158,11 +162,11 @@ export function ReviewPanel({
       </form>
 
       {nextSubmissionId ? (
-        <p className="text-caption text-sepia">
+        <p className="text-caption text-muted">
           После решения откроется следующая фотография из очереди.
         </p>
       ) : (
-        <p className="text-caption text-sepia">Это последняя фотография в очереди.</p>
+        <p className="text-caption text-muted">Это последняя фотография в очереди.</p>
       )}
     </Card>
   );

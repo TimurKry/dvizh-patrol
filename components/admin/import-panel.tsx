@@ -1,11 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import {
-  commitImportAction,
-  previewImportAction,
-  type ImportState,
-} from '@/actions/import';
+import { commitImportAction, previewImportAction, type ImportState } from '@/actions/import';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/surface';
 import { Checkbox, Field, TextArea } from '@/components/ui/field';
@@ -29,7 +25,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
   // После успешного импорта показываем только итог.
   if (commit.stage === 'done' && commit.ok) {
     return (
-      <Notice tone="strong" icon="✓" role="status">
+      <Notice tone="strong" icon="accepted" role="status">
         {commit.message} Задания уже видны в разделе «Задания».
       </Notice>
     );
@@ -66,7 +62,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
             name="file"
             type="file"
             accept=".json,.csv,application/json,text/csv"
-            className="w-full rounded-[16px] border border-hairline bg-paper px-4 py-3 text-body file:mr-4 file:rounded-[12px] file:border-0 file:bg-ink file:px-4 file:py-2 file:text-caption file:text-paper"
+            className="w-full border border-hairline bg-panel px-4 py-3 text-body file:mr-4 file: file:border-0 file:bg-ink file:px-4 file:py-2 file:text-caption file:text-canvas"
           />
         </Field>
 
@@ -86,14 +82,18 @@ export function ImportPanel({ eventId }: { eventId: string }) {
       {/* ═══ Шаг 2: результат разбора ═════════════════════ */}
       {state.stage === 'preview' && (
         <div className="flex flex-col gap-5 border-t border-hairline pt-6">
-          <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? '✓' : '!'} role="status">
+          <Notice
+            tone={state.ok ? 'neutral' : 'strong'}
+            icon={state.ok ? 'accepted' : 'upload-failed'}
+            role="status"
+          >
             {state.message}
           </Notice>
 
           {state.issues && state.issues.length > 0 && (
             <Card className="flex flex-col gap-3 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-subheading">Ошибки ({state.issues.length})</h3>
+                <h3 className="text-body-lg">Ошибки ({state.issues.length})</h3>
                 <Button type="button" variant="secondary" size="sm" onClick={downloadIssues}>
                   Скачать отчёт
                 </Button>
@@ -102,7 +102,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
               <div className="scroll-x">
                 <table className="w-full min-w-[520px] border-collapse text-caption">
                   <thead>
-                    <tr className="border-b border-hairline text-left text-sepia">
+                    <tr className="border-b border-hairline text-left text-muted">
                       <th scope="col" className="py-2 pr-3 font-medium">
                         Строка
                       </th>
@@ -131,7 +131,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
               </div>
 
               {state.issues.length > 60 && (
-                <p className="text-caption text-sepia">
+                <p className="text-caption text-muted">
                   Показаны первые 60. Полный список — в скачанном отчёте.
                 </p>
               )}
@@ -140,14 +140,14 @@ export function ImportPanel({ eventId }: { eventId: string }) {
 
           {state.items && state.items.length > 0 && (
             <Card className="flex flex-col gap-3 p-5">
-              <h3 className="text-subheading">
+              <h3 className="text-body-lg">
                 Разобрано: {state.items.length} {tasksWord(state.items.length)}
               </h3>
 
               <div className="scroll-x max-h-80 overflow-y-auto">
                 <table className="w-full min-w-[560px] border-collapse text-caption">
-                  <thead className="sticky top-0 bg-paper">
-                    <tr className="border-b border-hairline text-left text-sepia">
+                  <thead className="sticky top-0 bg-panel">
+                    <tr className="border-b border-hairline text-left text-muted">
                       <th scope="col" className="py-2 pr-3 font-medium">
                         №
                       </th>
@@ -180,7 +180,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
               </div>
 
               {state.existing !== undefined && state.existing > 0 && (
-                <p className="text-caption text-sepia">
+                <p className="text-caption text-muted">
                   Сейчас в мероприятии {state.existing} {tasksWord(state.existing)}. Задания с
                   совпадающими номерами будут перезаписаны.
                 </p>
@@ -195,7 +195,7 @@ export function ImportPanel({ eventId }: { eventId: string }) {
               <input type="hidden" name="content" value={state.content} />
               <input type="hidden" name="format" value={state.format ?? 'json'} />
 
-              <div className="rounded-[16px] border border-hairline bg-paper p-4">
+              <div className=" border border-hairline bg-panel p-4">
                 <Checkbox
                   name="replace"
                   label="Заменить существующие задания"

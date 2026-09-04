@@ -9,6 +9,12 @@
 
 // ═══ Перечисления ══════════════════════════════════════════════
 
+// Цвет команды описан в lib/team-colors.ts вместе с hex-значениями:
+// держать перечисление в двух местах — верный способ их рассинхронить.
+import type { TeamColor } from '@/lib/team-colors';
+
+export type { TeamColor };
+
 export const EVENT_STATUSES = [
   'draft',
   'registration',
@@ -47,12 +53,7 @@ export const VALIDATION_JOB_STATUSES = [
 ] as const;
 export type ValidationJobStatus = (typeof VALIDATION_JOB_STATUSES)[number];
 
-export const LEADERBOARD_MODES = [
-  'public',
-  'team_position_only',
-  'hidden',
-  'frozen',
-] as const;
+export const LEADERBOARD_MODES = ['public', 'team_position_only', 'hidden', 'frozen'] as const;
 export type LeaderboardMode = (typeof LEADERBOARD_MODES)[number];
 
 export const SCORE_TRANSACTION_TYPES = [
@@ -78,6 +79,25 @@ export type TaskCategory = (typeof TASK_CATEGORIES)[number];
 
 export const TASK_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number];
+
+/**
+ * Тип карточки. Рука команды состоит из двух карточек каждого
+ * типа, поэтому это отдельное поле, а не производная от одной из
+ * восьми категорий.
+ */
+export const TASK_CARD_TYPES = ['riddle', 'photo', 'active'] as const;
+export type TaskCardType = (typeof TASK_CARD_TYPES)[number];
+
+/**
+ * Что задание рисует на карте.
+ *
+ * Отдельно от типа карточки намеренно. Раньше «загадка» означала
+ * круг, а «фото» — крест, и выбора не было: круг у загадки либо
+ * настолько мелкий, что выдаёт ответ, либо настолько крупный, что
+ * бесполезен. Тип решает состав руки, режим карты — карту.
+ */
+export const TASK_MAP_MODES = ['none', 'point', 'area'] as const;
+export type TaskMapMode = (typeof TASK_MAP_MODES)[number];
 
 /** Почему отправка ушла в ручную проверку. */
 export const REVIEW_REASONS = [
@@ -125,6 +145,21 @@ export interface EventRow {
   area_radius_meters: number | null;
   /** Строгий режим: отправка вне поля не принимается. */
   area_enforced: boolean;
+  /** Граница поля как GeoJSON Polygon. NULL — используется круг. */
+  area_polygon: unknown;
+  /**
+   * Место сбора после игры.
+   *
+   * Квест заканчивается не таблицей, а тем, что все встречаются и
+   * идут дальше вместе. Координаты заполняются только парой — это
+   * держит ограничение в базе.
+   */
+  finish_latitude: number | null;
+  finish_longitude: number | null;
+  finish_title: string | null;
+  finish_address: string | null;
+  finish_note: string | null;
+  finish_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -138,6 +173,34 @@ export interface TeamRow {
   contact: string | null;
   status: TeamStatus;
   payment_confirmed: boolean;
+  /** Ключ цвета. Hex — в lib/team-colors.ts. NULL, если все шесть заняты. */
+  color: TeamColor | null;
+  /**
+   * Свой потолок участников.
+   *
+   * NULL — берётся общий из настроек мероприятия. Нужен, потому
+   * что одна компания приходит вшестером, а остальные вчетвером:
+   * общее число либо не пускает позванных, либо разрешает всем
+   * добрать лишних.
+   */
+  size_limit: number | null;
+  /**
+   * Служебная команда.
+   *
+   * Играет вне статуса мероприятия и ничего не забирает из пула:
+   * и проверка контента, и альфа-тест идут до квеста, а задания
+   * должны дожить до участников. Какая именно из двух — говорит
+   * `full_pool`; вместе они складываются в `teamAccess()`.
+   */
+  is_test: boolean;
+  /**
+   * Весь пул на руке вместо шести карточек.
+   *
+   * Только у проверки контента: организатор смотрит задания
+   * поштучно, и рука из шести случайных означала бы, что до
+   * остальных он доберётся, только заведя команду заново.
+   */
+  full_pool: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -171,21 +234,96 @@ export interface TaskRow {
   description: string;
   points: number;
   category: TaskCategory;
+  card_type: TaskCardType;
   difficulty: TaskDifficulty;
   validation_mode: ValidationMode;
   criteria: string[];
+  /**
+   * Критерии только для модели.
+   *
+   * Открытые критерии читает команда, и у загадки это ломает игру:
+   * «на фото памятник Фаусту» — готовый ответ под условием.
+   * Скрытые уходят в запрос к модели и наружу не отдаются — см.
+   * `publicTask` в `lib/data/tasks.ts`.
+   */
+  hidden_criteria: string[];
   minimum_people: number;
   max_attempts: number;
   require_location: boolean;
   latitude: number | null;
   longitude: number | null;
   radius_meters: number | null;
+  /** Что рисуется на карте. Не выводится из card_type: см. 0014. */
+  map_mode: TaskMapMode;
+  area_polygon: unknown;
+  /** Плашка над картинкой карточки. NULL — плашки нет. */
+  image_caption: string | null;
+  /** Место в витрине лендинга: 1..3, NULL — не показывать. */
+  landing_slot: number | null;
+  /** Справка, видная сразу: читается по дороге к точке. */
+  backstory: string | null;
+  /** Показывается только после отправки, подсказкой быть не может. */
+  afterword: string | null;
+  afterword_url: string | null;
+  afterword_url_label: string | null;
   active: boolean;
   sort_order: number;
   available_from: string | null;
   available_until: string | null;
+  /** Команда, забравшая задание. NULL — задание ещё в общем пуле. */
+  claimed_by_team_id: string | null;
+  claimed_submission_id: string | null;
+  claimed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Карточка на руке команды.
+ *
+ * Приходит из `get_team_hand` в camelCase — это ответ функции,
+ * а не строка таблицы, поэтому именование отличается от
+ * остальных Row-типов намеренно.
+ */
+export interface HandCard {
+  taskId: string;
+  number: number;
+  title: string;
+  shortDescription: string | null;
+  description: string;
+  cardType: TaskCardType;
+  category: TaskCategory;
+  difficulty: TaskDifficulty;
+  points: number;
+  maxAttempts: number;
+  minimumPeople: number;
+  requireLocation: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  radiusMeters: number | null;
+  criteria: string[];
+  dealtAt: string;
+  attemptsUsed: number;
+  lastStatus: SubmissionStatus | null;
+}
+
+/** Как картинка ложится в кадр 4:3. */
+export const IMAGE_FITS = ['cover', 'contain'] as const;
+export type ImageFit = (typeof IMAGE_FITS)[number];
+
+/**
+ * Рамка картинки.
+ *
+ * Кадр карточки — 4:3, а картинки приходят разные. `cover`
+ * заполняет кадр и обрезает лишнее, `contain` вписывает целиком с
+ * полями. Точка фокуса говорит, что оставить в кадре при обрезке:
+ * у вертикального рисунка это обычно верх, иначе из кадра уезжают
+ * головы.
+ */
+export interface ImageFraming {
+  fit: ImageFit;
+  focusX: number;
+  focusY: number;
 }
 
 export interface TaskReferenceImageRow {
@@ -194,6 +332,9 @@ export interface TaskReferenceImageRow {
   image_path: string;
   caption: string | null;
   sort_order: number;
+  fit: ImageFit;
+  focus_x: number;
+  focus_y: number;
   created_at: string;
 }
 
@@ -201,6 +342,8 @@ export interface SubmissionRow {
   id: string;
   event_id: string;
   team_id: string;
+  /** Копия признака команды: отправка тестовой в гонке не участвует. */
+  is_test: boolean;
   task_id: string;
   member_id: string | null;
   image_path: string | null;

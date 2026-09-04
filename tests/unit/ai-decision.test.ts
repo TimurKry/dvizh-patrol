@@ -99,3 +99,113 @@ describe('противоречия в ответе', () => {
     expect(verdict.action).toBe('accept');
   });
 });
+
+/**
+ * Тот самый случай, который заставил всё это переделать.
+ *
+ * Задание №13: «в кадре читается номер дома». Команда сняла
+ * табличку крупно — номер виден идеально, 0.99. Второй критерий
+ * требовал видеть, что табличка висит на здании, а в кадр с
+ * табличкой здание не помещается: 0.60. Итог — 0.75 и ручная
+ * очередь.
+ *
+ * Здесь важно, что порога не хватило бы. Даже опущенный до 0.5 он
+ * не спас бы: невыполненный критерий пересиливает вердикт и уводит
+ * к человеку отдельной дверью. Поэтому вместе с порогом убран и сам
+ * лишний критерий.
+ */
+describe('строгость, из-за которой годная фотография ушла в очередь', () => {
+  const asShipped = result({
+    decision: 'accept',
+    confidence: 0.75,
+    checks: [
+      { criterion: 'Номер дома читается', passed: true, confidence: 0.99, comment: '' },
+      { criterion: 'Табличка висит на здании', passed: false, confidence: 0.6, comment: '' },
+    ],
+  });
+
+  it('при прежнем пороге уходила к человеку', () => {
+    expect(decide(asShipped, 0.88).action).toBe('manual_review');
+  });
+
+  it('одного снижения порога не хватило бы', () => {
+    // 0.75 выше 0.5, но проваленный критерий — вторая дверь.
+    const verdict = decide(asShipped, 0.5);
+    expect(verdict.action).toBe('manual_review');
+    expect(verdict).toMatchObject({ reason: 'criterion_failed' });
+  });
+
+  it('без лишнего критерия и с новым порогом — принимает', () => {
+    const verdict = decide(
+      result({
+        confidence: 0.75,
+        checks: [{ criterion: 'Номер дома читается', passed: true, confidence: 0.99, comment: '' }],
+      }),
+      0.5,
+    );
+
+    expect(verdict.action).toBe('accept');
+  });
+});
+
+/**
+ * Запреты в системной инструкции.
+ *
+ * Судью намеренно сделали снисходительным, но снисходительность
+ * касается ракурса и света, а не людей в кадре. Эти строки —
+ * обещание со страницы конфиденциальности, и переписывание тона
+ * не должно их задеть.
+ */
+describe('системная инструкция', () => {
+  it('запрещает опознавать людей и судить о них', async () => {
+    const { SYSTEM_RULES_FOR_TESTS } = await import('@/lib/ai/gemini');
+
+    expect(SYSTEM_RULES_FOR_TESTS).toContain('опознавать людей');
+    expect(SYSTEM_RULES_FOR_TESTS).toContain('возраст, пол, национальность');
+    expect(SYSTEM_RULES_FOR_TESTS).toContain('Людей описывай обезличенно');
+  });
+
+  it('оставляет модели только два исхода', async () => {
+    const { SYSTEM_RULES_FOR_TESTS } = await import('@/lib/ai/gemini');
+
+    expect(SYSTEM_RULES_FOR_TESTS).toContain('Отклонять задание ты не можешь');
+  });
+});
+
+/**
+ * Скрытые критерии в запросе к модели.
+ *
+ * Судье всё равно, какой критерий открытый, а какой скрытый: он
+ * проверяет оба списка. Разница только в том, что скрытые не видит
+ * команда — у загадки открытый критерий назвал бы ответ.
+ */
+describe('скрытые критерии в промпте', () => {
+  it('уходят к модели вместе с открытыми', async () => {
+    const { buildPromptForTests } = await import('@/lib/ai/gemini');
+
+    const prompt = buildPromptForTests({
+      title: 'Тот, кто вписал город в свою книгу',
+      description: 'Найдите и снимите.',
+      criteria: ['В кадре вся команда'],
+      hiddenCriteria: ['В кадре памятник Фаусту'],
+      minimumPeople: 0,
+    });
+
+    expect(prompt).toContain('В кадре вся команда');
+    expect(prompt).toContain('В кадре памятник Фаусту');
+  });
+
+  it('без скрытых критериев промпт прежний', async () => {
+    const { buildPromptForTests } = await import('@/lib/ai/gemini');
+
+    const prompt = buildPromptForTests({
+      title: 'Повторите знак',
+      description: 'Найдите знак.',
+      criteria: ['Виден треугольный знак'],
+      minimumPeople: 2,
+    });
+
+    expect(prompt).toContain('Виден треугольный знак');
+    expect(prompt).toContain('минимум 2');
+  });
+});

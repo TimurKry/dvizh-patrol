@@ -135,3 +135,21 @@ ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY;
 GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
 GRANT ALL ON storage.objects TO service_role;
 GRANT ALL ON storage.buckets TO service_role;
+
+-- ─── Права на схему public ───────────────────────────────────
+-- На Supabase эти гранты выставлены платформой, поэтому в
+-- миграциях приложения их нет. Локальному Postgres их выдать
+-- некому, а без USAGE на схему PostgREST-фасад (scripts/qa-rest.mjs)
+-- получает «permission denied for schema public» ещё до RLS.
+--
+-- Раздача широкая намеренно: shim применяется только к
+-- одноразовой локальной базе и никогда — к Supabase.
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT ALL ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;

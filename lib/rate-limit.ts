@@ -29,8 +29,14 @@ export const RATE_LIMITS = {
   createSubmission: { windowSeconds: 60, max: 20 },
   /* Повторная AI-проверка вручную. */
   retryValidation: { windowSeconds: 60, max: 30 },
+  /* Отказ от карточки. Числового лимита у механики нет — её
+     ограничивает то, что отказ необратим, — но нажатая с досады
+     кнопка не должна перебрать полпула за десять секунд. */
+  declineTask: { windowSeconds: 60, max: 6 },
   /* Вход администратора. */
   adminLogin: { windowSeconds: 900, max: 10 },
+  /* Проверка связи с моделью: кнопка в админке, а не игровой путь. */
+  aiPing: { windowSeconds: 60, max: 10 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

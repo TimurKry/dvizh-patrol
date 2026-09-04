@@ -22,7 +22,10 @@
     "db:start": "./scripts/local-db.sh start",
     "db:stop": "./scripts/local-db.sh stop",
     "db:reset": "./scripts/local-db.sh reset",
+    "db:qa": "./scripts/local-db.sh reset && ./scripts/local-db.sh psql -q -X -f supabase/local/qa-seed.sql",
+    "qa:rest": "node scripts/qa-rest.mjs",
     "db:psql": "./scripts/local-db.sh psql",
+    "refs:upload": "node scripts/upload-references.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
@@ -30,6 +33,8 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.58.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.31.0",
+    "mapbox-gl": "^3.28.1",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4",

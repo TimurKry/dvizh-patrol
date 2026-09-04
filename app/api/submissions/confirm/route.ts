@@ -1,19 +1,13 @@
 import { NextResponse, after } from 'next/server';
-import sharp from 'sharp';
 import { runValidationWorker } from '@/lib/ai/worker';
 import { isAiConfigured } from '@/lib/env';
 import { checkLocation, checkPlayArea, toPlayArea } from '@/lib/geo';
 import { computePerceptualHash, findDuplicate } from '@/lib/image/phash';
+import { loadSharp } from '@/lib/image/sharp';
 import { errorMessage } from '@/lib/messages';
 import { getTeamSession } from '@/lib/session/team-session';
 import { callRpc, supabaseAdmin } from '@/lib/supabase/admin';
-import {
-  BUCKETS,
-  downloadObject,
-  objectExists,
-  previewPath,
-  uploadObject,
-} from '@/lib/storage';
+import { BUCKETS, downloadObject, objectExists, previewPath, uploadObject } from '@/lib/storage';
 import { submissionConfirmSchema } from '@/lib/validation/schemas';
 import type { SubmissionRow, TaskRow } from '@/types/database';
 
@@ -188,10 +182,7 @@ export async function POST(request: Request) {
   // Файл действительно долетел?
   const exists = await objectExists(BUCKETS.submissions, storagePath);
   if (!exists) {
-    await db
-      .from('submissions')
-      .update({ status: 'upload_failed' })
-      .eq('id', submission.id);
+    await db.from('submissions').update({ status: 'upload_failed' }).eq('id', submission.id);
 
     return NextResponse.json(
       {
@@ -291,7 +282,18 @@ export async function POST(request: Request) {
   if (result.data.status === 'pending') {
     after(async () => {
       try {
-        await runValidationWorker({ limit: 1 });
+        // Три, а не одна: рабочий берёт самую старую задачу из
+        // очереди, а не обязательно эту. Значит каждая новая
+        // отправка заодно разбирает застрявшие — те, у которых
+        // модель отвалилась по таймауту и задача вернулась в
+        // очередь. С одной за раз хвост рассасывался бы ровно со
+        // скоростью новых отправок, а последняя застрявшая за
+        // вечер ждала бы ночного прохода.
+        //
+        // Три параллельных запроса укладываются в отведённое
+        // функции время: они идут одновременно, и общее ожидание
+        // остаётся равным одному запросу.
+        await runValidationWorker({ limit: 3 });
       } catch {
         // Не получилось — очередь заберёт следующий проход.
       }
@@ -313,6 +315,9 @@ function mimeFor(extension: string): string {
 }
 
 async function buildPreview(file: Buffer): Promise<Buffer | null> {
+  const sharp = await loadSharp();
+  if (!sharp) return null;
+
   try {
     return await sharp(file)
       .rotate()

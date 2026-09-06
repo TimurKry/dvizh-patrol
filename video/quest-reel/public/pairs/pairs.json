@@ -1,0 +1,98 @@
+[
+  {
+    "slot": "01",
+    "team": "Клуб убийц по субботам",
+    "color": "red",
+    "number": 10,
+    "title": "Ратуша, которая старше",
+    "cardType": "photo",
+    "points": 20,
+    "caption": null,
+    "task": "01-task.webp",
+    "shot": "01-shot.webp"
+  },
+  {
+    "slot": "02",
+    "team": "Зелёная команда",
+    "color": "green",
+    "number": 17,
+    "title": "Повтори мем",
+    "cardType": "photo",
+    "points": 60,
+    "caption": null,
+    "task": "02-task.webp",
+    "shot": "02-shot.webp"
+  },
+  {
+    "slot": "03",
+    "team": "Коржики",
+    "color": "yellow",
+    "number": 24,
+    "title": "Круглое окно",
+    "cardType": "photo",
+    "points": 70,
+    "caption": null,
+    "task": "03-task.webp",
+    "shot": "03-shot.webp"
+  },
+  {
+    "slot": "04",
+    "team": "Розовая команда",
+    "color": "pink",
+    "number": 31,
+    "title": "Отражение",
+    "cardType": "photo",
+    "points": 90,
+    "caption": null,
+    "task": "04-task.webp",
+    "shot": "04-shot.webp"
+  },
+  {
+    "slot": "05",
+    "team": "Фанаты Маруси",
+    "color": "teal",
+    "number": 38,
+    "title": "Город звучит",
+    "cardType": "photo",
+    "points": 120,
+    "caption": null,
+    "task": "05-task.webp",
+    "shot": "05-shot.webp"
+  },
+  {
+    "slot": "06",
+    "team": "Клуб убийц по субботам",
+    "color": "red",
+    "number": 45,
+    "title": "Первая высотка",
+    "cardType": "photo",
+    "points": 20,
+    "caption": null,
+    "task": "06-task.webp",
+    "shot": "06-shot.webp"
+  },
+  {
+    "slot": "07",
+    "team": "Зелёная команда",
+    "color": "green",
+    "number": 52,
+    "title": "Рыцарь под ногами",
+    "cardType": "photo",
+    "points": 60,
+    "caption": null,
+    "task": null,
+    "shot": "07-shot.webp"
+  },
+  {
+    "slot": "08",
+    "team": "Коржики",
+    "color": "yellow",
+    "number": 59,
+    "title": "Эркер",
+    "cardType": "photo",
+    "points": 70,
+    "caption": null,
+    "task": "08-task.webp",
+    "shot": "08-shot.webp"
+  }
+]

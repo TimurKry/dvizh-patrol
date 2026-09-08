@@ -46,7 +46,18 @@ export function DownloadPhotos({ scope }: { scope?: 'accepted' }) {
       );
 
       if (!response.ok) {
-        throw new Error('Не удалось получить список фотографий.');
+        // Причину показываем на экране, а не только в консоли:
+        // иначе «не удалось» отправляет организатора искать логи.
+        const reason = await response
+          .json()
+          .then((body: { detail?: string; error?: string }) => body.detail ?? body.error)
+          .catch(() => null);
+
+        throw new Error(
+          reason
+            ? `Не удалось получить список фотографий: ${reason}`
+            : 'Не удалось получить список фотографий.',
+        );
       }
 
       const { files, archiveName } = (await response.json()) as {

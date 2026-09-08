@@ -27,6 +27,19 @@ export const dynamic = 'force-dynamic';
  * середине, а прогресс видно вживую.
  */
 
+/**
+ * Связь называется по колонке, а не по таблице, и это обязательно.
+ *
+ * Между `submissions` и `tasks` две дороги: отправка ссылается на
+ * задание через `task_id`, а задание на победившую отправку — через
+ * `claimed_submission_id`. От безымянного `tasks(...)` PostgREST
+ * отказывается: он не знает, какую из двух иметь в виду, и весь
+ * запрос падает. Форма `tasks:task_id (...)` снимает вопрос.
+ */
+const SELECT =
+  'id,status,attempt_number,image_path,submitted_at,' +
+  'teams:team_id (name),tasks:task_id (number, title)';
+
 interface Row {
   id: string;
   status: SubmissionStatus;
@@ -53,7 +66,7 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin()
     .from('submissions')
-    .select('id,status,attempt_number,image_path,submitted_at,teams(name),tasks(number,title)')
+    .select(SELECT)
     .eq('event_id', event.id)
     .not('image_path', 'is', null)
     .order('submitted_at', { ascending: true });
@@ -63,7 +76,14 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ ok: false, error: 'database_error' }, { status: 500 });
+    // Причина уходит и в журнал, и в ответ. Маршрут админский,
+    // прятать от организатора нечего, а «не удалось» без причины
+    // означает ещё один заход в логи вместо ответа на экране.
+    console.error('export/photos:', error.message);
+    return NextResponse.json(
+      { ok: false, error: 'database_error', detail: error.message },
+      { status: 500 },
+    );
   }
 
   const rows = (data ?? []) as unknown as Row[];

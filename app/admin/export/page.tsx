@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Card, Eyebrow } from '@/components/ui/surface';
+import { DownloadPhotos } from '@/components/admin/download-photos';
 import { Notice } from '@/components/ui/feedback';
 import { EmptyState } from '@/components/ui/feedback';
 import { requireAdmin } from '@/lib/auth/admin';
@@ -81,23 +82,22 @@ export default async function AdminExportPage() {
         скачать из панели Supabase в любой момент.
       </Notice>
 
-      <Card className="flex flex-col gap-3 p-5">
-        <h2 className="text-body-lg">Выгрузка фотографий</h2>
-        <p className="text-body text-muted">
-          Все снимки лежат в приватном бакете <code>submission-images</code> по пути{' '}
-          <code>
-            events/{'{'}eventId{'}'}/teams/{'{'}teamId{'}'}/tasks/{'{'}taskId{'}'}/…
-          </code>
-          . Скачать их целиком удобнее через Supabase CLI:
-        </p>
-        <pre className="scroll-x bg-ink-wash p-3 text-caption">
-          <code>{`supabase storage download \\
-  --recursive ss:///submission-images/events/${event.id} \\
-  ./фотографии-квеста`}</code>
-        </pre>
+      <Card className="flex flex-col gap-4 p-5">
+        <div>
+          <h2 className="text-body-lg">Фотографии архивом</h2>
+          <p className="mt-1 text-body text-muted">
+            Все снимки, которые прислали команды, одним ZIP. Внутри — папки по командам, файлы
+            названы номером и заданием: <code>Коржики/059 — Ратуша.jpg</code>. Отклонённые и
+            повторные попытки помечены прямо в имени.
+          </p>
+        </div>
+
+        <DownloadPhotos />
+
         <p className="text-caption text-muted">
-          Архив на 500 фотографий весит около 400 МБ. Собирать его в браузере через
-          serverless-функцию не стоит — упрётся в лимит времени.
+          Скачивает и упаковывает сам браузер, поэтому вкладку до конца лучше не закрывать. Сотня
+          снимков — это около ста мегабайт: на телефоне может не хватить памяти, с компьютера
+          надёжнее.
         </p>
       </Card>
     </div>

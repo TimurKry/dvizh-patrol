@@ -68,7 +68,10 @@ export default async function TaskPage({ params }: { params: Promise<{ taskId: s
 
   // См. список заданий: срок закрывает отправку раньше статуса.
   const eventLive = submissionsOpen(session.event) || session.team.is_test;
-  const item = await getTaskForTeam(session.event.id, session.teamId, taskId, { eventLive });
+  const item = await getTaskForTeam(session.event.id, session.teamId, taskId, {
+    eventLive,
+    ignoreClaims: session.team.is_test,
+  });
 
   if (!item) notFound();
 

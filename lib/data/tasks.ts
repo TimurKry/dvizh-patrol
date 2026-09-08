@@ -63,10 +63,24 @@ const ATTEMPT_STATUSES: SubmissionStatus[] = [
  * или уже трогалось командой. Без этого ограничения страница
  * заданий вернула бы весь пул, и весь смысл руки пропал бы.
  */
+/**
+ * Настройки взгляда на задания.
+ *
+ * `ignoreClaims` поднимается для служебных команд: они не
+ * участвуют в гонке и ничего не забирают, поэтому чужой захват для
+ * них не состояние карточки, а посторонний факт. Без этого после
+ * квеста, когда все задания разобраны, тестовая команда видела бы
+ * только «забрали» и пустую руку.
+ */
+export interface TaskViewOptions {
+  eventLive: boolean;
+  ignoreClaims?: boolean;
+}
+
 export async function getTeamHand(
   eventId: string,
   teamId: string,
-  options: { eventLive: boolean },
+  options: TaskViewOptions,
 ): Promise<TaskWithState[]> {
   const { data, error } = await supabaseAdmin().rpc('get_team_hand', { p_team_id: teamId });
 
@@ -106,7 +120,7 @@ function publicTask(task: TaskRow): TaskRow {
 export async function getTasksForTeam(
   eventId: string,
   teamId: string,
-  options: { eventLive: boolean },
+  options: TaskViewOptions,
   scope: { taskIds?: string[] } = {},
 ): Promise<TaskWithState[]> {
   const db = supabaseAdmin();
@@ -176,7 +190,15 @@ export async function getTasksForTeam(
 
     // Захват сильнее всех прочих состояний: если задание забрала
     // другая команда, ни попытки, ни проверка уже ничего не решают.
-    const claimedByOther = task.claimed_by_team_id !== null && task.claimed_by_team_id !== teamId;
+    //
+    // Служебная команда — исключение: она в гонке не участвует и
+    // сама ничего не захватывает, поэтому чужой захват для неё
+    // ничего не значит. Иначе после квеста, когда разобраны все
+    // задания, проверять было бы нечего.
+    const claimedByOther =
+      !options.ignoreClaims &&
+      task.claimed_by_team_id !== null &&
+      task.claimed_by_team_id !== teamId;
 
     let state: TaskState = 'available';
     if (claimedByOther) state = 'claimed_by_other';
@@ -223,7 +245,7 @@ export async function getTaskForTeam(
   eventId: string,
   teamId: string,
   taskId: string,
-  options: { eventLive: boolean },
+  options: TaskViewOptions,
 ): Promise<TaskWithState | null> {
   const db = supabaseAdmin();
 

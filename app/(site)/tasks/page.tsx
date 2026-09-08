@@ -73,7 +73,10 @@ export default async function TasksPage() {
   // предлагать кнопку было бы обманом.
   const eventLive = submissionsOpen(session.event) || session.team.is_test;
   const over = questOver(session.event) && !session.team.is_test;
-  const hand = await getTeamHand(session.event.id, session.teamId, { eventLive });
+  const hand = await getTeamHand(session.event.id, session.teamId, {
+    eventLive,
+    ignoreClaims: session.team.is_test,
+  });
   const access = teamAccessSpec(teamAccess(session.team));
 
   const waiting = hand.some((item) => item.state === 'in_review');

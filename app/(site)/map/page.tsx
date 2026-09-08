@@ -73,6 +73,7 @@ export default async function MapPage() {
     // ровно то, от чего рука и защищает.
     const items = await getTeamHand(session.event.id, session.teamId, {
       eventLive: submissionsOpen(session.event) || session.team.is_test,
+      ignoreClaims: session.team.is_test,
     });
 
     for (const item of items) {

@@ -35,6 +35,8 @@ export async function resetData(): Promise<void> {
       public.leaderboard_snapshots,
       public.admin_audit_log,
       public.rate_limits,
+      public.lead_activities,
+      public.leads,
       public.events
     RESTART IDENTITY CASCADE
   `);

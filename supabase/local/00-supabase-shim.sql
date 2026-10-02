@@ -31,6 +31,10 @@ $$;
 
 GRANT anon, authenticated, service_role TO authenticator;
 
+-- На Supabase API-роли видят схему public; права на таблицы
+-- раздаются миграциями точечно.
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
 -- ─── Схема auth ──────────────────────────────────────────────
 CREATE SCHEMA IF NOT EXISTS auth;
 

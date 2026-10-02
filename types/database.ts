@@ -514,3 +514,55 @@ export interface AiValidationResult {
 // ═══ Ответы функций ════════════════════════════════════════════
 
 export type RpcResult<T> = ({ ok: true } & T) | { ok: false; error: string; [k: string]: unknown };
+
+// ═══ Студия: заявки ════════════════════════════════════════════
+
+export const LEAD_STATUSES = [
+  'new',
+  'contacted',
+  'qualified',
+  'proposal_sent',
+  'won',
+  'lost',
+] as const;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const LEAD_SOURCES = ['site', 'telegram', 'manual'] as const;
+export type LeadSource = (typeof LEAD_SOURCES)[number];
+
+export interface LeadRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  source: LeadSource;
+  name: string;
+  email: string | null;
+  messenger: string | null;
+  city: string | null;
+  scenario: string | null;
+  participants_range: string | null;
+  ticket_price_range: string | null;
+  event_date: string | null;
+  notes: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  status: LeadStatus;
+  status_changed_at: string;
+  assignee_id: string | null;
+  lost_reason: string | null;
+}
+
+export type LeadActivityKind = 'note' | 'status' | 'assignee' | 'created';
+
+export interface LeadActivityRow {
+  id: string;
+  lead_id: string;
+  kind: LeadActivityKind;
+  body: string | null;
+  from_status: LeadStatus | null;
+  to_status: LeadStatus | null;
+  author_id: string | null;
+  author_email: string | null;
+  created_at: string;
+}

@@ -108,6 +108,9 @@ export function AdminNav({
         </p>
 
         <div className="flex items-center gap-3">
+          <Link href="/studio" className="text-caption text-muted hover:text-ink">
+            Студия
+          </Link>
           <Link href="/" className="text-caption text-muted hover:text-ink">
             Сайт
           </Link>

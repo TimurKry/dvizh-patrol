@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import {
+  LEAD_SOURCES,
+  LEAD_STATUSES,
   LEADERBOARD_MODES,
   SCORE_TRANSACTION_TYPES,
   TASK_CARD_TYPES,
@@ -454,6 +456,59 @@ export function taskValidationReport(error: z.ZodError): {
         : `Задание не сохранено: проверьте поля — ${names.join(', ')}.`,
   };
 }
+
+// ═══ Студия: заявки ════════════════════════════════════════════
+
+/** Необязательное поле: пустая строка из формы становится NULL в базе. */
+const nullableText = (max: number, label: string) =>
+  z
+    .string()
+    .trim()
+    .max(max, `${label}: не длиннее ${max} символов`)
+    .transform((v) => (v === '' ? null : v));
+
+export const leadCreateSchema = z
+  .object({
+    name: trimmed(2, 120, 'Имя'),
+    source: z.enum(LEAD_SOURCES).exclude(['site']),
+    messenger: nullableText(120, 'Мессенджер'),
+    email: z
+      .string()
+      .trim()
+      .max(200, 'Email: не длиннее 200 символов')
+      .refine((v) => v === '' || z.email().safeParse(v).success, 'Проверьте email')
+      .transform((v) => (v === '' ? null : v)),
+    city: nullableText(120, 'Город'),
+    scenario: nullableText(60, 'Игра'),
+    participantsRange: nullableText(60, 'Участники'),
+    eventDate: z
+      .string()
+      .trim()
+      .refine((v) => v === '' || !Number.isNaN(Date.parse(v)), 'Проверьте дату')
+      .transform((v) => (v === '' ? null : v)),
+    notes: nullableText(4000, 'Комментарий'),
+  })
+  .refine((v) => v.email !== null || v.messenger !== null, {
+    message: 'Нужен хотя бы один способ связи: Telegram, телефон или email',
+    path: ['messenger'],
+  });
+
+export const leadStatusSchema = z.object({
+  leadId: z.uuid(),
+  status: z.enum(LEAD_STATUSES),
+  lostReason: nullableText(500, 'Причина'),
+});
+
+export const leadAssigneeSchema = z.object({
+  leadId: z.uuid(),
+  // Пустая строка — «снять ответственного».
+  assigneeId: z.union([z.uuid(), z.literal('')]).transform((v) => (v === '' ? null : v)),
+});
+
+export const leadNoteSchema = z.object({
+  leadId: z.uuid(),
+  body: trimmed(1, 4000, 'Заметка'),
+});
 
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};

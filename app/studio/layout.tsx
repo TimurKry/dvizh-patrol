@@ -19,7 +19,7 @@ export default async function StudioLayout({ children }: { children: React.React
 
   return (
     <div className="flex min-h-dvh flex-col bg-canvas lg:flex-row">
-      {admin && <StudioNav email={admin.email} />}
+      {admin && <StudioNav email={admin.email} role={admin.role} />}
       <main id="main" className="min-w-0 flex-1">
         {children}
       </main>

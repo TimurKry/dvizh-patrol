@@ -411,11 +411,17 @@ export interface ConsentRow {
   created_at: string;
 }
 
+export const STAFF_ROLES = ['owner', 'manager', 'host'] as const;
+export type StaffRole = (typeof STAFF_ROLES)[number];
+
 export interface AdminUserRow {
   user_id: string;
   email: string;
   name: string | null;
   created_at: string;
+  role: StaffRole;
+  disabled_at: string | null;
+  invited_by: string | null;
 }
 
 export interface AdminAuditLogRow {

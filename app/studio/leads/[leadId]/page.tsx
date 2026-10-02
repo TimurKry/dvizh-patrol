@@ -6,7 +6,8 @@ import { Card, Eyebrow } from '@/components/ui/surface';
 import { Field, Select, TextArea, TextInput } from '@/components/ui/field';
 import { Tag } from '@/components/ui/status-badge';
 import { addLeadNoteAction, assignLeadAction, updateLeadStatusAction } from '@/actions/studio';
-import { requireAdmin } from '@/lib/auth/admin';
+import { requireRole } from '@/lib/auth/admin';
+import { CRM_ROLES } from '@/lib/studio/staff';
 import { getLead, listLeadActivities, listStaff, staffLabel } from '@/lib/data/leads';
 import {
   LEAD_FUNNEL,
@@ -45,7 +46,7 @@ function activityText(activity: LeadActivityRow): string {
 }
 
 export default async function StudioLeadPage({ params }: { params: Promise<{ leadId: string }> }) {
-  await requireAdmin();
+  await requireRole(...CRM_ROLES);
   const { leadId } = await params;
   if (!UUID.test(leadId)) notFound();
 

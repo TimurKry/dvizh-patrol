@@ -36,10 +36,13 @@ const LINKS: { href: string; label: string; icon: IconName; exact?: boolean }[] 
 
 export function AdminNav({
   email,
+  showStudio = true,
   /** Строка состояния квеста внизу сайдбара · Figma 104:106. */
   state,
 }: {
   email: string;
+  /** Ведущему Студия закрыта — ссылку не показываем. */
+  showStudio?: boolean;
   state?: { status: string; teams: string; queue: string };
 }) {
   const pathname = usePathname();
@@ -58,9 +61,11 @@ export function AdminNav({
         <p className="signal-label mt-1 hidden text-micro text-muted lg:block">Организатор</p>
 
         <div className="flex items-center gap-3 lg:hidden">
-          <Link href="/studio" className="text-caption text-muted hover:text-ink">
-            Студия
-          </Link>
+          {showStudio && (
+            <Link href="/studio" className="text-caption text-muted hover:text-ink">
+              Студия
+            </Link>
+          )}
           <button
             type="button"
             disabled={pending}
@@ -113,9 +118,11 @@ export function AdminNav({
         </p>
 
         <div className="flex items-center gap-3">
-          <Link href="/studio" className="text-caption text-muted hover:text-ink">
-            Студия
-          </Link>
+          {showStudio && (
+            <Link href="/studio" className="text-caption text-muted hover:text-ink">
+              Студия
+            </Link>
+          )}
           <Link href="/" className="text-caption text-muted hover:text-ink">
             Сайт
           </Link>

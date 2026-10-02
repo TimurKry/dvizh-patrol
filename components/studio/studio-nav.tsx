@@ -7,21 +7,29 @@ import { adminLogoutAction } from '@/actions/admin';
 import { DotCluster } from '@/components/ui/logo';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
+import { canManageTeam, canUseCrm } from '@/lib/studio/staff';
+import type { StaffRole } from '@/types/database';
 
 /**
  * Навигация Студии — рабочего места команды DVIZH.
  *
  * Устроена так же, как сайдбар организатора (components/admin/
  * admin-nav): слева на ноутбуке, лентой сверху на телефоне.
- * Разделы добавляются по мере готовности — заявки, затем проекты,
- * шаблоны игр и команда. Пустых «скоро будет» здесь нет: в
+ * Разделы добавляются по мере готовности и видны по роли:
+ * заявки — владельцу и менеджерам, команда — только владельцу. Пустых «скоро будет» здесь нет: в
  * рабочем инструменте они только мешают попасть в нужное.
  */
-const LINKS: { href: string; label: string; icon: IconName }[] = [
-  { href: '/studio/leads', label: 'Заявки', icon: 'queue' },
+const LINKS: {
+  href: string;
+  label: string;
+  icon: IconName;
+  visible: (role: StaffRole) => boolean;
+}[] = [
+  { href: '/studio/leads', label: 'Заявки', icon: 'queue', visible: canUseCrm },
+  { href: '/studio/team', label: 'Команда', icon: 'teams', visible: canManageTeam },
 ];
 
-export function StudioNav({ email }: { email: string }) {
+export function StudioNav({ email, role }: { email: string; role: StaffRole }) {
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
 
@@ -56,7 +64,7 @@ export function StudioNav({ email }: { email: string }) {
         className="scroll-x border-b border-hairline lg:mt-6 lg:flex-1 lg:overflow-y-auto lg:border-b-0"
       >
         <ul className="flex lg:flex-col lg:gap-1 lg:px-4">
-          {LINKS.map((link) => {
+          {LINKS.filter((link) => link.visible(role)).map((link) => {
             const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <li key={link.href} className="shrink-0">

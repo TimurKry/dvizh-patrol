@@ -35,6 +35,8 @@ export const RATE_LIMITS = {
   declineTask: { windowSeconds: 60, max: 6 },
   /* Вход администратора. */
   adminLogin: { windowSeconds: 900, max: 10 },
+  /* Письмо со ссылкой: каждое — настоящая отправка с лимитом Supabase. */
+  emailLink: { windowSeconds: 900, max: 5 },
   /* Проверка связи с моделью: кнопка в админке, а не игровой путь. */
   aiPing: { windowSeconds: 60, max: 10 },
 } as const satisfies Record<string, RateLimitRule>;

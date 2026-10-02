@@ -7,6 +7,7 @@ import {
   type LeadStatus,
 } from '@/types/database';
 import { OPEN_LEAD_STATUSES } from '@/lib/studio/leads';
+import { CRM_ROLES } from '@/lib/studio/staff';
 
 /**
  * Чтение заявок для Студии.
@@ -62,11 +63,13 @@ export interface StaffMember {
   name: string | null;
 }
 
-/** Кому можно назначить заявку. Пока это все администраторы. */
+/** Кому можно назначить заявку: действующие владельцы и менеджеры. */
 export async function listStaff(): Promise<StaffMember[]> {
   const { data } = await supabaseAdmin()
     .from('admin_users')
     .select('user_id, email, name')
+    .is('disabled_at', null)
+    .in('role', [...CRM_ROLES])
     .order('email');
   return (
     (data as Array<{ user_id: string; email: string; name: string | null }> | null) ?? []

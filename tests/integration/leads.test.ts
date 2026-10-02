@@ -40,12 +40,13 @@ async function asRole<T>(
   }
 }
 
-async function createAdmin(): Promise<string> {
+async function createAdmin(role: 'owner' | 'manager' | 'host' = 'manager'): Promise<string> {
   const id = randomUUID();
   await pool.query(`INSERT INTO auth.users (id, email) VALUES ($1, $2)`, [id, `${id}@example.com`]);
-  await pool.query(`INSERT INTO public.admin_users (user_id, email) VALUES ($1, $2)`, [
+  await pool.query(`INSERT INTO public.admin_users (user_id, email, role) VALUES ($1, $2, $3)`, [
     id,
     `${id}@example.com`,
+    role,
   ]);
   return id;
 }
@@ -111,7 +112,24 @@ describe('вошедший пользователь', () => {
     expect(rows).toHaveLength(0);
   });
 
-  it('администратор видит заявки', async () => {
+  it('ведущий заявок не видит', async () => {
+    await pool.query(SITE_LEAD);
+    const host = await createAdmin('host');
+    const rows = await asRole('authenticated', `SELECT * FROM public.leads`, { sub: host });
+    expect(rows).toHaveLength(0);
+  });
+
+  it('отключённый менеджер заявок не видит', async () => {
+    await pool.query(SITE_LEAD);
+    const manager = await createAdmin('manager');
+    await pool.query(`UPDATE public.admin_users SET disabled_at = now() WHERE user_id = $1`, [
+      manager,
+    ]);
+    const rows = await asRole('authenticated', `SELECT * FROM public.leads`, { sub: manager });
+    expect(rows).toHaveLength(0);
+  });
+
+  it('менеджер видит заявки', async () => {
     await pool.query(SITE_LEAD);
     const admin = await createAdmin();
     const rows = await asRole('authenticated', `SELECT * FROM public.leads`, { sub: admin });

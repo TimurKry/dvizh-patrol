@@ -106,7 +106,11 @@ async function main() {
 
   const { error: adminError } = await supabase
     .from('admin_users')
-    .upsert({ user_id: user.id, email }, { onConflict: 'user_id' });
+    // Скрипт заводит владельца: остальных он приглашает сам в Студии → Команда.
+    .upsert(
+      { user_id: user.id, email, role: 'owner', disabled_at: null },
+      { onConflict: 'user_id' },
+    );
 
   if (adminError) {
     throw new Error(

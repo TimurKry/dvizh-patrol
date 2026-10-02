@@ -4,7 +4,8 @@ import { ActionForm } from '@/components/admin/action-form';
 import { Card } from '@/components/ui/surface';
 import { Field, Select, TextArea, TextInput } from '@/components/ui/field';
 import { createLeadAction } from '@/actions/studio';
-import { requireAdmin } from '@/lib/auth/admin';
+import { requireRole } from '@/lib/auth/admin';
+import { CRM_ROLES } from '@/lib/studio/staff';
 import { PARTICIPANTS_LABEL, SCENARIO_LABEL } from '@/lib/studio/leads';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,7 @@ export const metadata: Metadata = { title: 'Новая заявка' };
  * дозаполняется по ходу разговора заметками.
  */
 export default async function StudioNewLeadPage() {
-  await requireAdmin();
+  await requireRole(...CRM_ROLES);
 
   return (
     <div className="page-well flex max-w-2xl flex-col gap-6 py-8">

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { AdminNav } from '@/components/admin/admin-nav';
 import { getAdmin } from '@/lib/auth/admin';
+import { canUseCrm } from '@/lib/studio/staff';
 import { getCurrentEvent, getRegistrationStats } from '@/lib/data/event';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { EVENT_STATUS_TEXT, teamsWord } from '@/lib/messages';
@@ -51,7 +52,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-dvh flex-col bg-canvas lg:flex-row">
-      {admin && <AdminNav email={admin.email} state={state} />}
+      {admin && <AdminNav email={admin.email} showStudio={canUseCrm(admin.role)} state={state} />}
       <main id="main" className="min-w-0 flex-1">
         {children}
       </main>

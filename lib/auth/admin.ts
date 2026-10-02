@@ -2,7 +2,8 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import type { AdminUserRow } from '@/types/database';
+import type { AdminUserRow, StaffRole } from '@/types/database';
+import { staffHome } from '@/lib/studio/staff';
 
 /**
  * Права администратора.
@@ -18,6 +19,7 @@ export interface AdminContext {
   userId: string;
   email: string;
   name: string | null;
+  role: StaffRole;
 }
 
 export async function getAdmin(): Promise<AdminContext | null> {
@@ -35,12 +37,14 @@ export async function getAdmin(): Promise<AdminContext | null> {
     .maybeSingle();
 
   const record = data as AdminUserRow | null;
-  if (!record) return null;
+  // Отключённый сотрудник — то же, что посторонний.
+  if (!record || record.disabled_at) return null;
 
   return {
     userId: record.user_id,
     email: record.email,
     name: record.name,
+    role: record.role,
   };
 }
 
@@ -48,6 +52,18 @@ export async function getAdmin(): Promise<AdminContext | null> {
 export async function requireAdmin(): Promise<AdminContext> {
   const admin = await getAdmin();
   if (!admin) redirect('/admin/login');
+  return admin;
+}
+
+/**
+ * Страница для определённых ролей.
+ *
+ * Чужая роль получает не ошибку, а свой стартовый экран: ведущий,
+ * открывший ссылку на заявку, попадает в игру, а не в тупик.
+ */
+export async function requireRole(...roles: StaffRole[]): Promise<AdminContext> {
+  const admin = await requireAdmin();
+  if (!roles.includes(admin.role)) redirect(staffHome(admin.role));
   return admin;
 }
 
@@ -64,7 +80,7 @@ export async function requireAdmin(): Promise<AdminContext> {
  * из-за проблемы с журналом хуже, чем потерять строку журнала.
  */
 export async function audit(params: {
-  admin: AdminContext | null;
+  admin: Pick<AdminContext, 'userId' | 'email'> | null;
   action: string;
   entityType: string;
   entityId?: string | null;

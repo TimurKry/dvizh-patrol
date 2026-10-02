@@ -3,6 +3,7 @@ import {
   LEAD_SOURCES,
   LEAD_STATUSES,
   LEADERBOARD_MODES,
+  STAFF_ROLES,
   SCORE_TRANSACTION_TYPES,
   TASK_CARD_TYPES,
   TASK_CATEGORIES,
@@ -456,6 +457,29 @@ export function taskValidationReport(error: z.ZodError): {
         : `Задание не сохранено: проверьте поля — ${names.join(', ')}.`,
   };
 }
+
+// ═══ Студия: вход и команда ════════════════════════════════════
+
+const staffEmail = z.string().trim().toLowerCase().pipe(z.email('Проверьте email').max(200));
+
+export const emailLinkSchema = z.object({ email: staffEmail });
+
+export const staffInviteSchema = z.object({
+  email: staffEmail,
+  name: z
+    .string()
+    .trim()
+    .max(80, 'Имя: не длиннее 80 символов')
+    .transform((v) => (v === '' ? null : v)),
+  role: z.enum(STAFF_ROLES),
+});
+
+export const staffRoleSchema = z.object({
+  userId: z.uuid(),
+  role: z.enum(STAFF_ROLES),
+});
+
+export const staffUserSchema = z.object({ userId: z.uuid() });
 
 // ═══ Студия: заявки ════════════════════════════════════════════
 

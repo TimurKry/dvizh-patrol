@@ -4,7 +4,8 @@ import { ButtonLink } from '@/components/ui/button';
 import { Card, Eyebrow } from '@/components/ui/surface';
 import { EmptyState } from '@/components/ui/feedback';
 import { Tag } from '@/components/ui/status-badge';
-import { requireAdmin } from '@/lib/auth/admin';
+import { requireRole } from '@/lib/auth/admin';
+import { CRM_ROLES } from '@/lib/studio/staff';
 import {
   countLeadsByStatus,
   listLeads,
@@ -35,7 +36,7 @@ export default async function StudioLeadsPage({
 }: {
   searchParams: Promise<{ status?: string | string[] }>;
 }) {
-  await requireAdmin();
+  await requireRole(...CRM_ROLES);
   const filter = parseLeadFilter((await searchParams).status);
 
   const [leads, counts, staff] = await Promise.all([

@@ -2,7 +2,8 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { audit, requireAdmin, type AdminContext } from '@/lib/auth/admin';
+import { audit, requireRole, type AdminContext } from '@/lib/auth/admin';
+import { CRM_ROLES } from '@/lib/studio/staff';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
   fieldErrors,
@@ -17,7 +18,7 @@ import type { AdminActionState } from '@/actions/admin';
 /**
  * Действия Студии над заявками.
  *
- * Как и в админке игры: каждое начинается с requireAdmin, каждое
+ * Как и в админке игры: каждое начинается с проверки роли, каждое
  * изменение оставляет след. Здесь след двойной — строка в ленте
  * заявки (её читает менеджер) и запись в общем журнале (его
  * читают, когда разбираются, что пошло не так).
@@ -60,7 +61,7 @@ export async function createLeadAction(
   _prev: AdminActionState,
   formData: FormData,
 ): Promise<AdminActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireRole(...CRM_ROLES);
 
   const parsed = leadCreateSchema.safeParse({
     name: formData.get('name') ?? '',
@@ -114,7 +115,7 @@ export async function updateLeadStatusAction(
   _prev: AdminActionState,
   formData: FormData,
 ): Promise<AdminActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireRole(...CRM_ROLES);
 
   const parsed = leadStatusSchema.safeParse({
     leadId: formData.get('leadId'),
@@ -166,7 +167,7 @@ export async function assignLeadAction(
   _prev: AdminActionState,
   formData: FormData,
 ): Promise<AdminActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireRole(...CRM_ROLES);
 
   const parsed = leadAssigneeSchema.safeParse({
     leadId: formData.get('leadId'),
@@ -187,6 +188,8 @@ export async function assignLeadAction(
       .from('admin_users')
       .select('email')
       .eq('user_id', assigneeId)
+      .is('disabled_at', null)
+      .in('role', [...CRM_ROLES])
       .maybeSingle();
     if (!data) return { ok: false, message: 'Такого сотрудника нет.' };
     assigneeEmail = (data as { email: string }).email;
@@ -221,7 +224,7 @@ export async function addLeadNoteAction(
   _prev: AdminActionState,
   formData: FormData,
 ): Promise<AdminActionState> {
-  const admin = await requireAdmin();
+  const admin = await requireRole(...CRM_ROLES);
 
   const parsed = leadNoteSchema.safeParse({
     leadId: formData.get('leadId'),

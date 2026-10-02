@@ -11,13 +11,14 @@ import { audit, requireAdmin } from '@/lib/auth/admin';
 import { allowedNextStatuses } from '@/lib/event-status';
 import { fromZonedInput } from '@/lib/time';
 import { runValidationWorker } from '@/lib/ai/worker';
-import { env } from '@/lib/env';
+import { appUrl, env } from '@/lib/env';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { supabaseServer } from '@/lib/supabase/server';
 import { callRpc, supabaseAdmin } from '@/lib/supabase/admin';
 import { revokeAllTeamSessions } from '@/lib/session/team-session';
 import {
   adminLoginSchema,
+  emailLinkSchema,
   eventSettingsSchema,
   fieldErrors,
   reviewDecisionSchema,
@@ -26,7 +27,13 @@ import {
   taskValidationReport,
 } from '@/lib/validation/schemas';
 import { BUCKETS, extensionFor, referencePath } from '@/lib/storage';
-import type { EventStatus, LeaderboardMode, TaskReferenceImageRow } from '@/types/database';
+import type {
+  AdminUserRow,
+  EventStatus,
+  LeaderboardMode,
+  TaskReferenceImageRow,
+} from '@/types/database';
+import { staffHome } from '@/lib/studio/staff';
 
 /**
  * Действия администратора.
@@ -85,26 +92,79 @@ export async function adminLoginAction(
     return { ok: false, message: 'Неверный email или пароль.' };
   }
 
-  // Аккаунт есть, но прав нет — сессию сразу закрываем.
+  // Аккаунт есть, но прав нет (или доступ закрыт) — сессию сразу закрываем.
   const { data: adminRow } = await supabaseAdmin()
     .from('admin_users')
-    .select('user_id')
+    .select('user_id, role, disabled_at')
     .eq('user_id', data.user.id)
     .maybeSingle();
 
-  if (!adminRow) {
+  const staff = adminRow as Pick<AdminUserRow, 'user_id' | 'role' | 'disabled_at'> | null;
+  if (!staff || staff.disabled_at) {
     await supabase.auth.signOut();
-    return { ok: false, message: 'У этого аккаунта нет прав администратора.' };
+    return { ok: false, message: 'У этого аккаунта нет доступа.' };
   }
 
   await audit({
-    admin: { userId: data.user.id, email: parsed.data.email, name: null },
+    admin: { userId: data.user.id, email: parsed.data.email },
     action: 'admin_login',
     entityType: 'admin',
     entityId: data.user.id,
   });
 
-  redirect('/admin');
+  redirect(staffHome(staff.role));
+}
+
+/**
+ * Вход по ссылке на почту.
+ *
+ * Письмо отправляет Supabase. Ответ одинаковый, есть адрес в
+ * команде или нет: иначе форма подсказывала бы, чьи адреса
+ * стоит перебирать. Посторонним письмо не уходит вовсе —
+ * shouldCreateUser: false плюс проверка по списку сотрудников.
+ */
+export async function emailLinkLoginAction(
+  _prev: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const parsed = emailLinkSchema.safeParse({ email: formData.get('email') ?? '' });
+  if (!parsed.success) {
+    return { ok: false, error: 'validation_failed', fields: fieldErrors(parsed.error) };
+  }
+
+  const limit = await checkRateLimit('emailLink');
+  if (!limit.allowed) {
+    return { ok: false, error: 'rate_limited', message: 'Слишком много попыток. Подождите.' };
+  }
+
+  const done: AdminActionState = {
+    ok: true,
+    message: 'Если этот адрес есть в команде, письмо со ссылкой уже в пути.',
+  };
+
+  const { data } = await supabaseAdmin()
+    .from('admin_users')
+    .select('user_id')
+    // ilike — ради регистра; % и _ в адресе экранируем, иначе это шаблон.
+    .ilike('email', parsed.data.email.replace(/[%_\\]/g, '\\$&'))
+    .is('disabled_at', null)
+    .maybeSingle();
+  if (!data) return done;
+
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: parsed.data.email,
+    options: { shouldCreateUser: false, emailRedirectTo: `${appUrl()}/auth/confirm` },
+  });
+  if (error) {
+    console.error('[auth] email link failed', error.message);
+    return {
+      ok: false,
+      message: 'Не удалось отправить письмо. Войдите по паролю или попросите ссылку у владельца.',
+    };
+  }
+
+  return done;
 }
 
 export async function adminLogoutAction(): Promise<void> {
@@ -461,9 +521,7 @@ export async function updateTeamAction(
       // команды. Молча такое не делают.
       const wiped = result.data.wipedSubmissions ?? 0;
       const wipedNote =
-        wiped > 0
-          ? ` Служебных отправок удалено: ${wiped} — вместе с баллами по ним.`
-          : '';
+        wiped > 0 ? ` Служебных отправок удалено: ${wiped} — вместе с баллами по ним.` : '';
 
       return {
         ok: true,

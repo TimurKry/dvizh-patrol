@@ -29,6 +29,13 @@ export default defineConfig({
 
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3000',
+    // Готовый Chromium в образе, если он там есть. Playwright по
+    // умолчанию ищет headless shell своей версии и падает, когда
+    // браузеры предустановлены кем-то другим; переменная делает
+    // это переопределяемым, не ломая обычный запуск на ноутбуке.
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
+      : undefined,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     locale: 'ru-RU',
@@ -39,6 +46,12 @@ export default defineConfig({
   },
 
   projects: [
+    // Сценарии меняют состояние мероприятия: команда создаётся,
+    // квест запускается и завершается. Прогнать их дважды по
+    // одной базе нельзя — второй проход упрётся в закрытый набор
+    // и в лимит десяти команд. Поэтому весь поток идёт на
+    // телефоне, а десктоп проверяет то, что от состояния не
+    // зависит: доступность, раскладку и PWA.
     {
       name: 'mobile',
       use: { ...devices['Pixel 7'] },
@@ -46,6 +59,7 @@ export default defineConfig({
     {
       name: 'desktop',
       use: { ...devices['Desktop Chrome'] },
+      grep: /доступность|PWA/,
     },
   ],
 

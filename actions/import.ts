@@ -91,7 +91,7 @@ export async function commitImportAction(
 
   const eventId = String(formData.get('eventId') ?? '');
   const content = String(formData.get('content') ?? '');
-  const format = (String(formData.get('format') ?? 'json') as 'json' | 'csv');
+  const format = String(formData.get('format') ?? 'json') as 'json' | 'csv';
   const replace = formData.get('replace') === 'on';
 
   // Разбираем ещё раз: доверять предпросмотру нельзя, он пришёл

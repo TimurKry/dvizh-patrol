@@ -1,11 +1,18 @@
 import { getTeamSession } from '@/lib/session/team-session';
+import { TELEGRAM_MANAGER_URL } from '@/lib/links';
 import { NavShell, type NavLink } from './nav-shell';
 
 /**
  * Навигация верхнего уровня.
  *
- * Состав ссылок зависит от того, вошла ли команда: гостю не за чем
- * показывать «Отправки», а вошедшей команде — кнопку регистрации.
+ * Состав ссылок зависит от того, вошла ли команда. Вошедшая
+ * команда живёт в нижней навигации из трёх пунктов, поэтому
+ * сверху ей нужен только выход к общим разделам — дублировать
+ * «Задания» и «Команда» вторым рядом дизайн-система запрещает.
+ *
+ * Гость получает три ссылки и один CTA. «Создать команду» ведёт
+ * в Telegram менеджера, а не на форму: команды заводятся вручную
+ * (CLAUDE.md, «Неподвижные продуктовые решения»).
  */
 export async function SiteNav() {
   const session = await getTeamSession();
@@ -13,10 +20,8 @@ export async function SiteNav() {
   if (session) {
     const links: NavLink[] = [
       { href: '/tasks', label: 'Задания' },
-      { href: '/map', label: 'Карта' },
       { href: '/team', label: 'Команда' },
-      { href: '/submissions', label: 'Отправки' },
-      { href: '/leaderboard', label: 'Рейтинг' },
+      { href: '/more', label: 'Ещё' },
     ];
     return <NavShell links={links} action={null} />;
   }
@@ -27,5 +32,10 @@ export async function SiteNav() {
     { href: '/join', label: 'Войти по коду' },
   ];
 
-  return <NavShell links={links} action={{ href: '/register', label: 'Создать команду' }} />;
+  return (
+    <NavShell
+      links={links}
+      action={{ href: TELEGRAM_MANAGER_URL, label: 'Создать команду', external: true }}
+    />
+  );
 }

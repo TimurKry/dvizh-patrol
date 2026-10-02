@@ -1,0 +1,18 @@
+Аватарки чатов Telegram, 1024×1024.
+
+00-obshchiy.png — общий чат: тёмный холст, цветной знак
+01-red.png — Красная (#FF3B30)
+02-green.png — Зелёная (#21C55D)
+03-blue.png — Синяя (#2F80FF)
+04-yellow.png — Жёлтая (#FFD400)
+05-orange.png — Оранжевая (#FF7A00)
+06-pink.png — Розовая (#FF00B3)
+
+Цвет назначается командам по порядку, тем же, что в lib/team-colors.ts
+и в перечислении team_color: первая заведённая команда получает
+красный, вторая зелёный и так далее. Проверить, кому что досталось:
+
+  select name, color from public.teams order by created_at;
+
+Знак вписан в круг: Telegram обрезает аватарку по кругу, и углы
+теряются. Пересобрать — node scripts/team-avatars.mjs

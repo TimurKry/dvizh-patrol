@@ -1,7 +1,41 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /**
+   * `sharp` — нативный модуль: рядом с ним лежит собранная
+   * libvips (`@img/sharp-libvips-linux-x64`). Собирать его в общий
+   * пакет нельзя, а трассировщик файлов о `.so` рядом с ним не
+   * догадывается сам — на боевом Vercel функция подтверждения
+   * отправки падала с `libvips-cpp.so.8.18.3: cannot open shared
+   * object file`, и ни одна команда не могла отправить фотографию.
+   *
+   * Первое говорит «не бандли», второе — «положи бинарники рядом».
+   */
+  serverExternalPackages: ['sharp'],
+
+  outputFileTracingIncludes: {
+    '/api/submissions/confirm': ['./node_modules/@img/**'],
+  },
+
+  experimental: {
+    /**
+     * Потолок тела серверного действия.
+     *
+     * По умолчанию мегабайт, и загрузка эталона с телефона в него
+     * не влезала: организатор получал страницу «This page couldn't
+     * load» вместо объяснения, потому что запрос отбрасывается до
+     * того, как действие вообще начнёт работать, — своей проверкой
+     * размера его не поймать.
+     *
+     * Четыре мегабайта, а не десять: у Vercel потолок запроса к
+     * функции 4.5 МБ, и обещать больше было бы враньём.
+     *
+     * Это подстраховка, а не рабочий путь. Картинки ужимаются в
+     * браузере до отправки (`lib/image/compress.ts`), и сюда
+     * доезжает 200–600 КБ.
+     */
+    serverActions: { bodySizeLimit: '4mb' },
+  },
 };
 
 export default nextConfig;

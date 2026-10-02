@@ -30,7 +30,7 @@ export function Ticker({
     <div
       aria-hidden="true"
       className={cn(
-        'relative overflow-hidden border-y border-brick-line bg-canvas-deep py-3',
+        'relative overflow-hidden border-y border-signal-line bg-canvas-deep py-3',
         className,
       )}
     >
@@ -39,12 +39,12 @@ export function Ticker({
           <span
             key={`${item}-${index}`}
             className={cn(
-              'poster-label flex items-center gap-6 text-caption',
-              tone === 'brick' ? 'text-brick' : 'text-sepia',
+              'signal-label flex items-center gap-6 text-caption',
+              tone === 'brick' ? 'text-signal' : 'text-muted',
             )}
           >
             {item}
-            <span className="text-brick-line">◆</span>
+            <span className="text-signal-line">◆</span>
           </span>
         ))}
       </div>

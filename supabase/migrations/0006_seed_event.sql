@@ -19,8 +19,8 @@ VALUES (
   'Городской фото-квест',
   'Leipzig',
   'Europe/Berlin',
-  -- 15 августа 2026, 15:00 по Берлину.
-  timestamptz '2026-08-15 15:00:00+02',
+  -- 5 сентября 2026, 14:00 по Берлину.
+  timestamptz '2026-09-05 14:00:00+02',
   'registration',
   1500,
   'EUR',
@@ -31,7 +31,9 @@ VALUES (
   true,
   0.88,
   30,
-  'dvizh-patrol-poster.jpg'
+  -- Постера больше нет: Mono Signal не использует постерную
+  -- картинку, а социальное превью рисуется кодом в app/opengraph-image.
+  NULL
 )
 ON CONFLICT (slug) DO NOTHING;
 

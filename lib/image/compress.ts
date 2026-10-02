@@ -134,9 +134,7 @@ export async function compressImage(
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(decoded.draw, 0, 0, width, height);
 
-    const contentType: 'image/webp' | 'image/jpeg' = supportsWebp()
-      ? 'image/webp'
-      : 'image/jpeg';
+    const contentType: 'image/webp' | 'image/jpeg' = supportsWebp() ? 'image/webp' : 'image/jpeg';
 
     // Подбираем качество сверху вниз, пока не уложимся в лимит.
     let blob: Blob | null = null;

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ActionButton, ActionForm } from '@/components/admin/action-form';
-import { adjustScoreAction, updateTeamAction } from '@/actions/admin';
+import { adjustScoreAction, deleteTeamAction, updateTeamAction } from '@/actions/admin';
 import { Card, Eyebrow } from '@/components/ui/surface';
 import { Field, Select, TextInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/feedback';
@@ -10,6 +10,8 @@ import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { requireAdmin } from '@/lib/auth/admin';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { TEAM_STATUS_TEXT, pointsWord } from '@/lib/messages';
+import { TEAM_COLOR_OPTIONS, teamColorLabel } from '@/lib/team-colors';
+import { TEAM_ACCESS_OPTIONS, teamAccess, teamAccessSpec } from '@/lib/team-access';
 import type {
   ConsentRow,
   EventRow,
@@ -32,11 +34,7 @@ const TRANSACTION_LABEL: Record<string, string> = {
   submission_revoked: 'Отмена начисления',
 };
 
-export default async function AdminTeamPage({
-  params,
-}: {
-  params: Promise<{ teamId: string }>;
-}) {
+export default async function AdminTeamPage({ params }: { params: Promise<{ teamId: string }> }) {
   await requireAdmin();
   const { teamId } = await params;
 
@@ -68,6 +66,19 @@ export default async function AdminTeamPage({
       db.from('consents').select('*').eq('team_id', teamId),
     ]);
 
+  // Кто какой цвет уже занял: занятые показываем, но выбрать
+  // нельзя — уникальный индекс в базе всё равно не даст.
+  const { data: siblings } = await db
+    .from('teams')
+    .select('id, color')
+    .eq('event_id', team.event_id)
+    .neq('status', 'cancelled');
+
+  const colorOwners = new Map<string, string>();
+  for (const row of (siblings as Array<{ id: string; color: string | null }> | null) ?? []) {
+    if (row.color) colorOwners.set(row.color, row.id);
+  }
+
   const event = eventResult.data as EventRow | null;
   const members = (membersResult.data as TeamMemberRow[] | null) ?? [];
   const score = scoreResult.data as { total_points: number; accepted_count: number } | null;
@@ -81,23 +92,118 @@ export default async function AdminTeamPage({
   const canDelete = event?.status === 'registration' || event?.status === 'draft';
   const socialAllowed = consents.filter((c) => c.social_publication_consent).length;
 
+  const access = teamAccess(team);
+  const spec = teamAccessSpec(access);
+
   return (
     <div className="page-well flex max-w-4xl flex-col gap-8 py-8">
       <div>
-        <Link href="/admin/teams" className="text-caption text-sepia hover:text-ink">
+        <Link href="/admin/teams" className="text-caption text-muted hover:text-ink">
           ← Все команды
         </Link>
-        <Eyebrow className="mt-4">{TEAM_STATUS_TEXT[team.status]}</Eyebrow>
-        <h1 className="mt-2 text-heading">{team.name}</h1>
-        <p className="mt-1 text-body text-sepia">
+        <Eyebrow className="mt-4">
+          {TEAM_STATUS_TEXT[team.status]}
+          {access !== 'normal' && ` · ${spec.label.toLowerCase()}`}
+        </Eyebrow>
+        <h1 className="mt-2 text-headline">{team.name}</h1>
+        <p className="mt-1 text-body text-muted">
           Капитан: {team.captain_name}
           {team.contact && ` · ${team.contact}`}
         </p>
       </div>
 
+      {access !== 'normal' && (
+        <Notice tone="strong" icon="info">
+          {spec.admin}
+        </Notice>
+      )}
+
+      {/* ═══ Цвет команды ═══════════════════════════════════
+          Цвет виден участникам на рубашке карточек, поэтому он
+          не настройка «на потом», а часть карточки команды.
+          Занятые цвета показаны, но выбрать их нельзя: два
+          одинаковых цвета сделали бы рубашки неразличимыми. */}
+      <Card className="flex flex-col gap-4 p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-body-lg">Цвет команды</h2>
+          <p className="text-caption text-muted">
+            {team.color ? teamColorLabel(team.color) : 'не назначен'}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {TEAM_COLOR_OPTIONS.map((option) => {
+            const takenBy = colorOwners.get(option.value);
+            const mine = team.color === option.value;
+            return (
+              <ActionButton
+                key={option.value}
+                action={updateTeamAction}
+                values={{ teamId: team.id, action: 'set_color', color: option.value }}
+                disabled={mine || (Boolean(takenBy) && takenBy !== team.id)}
+                variant={mine ? 'primary' : 'secondary'}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="block h-4 w-4 border border-hairline"
+                    style={{ backgroundColor: option.hex }}
+                  />
+                  {option.label}
+                  {takenBy && takenBy !== team.id && ' · занят'}
+                </span>
+              </ActionButton>
+            );
+          })}
+
+          {team.color && (
+            <ActionButton
+              action={updateTeamAction}
+              values={{ teamId: team.id, action: 'clear_color' }}
+              variant="ghost"
+            >
+              Снять цвет
+            </ActionButton>
+          )}
+        </div>
+      </Card>
+
+      {/* ═══ Доступ ═════════════════════════════════════════
+          Три режима вместо прежнего тумблера «тестовая да/нет».
+          Служебных команд оказалось две разновидности, и они
+          отличаются ровно размером руки: проверке контента нужен
+          весь пул, альфа-тесту — настоящие шесть карточек.
+          Переключается на ходу: рука пересобирается под новый
+          режим внутри `set_team_access`. */}
+      <Card className="flex flex-col gap-4 p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-body-lg">Доступ</h2>
+          <p className="text-caption text-muted">{spec.label.toLowerCase()}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {TEAM_ACCESS_OPTIONS.map((option) => (
+            <ActionButton
+              key={option.value}
+              action={updateTeamAction}
+              values={{ teamId: team.id, action: 'set_access', access: option.value }}
+              disabled={access === option.value}
+              variant={access === option.value ? 'primary' : 'secondary'}
+              confirm={access === option.value ? undefined : option.confirm}
+            >
+              {option.label}
+            </ActionButton>
+          ))}
+        </div>
+
+        {/* У служебной команды то же самое уже сказано кричащей
+            плашкой наверху страницы — второй раз не повторяем. */}
+        {access === 'normal' && <p className="text-caption text-muted">{spec.admin}</p>}
+      </Card>
+
       {/* ═══ Быстрые действия ═══════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
-        <h2 className="text-subheading">Действия</h2>
+        <h2 className="text-body-lg">Действия</h2>
 
         <div className="flex flex-wrap gap-3">
           {team.payment_confirmed ? (
@@ -134,10 +240,7 @@ export default async function AdminTeamPage({
           </ActionButton>
 
           {team.status === 'cancelled' ? (
-            <ActionButton
-              action={updateTeamAction}
-              values={{ teamId: team.id, action: 'restore' }}
-            >
+            <ActionButton action={updateTeamAction} values={{ teamId: team.id, action: 'restore' }}>
               Вернуть команду
             </ActionButton>
           ) : (
@@ -157,7 +260,7 @@ export default async function AdminTeamPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
-          <span className="text-caption text-sepia">Код:</span>
+          <span className="text-caption text-muted">Код:</span>
           <code className="rounded-[8px] bg-ink-wash px-2 py-1 font-mono tabular-nums">
             {team.join_code}
           </code>
@@ -175,17 +278,85 @@ export default async function AdminTeamPage({
             <TextInput id="team-name" name="name" defaultValue={team.name} maxLength={60} />
           </Field>
         </ActionForm>
+
+        {/* ═══ Размер именно этой команды ═══════════════════
+            Число в настройках мероприятия — значение по
+            умолчанию. Одна компания приходит вшестером, а
+            остальные вчетвером: общий потолок либо не пускает
+            позванных, либо разрешает всем добрать лишних. */}
+        <ActionForm
+          action={updateTeamAction}
+          submitLabel="Изменить размер"
+          variant="secondary"
+          className="flex flex-col gap-3 border-t border-hairline pt-4"
+        >
+          <input type="hidden" name="teamId" value={team.id} />
+          <input type="hidden" name="action" value="set_size" />
+          <Field
+            label="Человек в команде"
+            htmlFor="team-size"
+            name="sizeLimit"
+            hint={
+              team.size_limit === null
+                ? `Сейчас как у всех: ${event?.team_size ?? '—'}. Впишите своё число, чтобы отличалось.`
+                : `Своё число. Очистите поле — вернётся общее (${event?.team_size ?? '—'}).`
+            }
+          >
+            <TextInput
+              id="team-size"
+              name="sizeLimit"
+              type="number"
+              min="1"
+              max="6"
+              defaultValue={team.size_limit ?? ''}
+              placeholder={String(event?.team_size ?? '')}
+            />
+          </Field>
+          <p className="text-caption text-faint">
+            Сейчас вошло: {members.length}. Ниже этого числа потолок не опустить.
+          </p>
+        </ActionForm>
+      </Card>
+
+      {/* ═══ Убрать команду ═════════════════════════════════
+          Отмена и удаление — разные действия. Отмена нужна во
+          время игры: команда сошла, место освободилось, а её
+          баллы остаются в журнале, потому что влияли на гонку у
+          всех остальных. Удаление нужно до старта — чтобы список
+          был чистым перед настоящими людьми. */}
+      <Card className="flex flex-col gap-4 p-5">
+        <h2 className="text-body-lg">Убрать команду совсем</h2>
+
+        {canDelete ? (
+          <>
+            <p className="text-body text-muted">
+              Исчезнут и участники, и отправки, и баллы — целиком и без следа. Захваченные задания
+              вернутся в общий пул. Отменить это будет нечем.
+            </p>
+            <ActionButton
+              action={deleteTeamAction}
+              values={{ teamId: team.id }}
+              variant="danger"
+              confirm={`Удалить «${team.name}» насовсем? Участники (${members.length}), отправки (${submissions.length}) и баллы исчезнут без возможности вернуть.`}
+            >
+              Удалить команду
+            </ActionButton>
+          </>
+        ) : (
+          <Notice icon="info">
+            Квест уже запущен, и удаление закрыто: баллы этой команды влияли на гонку за задания у
+            всех остальных. Сошедшую команду отменяйте — место освободится, а история останется.
+          </Notice>
+        )}
       </Card>
 
       {/* ═══ Баллы ══════════════════════════════════════════ */}
       <Card className="flex flex-col gap-4 p-5">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-subheading">Баллы</h2>
-          <p className="text-heading-sm tabular-nums">
+          <h2 className="text-body-lg">Баллы</h2>
+          <p className="text-title tabular-nums">
             {score?.total_points ?? 0}{' '}
-            <span className="text-caption text-sepia">
-              {pointsWord(score?.total_points ?? 0)}
-            </span>
+            <span className="text-caption text-muted">{pointsWord(score?.total_points ?? 0)}</span>
           </p>
         </div>
 
@@ -219,7 +390,7 @@ export default async function AdminTeamPage({
 
         {transactions.length > 0 && (
           <div className="border-t border-hairline pt-4">
-            <h3 className="mb-3 text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+            <h3 className="mb-3 text-caption font-medium uppercase tracking-[0.08em] text-muted">
               Журнал начислений
             </h3>
             <ul className="flex flex-col gap-2">
@@ -232,10 +403,10 @@ export default async function AdminTeamPage({
                     <p>
                       {TRANSACTION_LABEL[tx.transaction_type] ?? tx.transaction_type}
                       {tx.reversed_by_transaction_id && (
-                        <span className="ml-2 text-caption text-sepia">— отменено</span>
+                        <span className="ml-2 text-caption text-muted">— отменено</span>
                       )}
                     </p>
-                    {tx.reason && <p className="text-caption text-sepia">{tx.reason}</p>}
+                    {tx.reason && <p className="text-caption text-muted">{tx.reason}</p>}
                   </div>
                   <span className="shrink-0 tabular-nums">
                     {tx.points > 0 ? `+${tx.points}` : tx.points}
@@ -250,9 +421,9 @@ export default async function AdminTeamPage({
       {/* ═══ Состав ═════════════════════════════════════════ */}
       <Card className="flex flex-col gap-3 p-5">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-subheading">Состав</h2>
-          <p className="text-caption text-sepia">
-            {members.length} из {event?.team_size ?? 4}
+          <h2 className="text-body-lg">Состав</h2>
+          <p className="text-caption text-muted">
+            {members.length} из {event?.team_size ?? 5}
           </p>
         </div>
         <ul className="flex flex-col gap-2">
@@ -267,7 +438,7 @@ export default async function AdminTeamPage({
           ))}
         </ul>
 
-        <Notice icon="•" className="mt-2">
+        <Notice icon="info" className="mt-2">
           Согласие на публикацию в социальных сетях дали {socialAllowed} из {consents.length}.
           Фотографии остальных публиковать нельзя.
         </Notice>
@@ -275,23 +446,23 @@ export default async function AdminTeamPage({
 
       {/* ═══ Отправки ═══════════════════════════════════════ */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-subheading">Отправки ({submissions.length})</h2>
+        <h2 className="text-body-lg">Отправки ({submissions.length})</h2>
         {submissions.length === 0 ? (
-          <p className="text-body text-sepia">Команда пока ничего не отправляла.</p>
+          <p className="text-body text-muted">Команда пока ничего не отправляла.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {submissions.map((row) => (
               <li key={row.id}>
                 <Link
                   href={`/admin/submissions/${row.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[16px] border border-hairline bg-paper px-4 py-3 hover:border-hairline-strong"
+                  className="flex items-center justify-between gap-4 border border-hairline bg-panel px-4 py-3 hover:border-hairline-strong"
                 >
                   <span className="min-w-0 truncate text-body">
                     {row.tasks ? `${row.tasks.number}. ${row.tasks.title}` : 'Задание удалено'}
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     {row.awarded_points > 0 && (
-                      <span className="text-caption tabular-nums text-sepia">
+                      <span className="text-caption tabular-nums text-muted">
                         +{row.awarded_points}
                       </span>
                     )}

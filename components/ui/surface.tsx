@@ -7,8 +7,8 @@ import { cn } from '@/lib/cn';
  * уже создана `Reveal`, а лишний div сломал бы разметку
  * списка определений.
  */
-export const CARD_SURFACE = 'bg-paper border border-hairline rounded-[16px]';
-export const CARD_INTERACTIVE = 'lift hover:border-brick-line';
+export const CARD_SURFACE = 'bg-panel border border-hairline';
+export const CARD_INTERACTIVE = 'lift hover:border-signal-line';
 
 /**
  * Поверхность первого уровня: Paper White на Linen Canvas.
@@ -34,14 +34,7 @@ export function Card({
   interactive?: boolean;
 }) {
   return (
-    <Tag
-      className={cn(
-        CARD_SURFACE,
-        padded && 'p-4',
-        interactive && CARD_INTERACTIVE,
-        className,
-      )}
-    >
+    <Tag className={cn(CARD_SURFACE, padded && 'p-4', interactive && CARD_INTERACTIVE, className)}>
       {children}
     </Tag>
   );
@@ -50,12 +43,7 @@ export function Card({
 /** Заголовок раздела: маленький, набранный как штамп. */
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p
-      className={cn(
-        'text-caption font-medium uppercase tracking-[0.08em] text-sepia',
-        className,
-      )}
-    >
+    <p className={cn('text-caption font-medium uppercase tracking-[0.08em] text-muted', className)}>
       {children}
     </p>
   );
@@ -70,7 +58,7 @@ export function SectionTitle({
   className?: string;
   as?: ElementType;
 }) {
-  return <Tag className={cn('text-heading-sm md:text-heading', className)}>{children}</Tag>;
+  return <Tag className={cn('text-title md:text-headline', className)}>{children}</Tag>;
 }
 
 export function Divider({ className }: { className?: string }) {
@@ -79,5 +67,5 @@ export function Divider({ className }: { className?: string }) {
 
 /** Подпись-метаданные под заголовком или в карточке. */
 export function Meta({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cn('text-caption text-sepia', className)}>{children}</p>;
+  return <p className={cn('text-caption text-muted', className)}>{children}</p>;
 }

@@ -24,32 +24,39 @@ export default async function JoinPage({
 
   const [event, params] = await Promise.all([getCurrentEvent(), searchParams]);
 
-  const joinable =
-    event && ['registration', 'live', 'paused'].includes(event.status);
+  const joinable = event && ['registration', 'live', 'paused'].includes(event.status);
 
   return (
     <div className="page-well py-10 md:py-16">
       <div className="mx-auto max-w-xl">
         <Eyebrow>Вход</Eyebrow>
-        <h1 className="mt-3 text-heading md:text-heading-lg">Войти по коду</h1>
-        <p className="mt-4 text-body text-sepia">
+        <h1 className="mt-3 text-headline md:text-headline">Войти по коду</h1>
+        <p className="mt-4 text-body text-muted">
           Введите код из шести символов, который дал капитан.
         </p>
 
-        <div className="mt-8">
-          {joinable ? (
-            /* Ссылка-приглашение приходит с кодом в адресе —
-               подставляем его сразу, чтобы не набирать вручную. */
-            <JoinForm defaultCode={params.code?.toUpperCase().slice(0, 6)} />
-          ) : (
-            <div className="flex flex-col gap-6">
-              <Notice tone="strong" icon="•">
-                К этому мероприятию сейчас нельзя присоединиться.
-              </Notice>
-              <ButtonLink href="/" variant="secondary">
-                На главную
-              </ButtonLink>
-            </div>
+        <div className="mt-8 flex flex-col gap-6">
+          {/* Форма показывается всегда, даже когда набор закрыт.
+              Тестовая команда опознаётся только по коду, а код
+              вводится вот здесь: спрятав поле, мы закрыли бы
+              организатору единственную дверь к проверке заданий.
+              Настоящему коду сервер всё равно откажет — и скажет
+              почему. */}
+          {!joinable && (
+            <Notice tone="strong" icon="info">
+              Набор в команды сейчас закрыт — обычный код не сработает. Тестовый доступ, если он у
+              вас есть, работает.
+            </Notice>
+          )}
+
+          {/* Ссылка-приглашение приходит с кодом в адресе —
+              подставляем его сразу, чтобы не набирать вручную. */}
+          <JoinForm defaultCode={params.code?.toUpperCase().slice(0, 6)} />
+
+          {!joinable && (
+            <ButtonLink href="/" variant="secondary">
+              На главную
+            </ButtonLink>
           )}
         </div>
       </div>

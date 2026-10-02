@@ -48,14 +48,14 @@ export default async function SubmissionPage({
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <Link
           href="/submissions"
-          className="inline-flex items-center gap-2 text-caption text-sepia hover:text-ink"
+          className="inline-flex items-center gap-2 text-caption text-muted hover:text-ink"
         >
           <span aria-hidden="true">←</span> Все отправки
         </Link>
 
         <header className="flex flex-col gap-3">
-          {task && <p className="text-caption text-sand">Задание {task.number}</p>}
-          <h1 className="text-heading">{task?.title ?? 'Задание удалено'}</h1>
+          {task && <p className="text-caption text-faint">Задание {task.number}</p>}
+          <h1 className="text-headline">{task?.title ?? 'Задание удалено'}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={submission.status} />
             <Tag>попытка {submission.attempt_number}</Tag>
@@ -70,19 +70,19 @@ export default async function SubmissionPage({
           <img
             src={imageUrl ?? previewUrl ?? ''}
             alt={`Фотография к заданию ${task?.number ?? ''}`}
-            className="w-full rounded-[16px] border border-hairline"
+            className="w-full border border-hairline"
           />
         )}
 
         <Notice icon={presentation.icon}>
           <p className="font-medium">{presentation.label}</p>
-          <p className="mt-1 text-sepia">{presentation.hint}</p>
+          <p className="mt-1 text-muted">{presentation.hint}</p>
         </Notice>
 
         {submission.status === 'accepted' && (
           <Card className="flex items-center justify-between gap-3">
             <span className="text-body">Начислено за задание</span>
-            <span className="text-heading-sm tabular-nums">
+            <span className="text-title tabular-nums">
               +{submission.awarded_points} {pointsWord(submission.awarded_points)}
             </span>
           </Card>
@@ -90,7 +90,7 @@ export default async function SubmissionPage({
 
         {submission.review_reason && submission.status !== 'accepted' && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
               Причина
             </h2>
             <p className="text-body">
@@ -101,7 +101,7 @@ export default async function SubmissionPage({
 
         {submission.admin_comment && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
               Комментарий организатора
             </h2>
             <p className="text-body">{submission.admin_comment}</p>
@@ -112,7 +112,7 @@ export default async function SubmissionPage({
             технических подробностей: участнику важен вывод. */}
         {submission.ai_result?.reason && (
           <Card className="flex flex-col gap-2">
-            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-sepia">
+            <h2 className="text-caption font-medium uppercase tracking-[0.08em] text-muted">
               Автоматическая проверка
             </h2>
             <p className="text-body">{submission.ai_result.reason}</p>
@@ -125,7 +125,7 @@ export default async function SubmissionPage({
               К заданию
             </ButtonLink>
             {submission.status === 'rejected' && (
-              <p className="self-center text-caption text-sepia">
+              <p className="self-center text-caption text-muted">
                 Если попытки остались, можно отправить другую фотографию.
               </p>
             )}
@@ -133,7 +133,7 @@ export default async function SubmissionPage({
         )}
 
         {task && submission.status === 'rejected' && (
-          <p className="text-caption text-sepia">
+          <p className="text-caption text-muted">
             Всего попыток по заданию: {task.max_attempts} {attemptsWord(task.max_attempts)}.
           </p>
         )}

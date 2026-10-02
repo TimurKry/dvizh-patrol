@@ -5,11 +5,13 @@ import { EmptyState, ErrorNotice, Notice, Skeleton } from '@/components/ui/feedb
 import { DotCluster, Wordmark } from '@/components/ui/logo';
 import { StatusBadge, Tag } from '@/components/ui/status-badge';
 import { Card, Divider, Eyebrow, SectionTitle } from '@/components/ui/surface';
-import { PosterHero } from '@/components/game/poster-hero';
 import { Ticker } from '@/components/game/ticker';
 import { CountUp } from '@/components/ui/count-up';
-import { SUBMISSION_STATUSES } from '@/types/database';
-import { SUBMISSION_STATUS_TEXT } from '@/lib/messages';
+import { Icon, ICON_NAMES } from '@/components/ui/icon';
+import { TaskTypeIcon } from '@/components/game/task-type-icon';
+import { SUBMISSION_STATUSES, TASK_CARD_TYPES } from '@/types/database';
+import { SUBMISSION_STATUS_TEXT, TASK_CARD_TYPE_TEXT } from '@/lib/messages';
+import { TEAM_COLOR_OPTIONS } from '@/lib/team-colors';
 
 /**
  * Витрина дизайн-системы.
@@ -28,31 +30,38 @@ export const metadata: Metadata = {
 };
 
 const COLORS = [
-  ['--color-canvas', '#f0dbc9', 'Фон страницы', 'Доминирующий цвет постера, 47% площади'],
-  ['--color-canvas-deep', '#e7cdb8', 'Полосы', 'Чередующиеся секции и подложки'],
-  ['--color-paper', '#faefe5', 'Карточки', 'Теплее холста, но не белый'],
-  ['--color-brick', '#9b1c17', 'Акцент', 'Кирпичный с постера. Контраст 6.6:1'],
-  ['--color-brick-deep', '#7e150f', 'Нажатие', 'Тёмный кирпич для hover и active'],
-  ['--color-brick-soft', '#b6371b', 'Светлый кирпич', 'Буквы на фоне неба'],
-  ['--color-ink', '#2b1a14', 'Текст', 'Тёплый тёмный. Контраст 13.4:1'],
-  ['--color-sepia', '#6b4636', 'Абзацы', 'Основной текст. Контраст 6.6:1'],
-  ['--color-sand', '#8a6a55', 'Подсказки', 'Только крупный текст, 3.9:1'],
+  [
+    '--color-canvas',
+    '#060609',
+    'Фон страницы',
+    'Почти чёрный, но не #000: на OLED чистый чёрный даёт ореол',
+  ],
+  ['--color-canvas-deep', '#0b0b0f', 'Полосы', 'Чередующиеся секции и подложки'],
+  ['--color-panel', '#121216', 'Поверхность', 'Панели, карточки, поля'],
+  ['--color-panel-high', '#1b1b21', 'Второй уровень', 'Строки внутри панели и наведение'],
+  ['--color-ink', '#f5f5f1', 'Текст', 'Контраст на холсте 18.7:1'],
+  ['--color-muted', '#a3a3a8', 'Абзацы', 'Вторичный текст. Контраст 9.1:1'],
+  ['--color-faint', '#83838b', 'Служебное', 'Неактивное. 5.4:1 на холсте, 4.85:1 на панели'],
+  ['--color-hairline', '#404045', 'Линия', 'Единственная граница в системе'],
+  ['--color-signal', '#ff00b3', 'Сигнал', 'Один акцент на всю систему'],
 ] as const;
 
 const SCALE = [
-  ['display-xl', 'poster-display text-display-xl text-brick', 'ДВИЖ-ПАТРУЛЬ'],
-  ['display', 'poster-display text-display', 'Городской квест'],
-  ['heading-lg', 'poster-display text-heading-lg', 'Заголовок раздела'],
-  ['heading', 'poster-display text-heading', 'Заголовок страницы'],
-  ['heading-sm', 'text-heading-sm', 'Подзаголовок'],
-  ['subheading', 'text-subheading', 'Название задания'],
+  ['display-xl', 'display-figure text-display-xl text-signal', 'ДВИЖ'],
+  ['display', 'display-figure text-display', 'ПАТРУЛЬ'],
+  ['headline', 'font-display font-bold uppercase text-headline', 'Заголовок раздела'],
+  ['title', 'font-display font-bold uppercase text-title', 'Подзаголовок'],
+  ['body-lg', 'text-body-lg', 'Название задания'],
   ['body', 'text-body', 'Основной текст, которым набраны описания и правила.'],
   ['caption', 'text-caption', 'Подпись, метаданные, вспомогательный текст'],
+  ['eyebrow', 'signal-label text-eyebrow text-signal', 'ГОРОДСКОЙ ФОТО-КВЕСТ'],
+  ['label', 'signal-label text-label text-muted', 'ДАТА · СТАРТ · УЧАСТНИК'],
+  ['micro', 'signal-label text-micro text-faint', '6 СИМВОЛОВ · БЕЗ АККАУНТА'],
 ] as const;
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-5 border-t border-brick-line pt-8">
+    <section className="flex flex-col gap-5 border-t border-signal-line pt-8">
       <SectionTitle as="h2">{title}</SectionTitle>
       {children}
     </section>
@@ -65,76 +74,76 @@ export default function DesignSystemPage() {
       <header className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
           <Wordmark />
-          <span className="poster-label text-caption text-brick">15 / 08</span>
+          <span className="signal-label text-caption text-signal">05 / 09</span>
         </div>
 
-        <div className="brick-rule" />
+        <div className="signal-rule" />
 
         <Eyebrow>Витрина</Eyebrow>
-        <h1 className="text-[52px] leading-[0.9] md:text-display-xl">Дизайн-система</h1>
-        <p className="max-w-prose text-body text-sepia">
-          Палитра снята пипеткой с утверждённого постера. Страница рендерится без базы —
-          на ней проверяется внешний вид и целостность компонентов.
+        <h1 className="text-[52px] leading-[0.9] md:text-display-xl">Mono Signal</h1>
+        <p className="max-w-prose text-body text-muted">
+          Интерфейс чёрно-белый, пурпурный — единственный сигнал. Страница рендерится без базы: на
+          ней проверяется внешний вид и целостность компонентов после правки токенов.
         </p>
       </header>
 
-      {/* ═══ Герой ══════════════════════════════════════════
-          Тот же компонент, что и на главной, но с образцовыми
-          данными: главную без базы не отрисовать, а проверять
-          вид как-то надо. */}
-      <Block title="Герой">
-        <PosterHero
-          city="Leipzig"
-          title="Движ-Патруль"
-          subtitle="Городской фото-квест"
-          dayMonth="15.08"
-          date="15.08"
-          time="15:00"
-          price="15 €"
-          timezoneNote="Europe/Berlin"
-          tasksNote="30 заданий"
-          actions={
-            <>
-              <Button size="lg">Создать команду</Button>
-              <Button variant="secondary" size="lg">
-                Войти по коду
-              </Button>
-            </>
-          }
-        />
+      {/* ═══ Цвета команд ═══════════════════════════════════
+          Единственное место в системе, где разрешён цвет помимо
+          сигнального. В интерфейс он не выходит: только рубашки
+          карточек, орнаменты и командные маркеры. */}
+      <Block title="Цвета команд">
+        <p className="max-w-prose text-body text-muted">
+          Десять значений хранятся в базе как enum, а hex живут в{' '}
+          <code className="font-mono text-caption">lib/team-colors.ts</code>. В интерфейс эти цвета
+          не попадают — только на рубашку карточки, орнамент и маркер команды.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {TEAM_COLOR_OPTIONS.map((option) => (
+            <div key={option.value} className="flex items-center gap-2 border border-hairline p-2">
+              <span
+                aria-hidden="true"
+                className="block h-8 w-8"
+                style={{ backgroundColor: option.hex }}
+              />
+              <span className="flex flex-col">
+                <span className="text-caption">{option.label}</span>
+                <span className="font-mono text-micro text-faint">{option.hex}</span>
+              </span>
+            </div>
+          ))}
+        </div>
       </Block>
 
       {/* ═══ Движение ═══════════════════════════════════════ */}
       <Block title="Движение">
-        <p className="max-w-prose text-body text-sepia">
+        <p className="max-w-prose text-body text-muted">
           Анимируются только <code className="font-mono text-caption">transform</code> и{' '}
-          <code className="font-mono text-caption">opacity</code>: браузер считает их на
-          композиторе и не пересчитывает раскладку. При включённом «меньше движения» всё
-          замирает в конечном состоянии.
+          <code className="font-mono text-caption">opacity</code>: браузер считает их на композиторе
+          и не пересчитывает раскладку. При включённом «меньше движения» всё замирает в конечном
+          состоянии.
         </p>
 
-        <Ticker
-          items={['Leipzig', '15.08', '15:00', '30 заданий', '15 €', 'Свободный маршрут']}
-        />
+        <Ticker items={['Leipzig', '05.09', '14:00', '30 заданий', '15 €', 'Свободный маршрут']} />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Card interactive className="flex flex-col gap-1">
-            <span className="poster-label text-caption text-sand">Подъём</span>
-            <p className="text-body text-sepia">Наведите — карточка приподнимется.</p>
+            <span className="signal-label text-caption text-faint">Подъём</span>
+            <p className="text-body text-muted">Наведите — карточка приподнимется.</p>
           </Card>
           <Card interactive className="flex flex-col gap-1">
-            <span className="poster-label text-caption text-sand">Счётчик</span>
-            <p className="poster-figure text-heading text-brick">
+            <span className="signal-label text-caption text-faint">Счётчик</span>
+            <p className="display-figure text-headline text-signal">
               <CountUp value={50} />
             </p>
           </Card>
-          <Card className="zoom-host p-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/tile-roofs.webp"
-              alt=""
-              className="aspect-4/3 w-full rounded-[16px] object-cover"
-            />
+          <Card interactive className="flex flex-col gap-1">
+            <span className="signal-label text-caption text-faint">Пульс</span>
+            <p className="text-body text-muted">
+              <span className="anim-tick inline-block align-[-2px] text-signal">
+                <Icon name="checking" size={14} />
+              </span>{' '}
+              Статус «проверяется» пульсирует.
+            </p>
           </Card>
         </div>
       </Block>
@@ -145,13 +154,13 @@ export default function DesignSystemPage() {
           {COLORS.map(([token, value, name, note]) => (
             <Card key={token} className="flex gap-3 p-3">
               <div
-                className="h-14 w-14 shrink-0 rounded-[12px] border border-hairline"
+                className="h-14 w-14 shrink-0 border border-hairline"
                 style={{ backgroundColor: value }}
               />
               <div className="min-w-0">
                 <p className="text-body font-medium">{name}</p>
-                <p className="font-mono text-caption text-sepia">{value}</p>
-                <p className="mt-1 text-caption text-sand">{note}</p>
+                <p className="font-mono text-caption text-muted">{value}</p>
+                <p className="mt-1 text-caption text-faint">{note}</p>
               </div>
             </Card>
           ))}
@@ -163,7 +172,7 @@ export default function DesignSystemPage() {
         <div className="flex flex-col gap-5">
           {SCALE.map(([name, cls, sample]) => (
             <div key={name} className="flex flex-col gap-1">
-              <span className="poster-label text-caption text-sand">{name}</span>
+              <span className="signal-label text-caption text-faint">{name}</span>
               <span className={cls}>{sample}</span>
             </div>
           ))}
@@ -173,15 +182,15 @@ export default function DesignSystemPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Card className="flex flex-col gap-2">
-            <span className="poster-label text-caption text-sand">Плакатный · Oswald</span>
-            <span className="poster-figure text-heading">15:00 · 15 € · 30+</span>
-            <span className="poster-label text-caption">ДАТА · СТАРТ · УЧАСТИЕ</span>
+            <span className="signal-label text-caption text-faint">Дисплейный · Unbounded</span>
+            <span className="display-figure text-headline">14:00 · 15 € · 30+</span>
+            <span className="signal-label text-caption">ДАТА · СТАРТ · УЧАСТИЕ</span>
           </Card>
           <Card className="flex flex-col gap-2">
-            <span className="poster-label text-caption text-sand">Текстовый · Literata</span>
-            <p className="text-body text-sepia">
-              Найдите треугольный знак дорожных работ. Минимум два участника должны повторить
-              позу рабочего.
+            <span className="signal-label text-caption text-faint">Интерфейсный · Onest</span>
+            <p className="text-body text-muted">
+              Найдите треугольный знак дорожных работ. Минимум два участника должны повторить позу
+              рабочего.
             </p>
           </Card>
         </div>
@@ -213,9 +222,9 @@ export default function DesignSystemPage() {
 
       {/* ═══ Статусы ════════════════════════════════════════ */}
       <Block title="Статусы отправок">
-        <p className="max-w-prose text-body text-sepia">
-          Статус различается тремя независимыми признаками: символ, текст и стиль рамки.
-          Только по цвету его определять не нужно — это требование доступности.
+        <p className="max-w-prose text-body text-muted">
+          Статус различается тремя независимыми признаками: символ, текст и стиль рамки. Только по
+          цвету его определять не нужно — это требование доступности.
         </p>
         <div className="flex flex-wrap gap-2">
           {SUBMISSION_STATUSES.map((status) => (
@@ -234,7 +243,7 @@ export default function DesignSystemPage() {
           {SUBMISSION_STATUSES.slice(2, 7).map((status) => (
             <div key={status} className="flex gap-2 text-caption">
               <dt className="shrink-0 font-medium">{SUBMISSION_STATUS_TEXT[status].label}:</dt>
-              <dd className="text-sepia">{SUBMISSION_STATUS_TEXT[status].hint}</dd>
+              <dd className="text-muted">{SUBMISSION_STATUS_TEXT[status].hint}</dd>
             </div>
           ))}
         </dl>
@@ -252,7 +261,7 @@ export default function DesignSystemPage() {
               id="ds-code"
               invalid
               defaultValue="A1B"
-              className="text-center text-heading-sm uppercase tracking-[0.3em]"
+              className="text-center text-title uppercase tracking-[0.3em]"
             />
           </Field>
 
@@ -281,12 +290,55 @@ export default function DesignSystemPage() {
         </Card>
       </Block>
 
+      {/* ═══ Значки ═════════════════════════════════════════ */}
+      <Block title="Значки">
+        <p className="max-w-prose text-body text-muted">
+          Один набор — Lucide, сетка 24×24, толщина штриха 2. Значок берётся по имени состояния, а
+          не по внешнему виду: в разметке стоит <code className="text-ink">accepted</code>, а не
+          «галочка». Поменяется рисунок — не придётся искать его по страницам. Типографские символы
+          вроде <code className="text-ink">◇</code> и <code className="text-ink">⁂</code> из
+          интерфейса убраны: их подбирали по тому, что нашлось в юникоде, часть отсутствовала в
+          Unbounded и молча подменялась чужим начертанием.
+        </p>
+
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {ICON_NAMES.map((name) => (
+            <li
+              key={name}
+              className="flex items-center gap-3 border border-hairline bg-panel px-3 py-3"
+            >
+              <Icon name={name} size={18} className="text-signal" />
+              <code className="truncate text-caption text-muted">{name}</code>
+            </li>
+          ))}
+        </ul>
+
+        <p className="max-w-prose text-body text-muted">
+          Типы заданий живут отдельно: фотоаппарат и бегущие человечки нарисованы от руки, а не
+          взяты из набора.
+        </p>
+
+        <ul className="flex flex-wrap gap-3">
+          {TASK_CARD_TYPES.map((type) => (
+            <li
+              key={type}
+              className="flex items-center gap-3 border border-hairline bg-panel px-4 py-3"
+            >
+              <TaskTypeIcon type={type} size={26} className="text-signal" />
+              <span className="signal-label text-micro text-muted">
+                {TASK_CARD_TYPE_TEXT[type].label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Block>
+
       {/* ═══ Сообщения ══════════════════════════════════════ */}
       <Block title="Сообщения и состояния">
-        <Notice icon="•">
+        <Notice icon="info">
           Фото загружено и отправлено на проверку. Можно продолжать квест.
         </Notice>
-        <Notice tone="strong" icon="✓">
+        <Notice tone="strong" icon="accepted">
           Команда создана. Передайте код остальным участникам.
         </Notice>
         <ErrorNotice>Регистрация команд завершена — все доступные места заняты.</ErrorNotice>
@@ -310,26 +362,24 @@ export default function DesignSystemPage() {
       <Block title="Поверхности">
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="flex flex-col gap-2">
-            <p className="text-caption text-sepia">Дата</p>
-            <p className="poster-figure text-heading-sm">15.08</p>
-            <p className="text-caption text-sand">15 августа 2026</p>
+            <p className="text-caption text-muted">Дата</p>
+            <p className="display-figure text-title">05.09</p>
+            <p className="text-caption text-faint">5 сентября 2026</p>
           </Card>
           <Card className="flex flex-col gap-2">
-            <p className="text-caption text-sepia">Старт</p>
-            <p className="poster-figure text-heading-sm">15:00</p>
-            <p className="text-caption text-sand">Leipzig, Europe/Berlin</p>
+            <p className="text-caption text-muted">Старт</p>
+            <p className="display-figure text-title">14:00</p>
+            <p className="text-caption text-faint">Leipzig, Europe/Berlin</p>
           </Card>
           <Card className="flex flex-col gap-2">
-            <p className="text-caption text-sepia">Участие</p>
-            <p className="poster-figure text-heading-sm">15 €</p>
-            <p className="text-caption text-sand">с человека</p>
+            <p className="text-caption text-muted">Участие</p>
+            <p className="display-figure text-title">15 €</p>
+            <p className="text-caption text-faint">с человека</p>
           </Card>
         </div>
 
-        <div className="brick-rule pt-4">
-          <p className="poster-label brick-diamond text-caption text-brick">
-            20+ фото-заданий
-          </p>
+        <div className="signal-rule pt-4">
+          <p className="signal-label text-caption text-signal">20+ фото-заданий</p>
         </div>
       </Block>
 
@@ -337,18 +387,18 @@ export default function DesignSystemPage() {
       <Block title="Знак">
         <div className="flex items-center gap-8">
           <DotCluster size={18} />
-          <DotCluster size={28} className="text-brick" />
+          <DotCluster size={28} className="text-signal" />
           <DotCluster size={44} />
           <Wordmark />
         </div>
-        <p className="max-w-prose text-caption text-sepia">
-          Восемь точек сеткой 3×3 с пустым центром. На постере тем же ромбом разделены
-          надписи в нижней строке.
+        <p className="max-w-prose text-caption text-muted">
+          Семь точек сеткой 3×3 с пустым центром; восьмая, нижняя правая, набрана сигнальным цветом.
+          Из того же знака сделаны иконки PWA.
         </p>
       </Block>
 
-      <footer className="brick-rule py-8">
-        <p className="poster-label text-caption text-sand">Движ · Патруль · Leipzig</p>
+      <footer className="signal-rule py-8">
+        <p className="signal-label text-caption text-faint">Движ · Патруль · Leipzig</p>
       </footer>
     </div>
   );

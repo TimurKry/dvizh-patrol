@@ -52,7 +52,9 @@ const schema = z.object({
   NEXT_PUBLIC_APP_URL: z
     .string()
     .optional()
-    .transform((v) => (v && v.trim() !== '' ? v.trim().replace(/\/+$/, '') : 'http://localhost:3000')),
+    .transform((v) =>
+      v && v.trim() !== '' ? v.trim().replace(/\/+$/, '') : 'http://localhost:3000',
+    ),
 
   NEXT_PUBLIC_SUPABASE_URL: z.string().url('NEXT_PUBLIC_SUPABASE_URL должен быть валидным URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20, 'NEXT_PUBLIC_SUPABASE_ANON_KEY не задан'),
@@ -60,21 +62,53 @@ const schema = z.object({
 
   ADMIN_EMAIL: optionalText,
 
-  SESSION_SECRET: z
-    .string()
-    .min(32, 'SESSION_SECRET должен быть не короче 32 символов'),
+  SESSION_SECRET: z.string().min(32, 'SESSION_SECRET должен быть не короче 32 символов'),
 
   WORKER_SECRET: optionalText,
 
   GEMINI_API_KEY: optionalText,
+  /**
+   * Модель проверки.
+   *
+   * Значение по умолчанию приходится обновлять: Google закрывает
+   * старые модели для новых ключей, не трогая старые. Так и вышло
+   * с `gemini-2.5-flash` — ключ был рабочий, а модель для него уже
+   * не существовала, и каждая фотография уходила в ручную проверку
+   * с HTTP 404. Проверяется кнопкой «Проверить связь с ИИ» в
+   * настройках; переопределяется переменной без пересборки.
+   */
   GEMINI_MODEL: z
     .string()
     .optional()
-    .transform((v) => (v && v.trim() !== '' ? v.trim() : 'gemini-2.5-flash')),
+    .transform((v) => (v && v.trim() !== '' ? v.trim() : 'gemini-3.6-flash')),
 
   AI_VALIDATION_ENABLED: boolFromEnv(true),
-  AI_ACCEPT_THRESHOLD: floatFromEnv(0.88, 0, 1),
-  AI_REQUEST_TIMEOUT_MS: intFromEnv(20_000, 1_000, 120_000),
+  /**
+   * Порог принятия для новых мероприятий.
+   *
+   * Был 0.88 — судья-перестраховщик. На боевой проверке это дало
+   * ровно то, чего организатор не может себе позволить: годная
+   * фотография с уверенностью 0.75 легла к нему в очередь. Вечером
+   * квеста разбирать её будет некому.
+   *
+   * Порог опущен до 0.5 сознательно: ошибочно принятая фотография
+   * поправима (отклонение снимает баллы обратной транзакцией),
+   * а потерянный вечер организатора — нет.
+   */
+  AI_ACCEPT_THRESHOLD: floatFromEnv(0.5, 0, 1),
+  /**
+   * Сколько ждать модель.
+   *
+   * 20 секунд хватало на `gemini-2.5-flash`; третье поколение
+   * размышляет перед ответом, и на них каждая фотография уходила
+   * в ручную проверку по таймауту. Даже с `thinkingLevel: low`
+   * запас нужен больший.
+   *
+   * Потолок держит `maxDuration` функций: 60 с у подтверждения
+   * отправки, 120 с у обработчика очереди. Пачка идёт параллельно,
+   * поэтому 45 с — это время одной проверки, а не всей пачки.
+   */
+  AI_REQUEST_TIMEOUT_MS: intFromEnv(45_000, 1_000, 120_000),
   AI_MAX_CONCURRENCY: intFromEnv(4, 1, 6),
   AI_STALE_CHECK_MINUTES: intFromEnv(5, 1, 120),
   AI_MAX_ATTEMPTS: intFromEnv(2, 1, 5),
@@ -115,6 +149,32 @@ function read(): Env {
 export function env(): Env {
   cached ??= read();
   return cached;
+}
+
+/**
+ * Публичный адрес приложения.
+ *
+ * Нужен там, где ссылка уходит наружу и относительного пути мало:
+ * og-картинка в превью ссылки, иконки, манифест.
+ *
+ * Порядок источников не случаен. Своя переменная — первая: домен
+ * может быть куплен, и тогда он единственный правильный. Дальше
+ * — домен production на Vercel: он проставляется площадкой сам, и
+ * ровно он спасает от случая, когда переменную забыли задать.
+ * `http://localhost:3000` остаётся последним, для разработки.
+ *
+ * Забытая переменная стоила бы дорого и молча: `metadataBase`
+ * уехал бы на localhost, и превью ссылки в мессенджере осталось
+ * бы без картинки — ровно там, где ссылку и рассылают.
+ */
+export function appUrl(): string {
+  const own = env().NEXT_PUBLIC_APP_URL;
+  if (own !== 'http://localhost:3000') return own;
+
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  if (vercel && vercel.trim() !== '') return `https://${vercel.trim().replace(/\/+$/, '')}`;
+
+  return own;
 }
 
 /**

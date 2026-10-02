@@ -2,24 +2,37 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
 
 /**
- * Нижняя навигация для вошедшей команды.
+ * Нижняя навигация вошедшей команды.
  *
- * Появляется только на командных страницах и только на мобильном.
- * Монохромная, пять пунктов, зона нажатия во всю высоту панели —
- * квест проходят одной рукой на ходу. Пять — предел: на узком
- * телефоне шестой пункт ужал бы подписи до нечитаемых.
+ * Ровно три пункта — это продуктовое решение, а не следствие
+ * нехватки места (CLAUDE.md, «Неподвижные продуктовые решения»).
+ * Карта, отправки, рейтинг, участники и правила живут в «Ещё»:
+ * во время игры к ним обращаются редко, а каждый лишний пункт
+ * отнимает ширину у тех трёх, которыми пользуются постоянно.
+ *
+ * Отправка ответа сюда не выносится вовсе — это действие внутри
+ * задания, а не раздел.
+ *
+ * Панель показывается и на десктопе тоже: командные экраны
+ * рассчитаны на телефон, и вторая навигация сверху для них
+ * избыточна. Ширина ограничена, чтобы на ноутбуке пункты не
+ * растягивались на весь экран.
  */
 
-const ITEMS = [
-  { href: '/team', label: 'Главная', icon: 'M2 8l7-6 7 6v8H2z' },
-  { href: '/tasks', label: 'Задания', icon: 'M3 3h12v12H3zM6 7h6M6 11h4' },
-  { href: '/map', label: 'Карта', icon: 'M2 4l5-2 4 2 5-2v12l-5 2-4-2-5 2zM7 2v12M11 4v12' },
-  { href: '/submissions', label: 'Отправки', icon: 'M2 4h14v10H2zM2 9l4-3 4 4 3-2 3 3' },
-  { href: '/leaderboard', label: 'Рейтинг', icon: 'M3 15V8M9 15V3M15 15v-5' },
-] as const;
+/**
+ * Ромб на «Заданиях» ничего не значил: он был взят из метки
+ * «доступно» на карточке, а в навигации читался как абстрактная
+ * фигура. Колода карт говорит прямо — там лежат карточки.
+ */
+const ITEMS: { href: string; label: string; icon: IconName }[] = [
+  { href: '/tasks', label: 'Задания', icon: 'tasks' },
+  { href: '/team', label: 'Команда', icon: 'teams' },
+  { href: '/more', label: 'Ещё', icon: 'more' },
+];
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -27,12 +40,10 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Разделы команды"
-      className={cn(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-paper md:hidden',
-      )}
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-panel"
       style={{ paddingBottom: 'var(--safe-bottom)' }}
     >
-      <ul className="mx-auto flex max-w-lg">
+      <ul className="mx-auto flex max-w-md">
         {ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
@@ -41,21 +52,12 @@ export function BottomNav() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex h-16 flex-col items-center justify-center gap-1',
-                  active ? 'text-ink' : 'text-sand',
+                  'flex h-[68px] flex-col items-center justify-center gap-1.5',
+                  active ? 'text-signal' : 'text-muted hover:text-ink',
                 )}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-                  <path
-                    d={item.icon}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={active ? 1.8 : 1.4}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className={cn('text-[11px]', active && 'font-medium')}>{item.label}</span>
+                <Icon name={item.icon} size={20} strokeWidth={active ? 2.2 : 1.7} />
+                <span className="signal-label text-micro">{item.label}</span>
               </Link>
             </li>
           );

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { Icon, type IconName } from './icon';
 
 /**
  * Сообщения, пустые состояния и скелетоны.
@@ -20,7 +21,8 @@ export function Notice({
 }: {
   children: ReactNode;
   tone?: Tone;
-  icon?: string;
+  /** Значок слева — имя из общего набора, не произвольный символ. */
+  icon?: IconName;
   className?: string;
   role?: 'alert' | 'status';
 }) {
@@ -28,14 +30,14 @@ export function Notice({
     <div
       role={role}
       className={cn(
-        'flex items-start gap-3 rounded-[16px] border px-4 py-3 text-body',
-        tone === 'strong' ? 'border-ink bg-paper' : 'border-hairline bg-paper',
+        'flex items-start gap-3 border px-4 py-3 text-body',
+        tone === 'strong' ? 'border-ink bg-panel' : 'border-hairline bg-panel',
         className,
       )}
     >
       {icon && (
-        <span aria-hidden="true" className="mt-0.5 shrink-0 font-medium">
-          {icon}
+        <span className="mt-1 shrink-0">
+          <Icon name={icon} size={16} />
         </span>
       )}
       <div className="min-w-0 flex-1">{children}</div>
@@ -45,7 +47,7 @@ export function Notice({
 
 export function ErrorNotice({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <Notice tone="strong" icon="!" role="alert" className={className}>
+    <Notice tone="strong" icon="upload-failed" role="alert" className={className}>
       {children}
     </Notice>
   );
@@ -65,13 +67,13 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-3 rounded-[16px] border border-dashed border-hairline-strong',
+        'flex flex-col items-center gap-3 border border-dashed border-hairline-strong',
         'px-6 py-12 text-center',
         className,
       )}
     >
-      <p className="text-subheading">{title}</p>
-      {description && <p className="max-w-prose text-body text-sepia">{description}</p>}
+      <p className="text-body-lg">{title}</p>
+      {description && <p className="max-w-prose text-body text-muted">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -84,8 +86,8 @@ export function Skeleton({ className }: { className?: string }) {
 /** Скелетон карточки задания — совпадает по габаритам с реальной. */
 export function TaskCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-[16px] border border-hairline bg-paper p-4">
-      <Skeleton className="mb-4 aspect-4/3 w-full rounded-[12px]" />
+    <div className="overflow-hidden border border-hairline bg-panel p-4">
+      <Skeleton className="mb-4 aspect-4/3 w-full" />
       <Skeleton className="mb-2 h-4 w-2/3" />
       <Skeleton className="h-4 w-1/3" />
     </div>

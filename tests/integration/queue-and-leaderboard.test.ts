@@ -298,10 +298,9 @@ describe('рейтинг', () => {
       eventId,
     ]);
 
-    const hidden = await pool.query(
-      `SELECT * FROM public.leaderboard_public WHERE event_id = $1`,
-      [eventId],
-    );
+    const hidden = await pool.query(`SELECT * FROM public.leaderboard_public WHERE event_id = $1`, [
+      eventId,
+    ]);
     expect(hidden.rows.length).toBe(0);
   });
 
@@ -339,10 +338,9 @@ describe('рейтинг', () => {
     const teamId = await scoreTeam('Команда', [50]);
     await pool.query(`SELECT public.freeze_leaderboard($1)`, [eventId]);
 
-    await pool.query(
-      `SELECT public.adjust_team_score($1, 100, 'bonus', 'после заморозки', NULL)`,
-      [teamId],
-    );
+    await pool.query(`SELECT public.adjust_team_score($1, 100, 'bonus', 'после заморозки', NULL)`, [
+      teamId,
+    ]);
 
     const { rows: snapshot } = await pool.query<{ total_points: number }>(
       `SELECT total_points FROM public.leaderboard_snapshots WHERE event_id = $1`,

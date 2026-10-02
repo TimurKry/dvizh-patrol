@@ -3,6 +3,7 @@
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { useFieldError } from '@/components/ui/field-errors';
+import { Icon } from '@/components/ui/icon';
 
 /**
  * Поля ввода.
@@ -15,10 +16,10 @@ import { useFieldError } from '@/components/ui/field-errors';
  */
 
 const CONTROL =
-  'w-full bg-paper text-ink rounded-[16px] border px-4 py-3 ' +
-  'text-body placeholder:text-sand min-h-[48px] ' +
+  'w-full bg-panel text-ink border px-4 py-3 ' +
+  'text-body placeholder:text-faint min-h-[48px] ' +
   'transition-colors focus:outline-none focus-visible:border-ink ' +
-  'disabled:bg-ink-wash disabled:text-sand disabled:cursor-not-allowed';
+  'disabled:bg-ink-wash disabled:text-faint disabled:cursor-not-allowed';
 
 export function Field({
   label,
@@ -47,7 +48,7 @@ export function Field({
       <label htmlFor={htmlFor} className="text-caption font-medium text-ink">
         {label}
         {required && (
-          <span className="text-sepia" aria-hidden="true">
+          <span className="text-muted" aria-hidden="true">
             {' '}
             *
           </span>
@@ -55,12 +56,14 @@ export function Field({
       </label>
       {children}
       {shownError ? (
-        <p className="text-caption text-ink" role="alert">
-          <span aria-hidden="true">! </span>
+        <p className="flex items-start gap-1.5 text-caption text-ink" role="alert">
+          <span className="mt-0.5">
+            <Icon name="upload-failed" size={14} />
+          </span>
           {shownError}
         </p>
       ) : hint ? (
-        <p className="text-caption text-sepia">{hint}</p>
+        <p className="text-caption text-muted">{hint}</p>
       ) : null}
     </div>
   );
@@ -142,16 +145,21 @@ export function Checkbox({
   return (
     <div className={cn('flex items-start gap-3', className)}>
       {/* Галочка — отдельный SVG поверх поля: так она рисуется
-          без inline-стилей и одинаково выглядит во всех браузерах. */}
+          без inline-стилей и одинаково выглядит во всех браузерах.
+          Прочерчивание живёт в `.checkbox-mark` (globals.css):
+          переход по `stroke-dashoffset` в утилитах Tailwind не
+          выражается. */}
       <span className="relative mt-[2px] inline-flex h-[22px] w-[22px] shrink-0">
         <input
           id={inputId}
           type="checkbox"
           className={cn(
             'peer h-full w-full cursor-pointer appearance-none',
-            'rounded-[6px] border border-hairline-strong bg-paper',
+            'border border-hairline-strong bg-panel',
+            'transition-[background-color,border-color,transform] duration-150 ease-out',
+            'hover:border-ink active:scale-90',
             'checked:border-ink checked:bg-ink',
-            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+            'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal',
             'disabled:cursor-not-allowed disabled:opacity-50',
           )}
           {...rest}
@@ -160,14 +168,15 @@ export function Checkbox({
           viewBox="0 0 14 12"
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute left-1/2 top-1/2 h-3 w-3.5',
-            '-translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100',
+            'checkbox-mark pointer-events-none absolute left-1/2 top-1/2 h-3 w-3.5',
+            // Цвет холста: заливка отмеченного поля светлая.
+            '-translate-x-1/2 -translate-y-1/2 text-canvas',
           )}
         >
           <path
             d="M1 6l4 4 8-9"
-            stroke="#faefe5"
-            strokeWidth="2"
+            stroke="currentColor"
+            strokeWidth="2.25"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -176,7 +185,7 @@ export function Checkbox({
       </span>
       <label htmlFor={inputId} className="cursor-pointer text-body leading-snug">
         {label}
-        {description && <span className="mt-1 block text-caption text-sepia">{description}</span>}
+        {description && <span className="mt-1 block text-caption text-muted">{description}</span>}
       </label>
     </div>
   );

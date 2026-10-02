@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { checkLocation, checkPlayArea, distanceMeters, toPlayArea } from '@/lib/geo';
+import {
+  asAreaPolygon,
+  checkLocation,
+  checkPlayArea,
+  distanceMeters,
+  pointInPolygon,
+  toPlayArea,
+} from '@/lib/geo';
 
 /** Рыночная площадь Лейпцига — точка отсчёта в тестах. */
 const MARKT = { latitude: 51.3397, longitude: 12.3731 };
@@ -112,12 +119,17 @@ describe('проверка радиуса', () => {
 });
 
 describe('игровое поле', () => {
-  const AREA = { latitude: MARKT.latitude, longitude: MARKT.longitude, radiusMeters: 1000 };
+  const AREA = {
+    shape: 'circle',
+    latitude: MARKT.latitude,
+    longitude: MARKT.longitude,
+    radiusMeters: 1000,
+  } as const;
 
   it('собирается только из трёх заполненных колонок', () => {
     expect(
       toPlayArea({ area_latitude: 51.3, area_longitude: 12.4, area_radius_meters: 900 }),
-    ).toEqual({ latitude: 51.3, longitude: 12.4, radiusMeters: 900 });
+    ).toEqual({ shape: 'circle', latitude: 51.3, longitude: 12.4, radiusMeters: 900 });
 
     // Радиуса нет — рисовать и проверять нечем.
     expect(
@@ -164,5 +176,99 @@ describe('игровое поле', () => {
     // точность, поэтому послабление ограничено 150 метрами.
     const far = { latitude: MARKT.latitude + 0.045, longitude: MARKT.longitude };
     expect(checkPlayArea({ area: AREA, ...far, accuracy: 100000 }).status).toBe('outside');
+  });
+});
+
+describe('игровое поле полигоном', () => {
+  // Прямоугольник вокруг Рыночной площади: примерно 2×1 км.
+  const RING: Array<[number, number]> = [
+    [12.36, 51.345],
+    [12.4, 51.345],
+    [12.4, 51.33],
+    [12.36, 51.33],
+    [12.36, 51.345],
+  ];
+  const POLYGON = { type: 'Polygon' as const, coordinates: [RING] as [typeof RING] };
+
+  it('полигон важнее круга, если задан и то, и другое', () => {
+    const area = toPlayArea({
+      area_latitude: 51.3,
+      area_longitude: 12.4,
+      area_radius_meters: 900,
+      area_polygon: POLYGON,
+    });
+
+    expect(area?.shape).toBe('polygon');
+  });
+
+  it('отбраковывает всё, что не замкнутый четырёхточечный полигон', () => {
+    expect(asAreaPolygon(null)).toBeNull();
+    expect(asAreaPolygon({ type: 'LineString', coordinates: [] })).toBeNull();
+    // Меньше четырёх точек — не фигура.
+    expect(
+      asAreaPolygon({
+        type: 'Polygon',
+        coordinates: [
+          [
+            [12.36, 51.34],
+            [12.4, 51.34],
+          ],
+        ],
+      }),
+    ).toBeNull();
+    // Незамкнутое кольцо ломает проверку «точка внутри».
+    expect(
+      asAreaPolygon({
+        type: 'Polygon',
+        coordinates: [
+          [
+            [12.36, 51.34],
+            [12.4, 51.34],
+            [12.4, 51.33],
+            [12.37, 51.33],
+          ],
+        ],
+      }),
+    ).toBeNull();
+    // Дырка в поле не предусмотрена: колец должно быть одно.
+    expect(asAreaPolygon({ type: 'Polygon', coordinates: [RING, RING] })).toBeNull();
+    // Координаты вне земного шара.
+    expect(
+      asAreaPolygon({
+        type: 'Polygon',
+        coordinates: [
+          [
+            [400, 51.34],
+            [12.4, 51.34],
+            [12.4, 51.33],
+            [400, 51.34],
+          ],
+        ],
+      }),
+    ).toBeNull();
+
+    expect(asAreaPolygon(POLYGON)).not.toBeNull();
+  });
+
+  it('точка внутри и снаружи определяются верно', () => {
+    expect(pointInPolygon(RING, 51.3397, 12.3731)).toBe(true);
+    expect(pointInPolygon(RING, 51.36, 12.3731)).toBe(false);
+    expect(pointInPolygon(RING, 51.3397, 12.5)).toBe(false);
+  });
+
+  it('вердикт совпадает с геометрией, а погрешность играет за участника', () => {
+    const area = toPlayArea({
+      area_latitude: null,
+      area_longitude: null,
+      area_radius_meters: null,
+      area_polygon: POLYGON,
+    });
+
+    expect(checkPlayArea({ area, latitude: 51.3397, longitude: 12.3731 }).status).toBe('inside');
+
+    // Точка в километре к северу от границы — снаружи при любой
+    // разумной погрешности.
+    const far = checkPlayArea({ area, latitude: 51.36, longitude: 12.3731, accuracy: 150 });
+    expect(far.status).toBe('outside');
   });
 });

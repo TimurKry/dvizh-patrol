@@ -105,3 +105,19 @@ describe('статусы отправок', () => {
     expect(SUBMISSION_STATUS_TEXT.pending.hint).toContain('Можно продолжать квест');
   });
 });
+
+describe('отказ от карточки', () => {
+  it('объясняет каждый исход человеческими словами', () => {
+    for (const code of ['task_not_on_hand', 'task_already_attempted', 'no_replacement']) {
+      const message = errorMessage(code);
+      expect(message, code).not.toBe(ERROR_MESSAGES.unknown_error);
+      expect(message, code).toMatch(/[а-яё]/i);
+    }
+  });
+
+  it('на отказе без замены говорит, что карточка осталась', () => {
+    // Здесь легко написать «не получилось» и оставить человека
+    // гадать, потерял он карту или нет.
+    expect(errorMessage('no_replacement')).toContain('остаётся у вас');
+  });
+});

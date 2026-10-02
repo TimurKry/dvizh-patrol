@@ -34,10 +34,7 @@ export function ActionButton({
   confirm?: string;
   disabled?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState<AdminActionState, FormData>(
-    action,
-    INITIAL,
-  );
+  const [state, formAction, pending] = useActionState<AdminActionState, FormData>(action, INITIAL);
 
   return (
     <form
@@ -58,7 +55,7 @@ export function ActionButton({
       {state.message && (
         <span
           role="status"
-          className={state.ok ? 'text-caption text-sepia' : 'text-caption text-ink'}
+          className={state.ok ? 'text-caption text-muted' : 'text-caption text-ink'}
         >
           {state.ok ? '' : '! '}
           {state.message}
@@ -90,15 +87,16 @@ export function ActionForm({
   className?: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
 }) {
-  const [state, formAction, pending] = useActionState<AdminActionState, FormData>(
-    action,
-    INITIAL,
-  );
+  const [state, formAction, pending] = useActionState<AdminActionState, FormData>(action, INITIAL);
 
   return (
     <form action={formAction} className={className}>
       {state.message && (
-        <Notice tone={state.ok ? 'neutral' : 'strong'} icon={state.ok ? '✓' : '!'} role="status">
+        <Notice
+          tone={state.ok ? 'neutral' : 'strong'}
+          icon={state.ok ? 'accepted' : 'upload-failed'}
+          role="status"
+        >
           {state.message}
         </Notice>
       )}

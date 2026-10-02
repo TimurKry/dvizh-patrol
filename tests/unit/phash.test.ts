@@ -76,10 +76,7 @@ describe('вычисление хэша', () => {
     const original = await makeImage(3);
 
     // То, что делает браузер перед отправкой: ресайз и WebP.
-    const recompressed = await sharp(original)
-      .resize(240)
-      .webp({ quality: 60 })
-      .toBuffer();
+    const recompressed = await sharp(original).resize(240).webp({ quality: 60 }).toBuffer();
 
     const a = await computePerceptualHash(original);
     const b = await computePerceptualHash(recompressed);

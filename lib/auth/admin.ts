@@ -72,15 +72,17 @@ export async function audit(params: {
   after?: unknown;
 }): Promise<void> {
   try {
-    await supabaseAdmin().from('admin_audit_log').insert({
-      admin_id: params.admin?.userId ?? null,
-      admin_email: params.admin?.email ?? null,
-      action: params.action,
-      entity_type: params.entityType,
-      entity_id: params.entityId ?? null,
-      before_data: params.before ?? null,
-      after_data: params.after ?? null,
-    });
+    await supabaseAdmin()
+      .from('admin_audit_log')
+      .insert({
+        admin_id: params.admin?.userId ?? null,
+        admin_email: params.admin?.email ?? null,
+        action: params.action,
+        entity_type: params.entityType,
+        entity_id: params.entityId ?? null,
+        before_data: params.before ?? null,
+        after_data: params.after ?? null,
+      });
   } catch {
     // Журнал не должен ронять действие администратора.
   }

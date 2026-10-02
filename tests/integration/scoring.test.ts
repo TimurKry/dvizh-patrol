@@ -436,3 +436,50 @@ describe('игровое поле', () => {
     expect(result.reviewReason).toBe('possible_duplicate');
   });
 });
+
+/**
+ * Конец игры по времени.
+ *
+ * Квест заканчивался только кнопкой организатора, а организатор в
+ * этот момент сам где-то в городе. Проверка стоит в базе, а не в
+ * интерфейсе: страница участника могла открыться до срока и
+ * провисеть в кармане полчаса.
+ */
+describe('время окончания', () => {
+  it('до срока отправка создаётся', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-2 hours', endsIn: '2 hours' });
+    const team = await registerTeam(id, 'Успевшие', { bypassLimits: true });
+    const task = await createTask(id, { number: 1 });
+
+    const slot = await createSlot(team.teamId!, task);
+    expect(slot.ok).toBe(true);
+  });
+
+  it('после срока отправку не принять, и это видно по коду ошибки', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-3 hours', endsIn: '-1 minute' });
+    const team = await registerTeam(id, 'Опоздавшие', { bypassLimits: true });
+    const task = await createTask(id, { number: 1 });
+
+    const slot = await createSlot(team.teamId!, task);
+    expect(slot.ok).toBe(false);
+    expect(slot.error).toBe('event_over');
+  });
+
+  it('без времени окончания срок не наступает никогда', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-3 hours', endsIn: null });
+    const team = await registerTeam(id, 'Бессрочные', { bypassLimits: true });
+    const task = await createTask(id, { number: 1 });
+
+    const slot = await createSlot(team.teamId!, task);
+    expect(slot.ok).toBe(true);
+  });
+
+  it('время закрывает окно, но не меняет статус: завершает организатор', async () => {
+    const id = await createEvent({ status: 'live', startsIn: '-3 hours', endsIn: '-1 minute' });
+    const { rows } = await pool.query<{ status: string }>(
+      `SELECT status FROM public.events WHERE id = $1`,
+      [id],
+    );
+    expect(rows[0]!.status).toBe('live');
+  });
+});

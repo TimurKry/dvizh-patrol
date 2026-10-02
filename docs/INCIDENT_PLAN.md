@@ -239,9 +239,9 @@ GROUP BY submission_id HAVING count(*) > 1;
 
 Заполните до мероприятия:
 
-| | |
-|---|---|
-| Админка | `https://__________/admin` |
-| Supabase | `https://supabase.com/dashboard/project/__________` |
-| Vercel | `https://vercel.com/__________` |
-| Второй организатор | `__________` |
+|                    |                                                     |
+| ------------------ | --------------------------------------------------- |
+| Админка            | `https://__________/admin`                          |
+| Supabase           | `https://supabase.com/dashboard/project/__________` |
+| Vercel             | `https://vercel.com/__________`                     |
+| Второй организатор | `__________`                                        |

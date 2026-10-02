@@ -106,10 +106,7 @@ export async function registerTeamAction(
 
 // ═══ Вход по коду ══════════════════════════════════════════════
 
-export async function joinTeamAction(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function joinTeamAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = joinTeamSchema.safeParse({
     joinCode: formData.get('joinCode'),
     memberName: formData.get('memberName'),

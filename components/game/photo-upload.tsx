@@ -229,7 +229,7 @@ export function PhotoUpload({
   if (phase === 'done') {
     return (
       <div className="flex flex-col gap-4">
-        <Notice tone="strong" icon="✓" role="status">
+        <Notice tone="strong" icon="accepted" role="status">
           Фото загружено и отправлено на проверку. Можно продолжать квест.
         </Notice>
         <Button variant="secondary" onClick={() => router.push('/tasks')}>
@@ -260,9 +260,9 @@ export function PhotoUpload({
       />
 
       {restored && phase === 'ready' && (
-        <Notice icon="◍">
-          Эта фотография осталась с прошлой попытки — отправка не завершилась. Можно отправить
-          её снова или выбрать другую.
+        <Notice icon="uploading">
+          Эта фотография осталась с прошлой попытки — отправка не завершилась. Можно отправить её
+          снова или выбрать другую.
         </Notice>
       )}
 
@@ -275,10 +275,10 @@ export function PhotoUpload({
           <img
             src={preview}
             alt="Выбранная фотография"
-            className="w-full rounded-[12px] border border-hairline object-cover"
+            className="w-full border border-hairline object-cover"
           />
           {prepared && (
-            <figcaption className="text-caption text-sepia">
+            <figcaption className="text-caption text-muted">
               После сжатия: {formatBytes(prepared.bytes)}
               {prepared.ratio > 1.1 && ` — меньше исходного в ${prepared.ratio.toFixed(1)} раза`}
             </figcaption>
@@ -287,7 +287,7 @@ export function PhotoUpload({
       )}
 
       {busy && (
-        <p className="text-body text-sepia" role="status" aria-live="polite">
+        <p className="text-body text-muted" role="status" aria-live="polite">
           {stage || 'Обрабатываем…'}
         </p>
       )}
@@ -336,7 +336,7 @@ export function PhotoUpload({
       )}
 
       {(requireLocation || areaEnforced) && (
-        <p className="text-caption text-sepia">
+        <p className="text-caption text-muted">
           <span aria-hidden="true">◎ </span>
           {requireLocation
             ? 'Задание привязано к месту: при отправке браузер спросит разрешение на геопозицию.'

@@ -14,7 +14,8 @@
       "Участники повторяют позу с лопатой или изображают копание"
     ],
     "minimumPeople": 2,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "photo"
   },
   {
     "number": 2,
@@ -31,7 +32,8 @@
       "Участник повторяет позу памятника"
     ],
     "minimumPeople": 1,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "photo"
   },
   {
     "number": 3,
@@ -47,7 +49,8 @@
       "В кадре находится вся команда"
     ],
     "minimumPeople": 2,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "active"
   },
   {
     "number": 4,
@@ -64,7 +67,8 @@
       "Плакат и участники находятся в одном кадре"
     ],
     "minimumPeople": 2,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "photo"
   },
   {
     "number": 5,
@@ -80,7 +84,8 @@
       "Объект является частью города, а не принесён с собой"
     ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "riddle"
   },
   {
     "number": 6,
@@ -91,9 +96,13 @@
     "category": "interaction",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["На фотографии виден полученный предмет", "Предмет держит участник команды"],
+    "criteria": [
+      "На фотографии виден полученный предмет",
+      "Предмет держит участник команды"
+    ],
     "minimumPeople": 1,
-    "maxAttempts": 1
+    "maxAttempts": 1,
+    "cardType": "active"
   },
   {
     "number": 7,
@@ -109,7 +118,8 @@
       "Рядом находится минимум один участник команды"
     ],
     "minimumPeople": 1,
-    "maxAttempts": 1
+    "maxAttempts": 1,
+    "cardType": "active"
   },
   {
     "number": 8,
@@ -125,7 +135,8 @@
       "В отражении узнаётся городская среда"
     ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "active"
   },
   {
     "number": 9,
@@ -141,7 +152,8 @@
       "Объект является частью городской среды"
     ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "active"
   },
   {
     "number": 10,
@@ -158,7 +170,8 @@
       "Дата является частью здания, а не объявления"
     ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "riddle"
   },
   {
     "number": 11,
@@ -174,7 +187,8 @@
       "Растение растёт в неожиданном для него месте"
     ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "riddle"
   },
   {
     "number": 12,
@@ -185,9 +199,13 @@
     "category": "team",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре вся команда", "Участники образуют единую фигуру"],
+    "criteria": [
+      "В кадре вся команда",
+      "Участники образуют единую фигуру"
+    ],
     "minimumPeople": 3,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "active"
   },
   {
     "number": 13,
@@ -198,9 +216,13 @@
     "category": "road_signs",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["На фотографии виден знак", "Пиктограмма читается целиком"],
+    "criteria": [
+      "На фотографии виден знак",
+      "Пиктограмма читается целиком"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "photo"
   },
   {
     "number": 14,
@@ -211,9 +233,13 @@
     "category": "object_search",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["На фотографии виден трамвай", "Различим номер маршрута"],
+    "criteria": [
+      "На фотографии виден трамвай",
+      "Различим номер маршрута"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "riddle"
   },
   {
     "number": 15,
@@ -224,9 +250,13 @@
     "category": "object_search",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["На фотографии видна дверь целиком", "Дверь чем-то выделяется"],
+    "criteria": [
+      "На фотографии видна дверь целиком",
+      "Дверь чем-то выделяется"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "riddle"
   },
   {
     "number": 16,
@@ -242,7 +272,8 @@
       "Участник взаимодействует с изображением"
     ],
     "minimumPeople": 1,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "active"
   },
   {
     "number": 17,
@@ -253,9 +284,13 @@
     "category": "advertising",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["На фотографии видна вывеска", "Текст читается и он не на немецком"],
+    "criteria": [
+      "На фотографии видна вывеска",
+      "Текст читается и он не на немецком"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "photo"
   },
   {
     "number": 18,
@@ -266,9 +301,13 @@
     "category": "creative",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["Композиция симметрична", "Снято фронтально, без сильного наклона"],
+    "criteria": [
+      "Композиция симметрична",
+      "Снято фронтально, без сильного наклона"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "active"
   },
   {
     "number": 19,
@@ -279,9 +318,13 @@
     "category": "team",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["В кадре скамейка", "На ней размещается вся команда"],
+    "criteria": [
+      "В кадре скамейка",
+      "На ней размещается вся команда"
+    ],
     "minimumPeople": 2,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "active"
   },
   {
     "number": 20,
@@ -292,9 +335,13 @@
     "category": "object_search",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["Надпись в кадре", "Текст можно разобрать при увеличении"],
+    "criteria": [
+      "Надпись в кадре",
+      "Текст можно разобрать при увеличении"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "riddle"
   },
   {
     "number": 21,
@@ -305,9 +352,12 @@
     "category": "object_search",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["В кадре есть животное или его изображение"],
+    "criteria": [
+      "В кадре есть животное или его изображение"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "riddle"
   },
   {
     "number": 22,
@@ -318,9 +368,13 @@
     "category": "team",
     "difficulty": "hard",
     "validationMode": "ai",
-    "criteria": ["В кадре вся команда", "Все участники в воздухе"],
+    "criteria": [
+      "В кадре вся команда",
+      "Все участники в воздухе"
+    ],
     "minimumPeople": 2,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "active"
   },
   {
     "number": 23,
@@ -331,9 +385,13 @@
     "category": "interaction",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре покупка", "В кадре чек с суммой"],
+    "criteria": [
+      "В кадре покупка",
+      "В кадре чек с суммой"
+    ],
     "minimumPeople": 1,
-    "maxAttempts": 1
+    "maxAttempts": 1,
+    "cardType": "active"
   },
   {
     "number": 24,
@@ -344,9 +402,12 @@
     "category": "creative",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["Тень является основным содержанием кадра"],
+    "criteria": [
+      "Тень является основным содержанием кадра"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "cardType": "active"
   },
   {
     "number": 25,
@@ -357,9 +418,13 @@
     "category": "object_search",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["Надпись читается", "Она содержит имя участника команды"],
+    "criteria": [
+      "Надпись читается",
+      "Она содержит имя участника команды"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "riddle"
   },
   {
     "number": 26,
@@ -370,9 +435,13 @@
     "category": "object_search",
     "difficulty": "medium",
     "validationMode": "ai",
-    "criteria": ["В кадре велосипед", "Видно, что он давно не используется"],
+    "criteria": [
+      "В кадре велосипед",
+      "Видно, что он давно не используется"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "riddle"
   },
   {
     "number": 27,
@@ -383,9 +452,13 @@
     "category": "advertising",
     "difficulty": "easy",
     "validationMode": "ai",
-    "criteria": ["В кадре витрина", "В кадре есть участник команды"],
+    "criteria": [
+      "В кадре витрина",
+      "В кадре есть участник команды"
+    ],
     "minimumPeople": 1,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "photo"
   },
   {
     "number": 28,
@@ -396,9 +469,13 @@
     "category": "special",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["Кадр снят сверху", "Виден городской пейзаж"],
+    "criteria": [
+      "Кадр снят сверху",
+      "Виден городской пейзаж"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "riddle"
   },
   {
     "number": 29,
@@ -409,9 +486,13 @@
     "category": "interaction",
     "difficulty": "medium",
     "validationMode": "manual",
-    "criteria": ["В кадре вся команда", "Очевидно, что снимал не участник"],
+    "criteria": [
+      "В кадре вся команда",
+      "Очевидно, что снимал не участник"
+    ],
     "minimumPeople": 2,
-    "maxAttempts": 2
+    "maxAttempts": 2,
+    "cardType": "active"
   },
   {
     "number": 30,
@@ -422,8 +503,11 @@
     "category": "special",
     "difficulty": "hard",
     "validationMode": "manual",
-    "criteria": ["Фотография сделана во время квеста"],
+    "criteria": [
+      "Фотография сделана во время квеста"
+    ],
     "minimumPeople": 0,
-    "maxAttempts": 1
+    "maxAttempts": 1,
+    "cardType": "riddle"
   }
 ]

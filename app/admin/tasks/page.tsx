@@ -36,11 +36,7 @@ export default async function AdminTasksPage() {
 
   const db = supabaseAdmin();
   const [tasksResult, submissionsResult] = await Promise.all([
-    db
-      .from('tasks')
-      .select('*')
-      .eq('event_id', event.id)
-      .order('number', { ascending: true }),
+    db.from('tasks').select('*').eq('event_id', event.id).order('number', { ascending: true }),
     db.from('submissions').select('task_id, status').eq('event_id', event.id),
   ]);
 
@@ -63,8 +59,8 @@ export default async function AdminTasksPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Eyebrow>Управление</Eyebrow>
-          <h1 className="mt-2 text-heading">Задания</h1>
-          <p className="mt-1 text-body text-sepia">
+          <h1 className="mt-2 text-headline">Задания</h1>
+          <p className="mt-1 text-body text-muted">
             {active} активных из {tasks.length} {tasksWord(tasks.length)}
           </p>
         </div>
@@ -94,7 +90,7 @@ export default async function AdminTasksPage() {
           <table className="w-full min-w-[860px] border-collapse text-body">
             <caption className="sr-only">Список заданий мероприятия</caption>
             <thead>
-              <tr className="border-b border-hairline text-left text-caption text-sepia">
+              <tr className="border-b border-hairline text-left text-caption text-muted">
                 <th scope="col" className="py-2 pr-3 font-medium">
                   №
                 </th>
@@ -126,7 +122,7 @@ export default async function AdminTasksPage() {
                 const stat = stats.get(task.id) ?? { total: 0, accepted: 0 };
                 return (
                   <tr key={task.id} className="border-b border-hairline last:border-0">
-                    <td className="py-3 pr-3 tabular-nums text-sepia">{task.number}</td>
+                    <td className="py-3 pr-3 tabular-nums text-muted">{task.number}</td>
                     <td className="py-3 pr-3">
                       <Link
                         href={`/admin/tasks/${task.id}`}
@@ -135,10 +131,10 @@ export default async function AdminTasksPage() {
                         {task.title}
                       </Link>
                       {task.require_location && (
-                        <span className="ml-2 text-caption text-sepia">геопозиция</span>
+                        <span className="ml-2 text-caption text-muted">геопозиция</span>
                       )}
                     </td>
-                    <td className="py-3 pr-3 text-caption text-sepia">
+                    <td className="py-3 pr-3 text-caption text-muted">
                       {TASK_CATEGORY_TEXT[task.category]}
                       <span className="ml-1">· {TASK_DIFFICULTY_TEXT[task.difficulty]}</span>
                     </td>
@@ -147,7 +143,7 @@ export default async function AdminTasksPage() {
                       {MODE_LABEL[task.validation_mode] ?? task.validation_mode}
                     </td>
                     <td className="py-3 pr-3 tabular-nums">{task.max_attempts}</td>
-                    <td className="py-3 pr-3 tabular-nums text-caption text-sepia">
+                    <td className="py-3 pr-3 tabular-nums text-caption text-muted">
                       {stat.accepted} / {stat.total}
                     </td>
                     <td className="py-3">

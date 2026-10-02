@@ -1,0 +1,855 @@
+[
+  {
+    "number": 1,
+    "title": "Патруль с патрулём",
+    "shortDescription": "Сфотографируйтесь с полицейским — спросив разрешения",
+    "description": "Найдите полицейского и попросите разрешения сфотографироваться вместе. Откажут — не настаивайте и ищите следующего: спокойно принять отказ тоже часть задания. В кадре нужен хотя бы один участник команды.",
+    "points": 70,
+    "category": "interaction",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре виден полицейский или полицейский автомобиль",
+      "В кадре минимум один участник команды",
+      "Снято на улице, а не переснято с экрана или плаката"
+    ],
+    "minimumPeople": 1,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 3,
+    "title": "Инструмент",
+    "shortDescription": "Любой музыкальный инструмент в городе",
+    "description": "Найдите музыкальный инструмент. Годится любой: в витрине, в руках уличного музыканта, на вывеске, в виде скульптуры или барельефа. Не годится картинка на экране телефона.",
+    "points": 50,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре узнаётся музыкальный инструмент",
+      "Инструмент снят в городе, а не переснят с экрана"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 6,
+    "title": "Башня",
+    "shortDescription": "Башня целиком — от основания до верхушки",
+    "description": "Снимите башню так, чтобы она поместилась в кадр целиком: от основания до верха. Башен в центре несколько — годится любая. Одна верхушка над крышами не считается.",
+    "points": 50,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "Башня видна целиком, включая основание",
+      "Снято в границах игрового поля"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 7,
+    "title": "Граффити",
+    "shortDescription": "Уличный рисунок, а не подпись-тэг",
+    "description": "Найдите граффити и снимите так, чтобы рисунок читался целиком. Три буквы, накиданные баллончиком на мусорный бак, не считаются — нужен именно рисунок.",
+    "points": 50,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре граффити-рисунок, а не подпись-тэг",
+      "Рисунок помещается в кадр целиком"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 10,
+    "title": "Пять зверей",
+    "shortDescription": "Пять разных животных одним кадром или коллажем",
+    "description": "Соберите пять разных животных. Живые, каменные, кованые, нарисованные, на вывеске или на гербе — считается всё, но пять раз один и тот же голубь не считается.\n\nОтправить можно только одну фотографию, поэтому либо ловите всех пятерых в один кадр, либо соберите коллаж в галерее телефона и пришлите его.",
+    "points": 70,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре или коллаже пять разных животных",
+      "Животные разные, а не один и тот же в пяти ракурсах"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 13,
+    "title": "Семь, тринадцать, двадцать один",
+    "shortDescription": "Дом с одним из этих номеров",
+    "description": "Найдите дом с номером 7, 13 или 21. В кадре должна быть табличка с номером и сам дом — так, чтобы было видно, что номер принадлежит именно ему.",
+    "points": 50,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре читается номер дома: 7, 13 или 21",
+      "Видно, что табличка висит на здании"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 14,
+    "title": "Пять жёлтых",
+    "shortDescription": "Пять жёлтых предметов одним кадром или коллажем",
+    "description": "Найдите пять жёлтых предметов. Покупать ничего не нужно, и своя жёлтая куртка не считается: ищите в городе.\n\nПять штук в один кадр собираются редко, поэтому отправляется либо общий кадр, либо коллаж из галереи телефона — отправка принимает одну фотографию.",
+    "points": 70,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре или коллаже пять или больше отчётливо жёлтых предметов",
+      "Предметы городские, а не вещи участников"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 16,
+    "title": "Пять флагов",
+    "shortDescription": "Пять разных флагов одним кадром или коллажем",
+    "description": "Найдите пять разных флагов. Государственные, городские, земельные, флаги отелей и организаций — всё считается, если рисунки различаются.\n\nОтправляется одна фотография: либо ловите ряд флагов одним кадром, либо соберите коллаж в галерее телефона.",
+    "points": 70,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре или коллаже пять флагов",
+      "Флаги различаются между собой"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 18,
+    "title": "Уличный музыкант",
+    "shortDescription": "Живая музыка на улице",
+    "description": "Найдите уличного музыканта и снимите его за игрой. Послушайте хотя бы минуту и оставьте монету — это не проверяется, но так делают приличные люди.",
+    "points": 70,
+    "category": "interaction",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре человек с музыкальным инструментом на улице",
+      "Видно, что он играет, а не просто несёт инструмент"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 23,
+    "title": "Повторите дорожного рабочего",
+    "shortDescription": "Знак с человечком и лопатой — повторите позу",
+    "description": "Найдите треугольный знак дорожных работ: чёрный человечек с лопатой на белом поле. Минимум двое из команды повторяют его позу рядом со знаком — так, чтобы в кадр попали и знак, и вы.\n\nЗнаки эти переносные и стоят там, где идут работы, поэтому точки на карте нет: смотрите по сторонам, пока ходите.",
+    "points": 50,
+    "category": "road_signs",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре треугольный знак дорожных работ",
+      "Видно минимум двух участников команды",
+      "Участники повторяют позу человечка со знака"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 29,
+    "title": "Три пассажа",
+    "shortDescription": "Три разных крытых пассажа коллажем",
+    "description": "Лейпциг — город пассажей: сквозных крытых проходов между улицами. Найдите три разных и снимите каждый изнутри.\n\nОтправляется одна фотография, поэтому соберите три кадра в коллаж в галерее телефона.",
+    "points": 90,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "В коллаже три разных крытых пассажа",
+      "Каждый снят изнутри, а не с улицы"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 31,
+    "title": "Скрытый двор",
+    "shortDescription": "Старый двор, куда не заходят с улицы",
+    "description": "Найдите старый внутренний двор — такой, мимо которого проходят, не заметив входа. Снимайте только то, что открыто для прохода: в подъезды и за закрытые двери не лезьте.",
+    "points": 70,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре внутренний двор, а не улица",
+      "Видно, что двор старый: кладка, галереи, брусчатка"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 33,
+    "title": "Эркер",
+    "shortDescription": "Выступающий над улицей закрытый балкон",
+    "description": "Найдите дом с эркером — застеклённым выступом, который висит над улицей, не касаясь земли. Снимите так, чтобы было видно: он именно выступает из стены.",
+    "points": 50,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре эркер: закрытый выступ фасада с окнами",
+      "Видно, что выступ не опирается на землю"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 38,
+    "title": "Круглое окно",
+    "shortDescription": "Круглое окно или витраж",
+    "description": "Найдите круглое окно — розетку собора, иллюминатор на фасаде, витраж в подъезде. Снимите так, чтобы окно было видно целиком и читалось как круглое.",
+    "points": 70,
+    "category": "object_search",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре круглое окно или витраж",
+      "Окно видно целиком"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 41,
+    "title": "Лейпциг одним кадром",
+    "shortDescription": "Место, которое вы покажете, рассказывая о городе",
+    "description": "Снимите место, которое вы показали бы человеку, объясняя, чем этот город хорош. Правильного ответа нет, оценивает организатор — берите то, что зацепило вас самих.",
+    "points": 70,
+    "category": "creative",
+    "cardType": "active",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "Кадр снят вами сегодня, а не взят из интернета"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 1,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 44,
+    "title": "Странная лавочка",
+    "shortDescription": "Скамейка, на которую хочется посмотреть дважды",
+    "description": "Найдите скамейку, которая выбивается из ряда: формой, местом, материалом, надписью. Обычная парковая лавка не считается — нужна та, из-за которой вы притормозили.",
+    "points": 50,
+    "category": "creative",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре скамейка",
+      "Видно, чем именно она необычная"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 45,
+    "title": "Цветы",
+    "shortDescription": "Команда и цветы в одном кадре",
+    "description": "Найдите цветы — клумбу, балконный ящик, витрину цветочного, куст в кадке — и сфотографируйтесь рядом. Рвать ничего не нужно.",
+    "points": 50,
+    "category": "team",
+    "cardType": "active",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре живые цветы",
+      "В кадре минимум два участника команды",
+      "Цветы растут или стоят, а не сорваны"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 4,
+    "title": "Тот, кто вписал город в свою книгу",
+    "shortDescription": "Загадка: писатель, учившийся здесь, стоит недалеко от погреба из своей пьесы",
+    "description": "Он приехал сюда студентом, а уехал писателем. Городской винный погреб, где он просиживал вечера, попал потом в его главную книгу — и стал знаменит на весь мир.\n\nТеперь он стоит неподалёку от этого погреба, в камне, спиной к торговому дому. Найдите его и снимите памятник целиком.",
+    "points": 120,
+    "category": "monuments",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "Памятник виден целиком, включая постамент"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 5,
+    "title": "Где встречают слоны",
+    "shortDescription": "Загадка: кафе, у входа в которое стоят слоны",
+    "description": "Есть в городе место, куда заходят выпить кофе, а встречают вас слоны. Не в зоопарке и не в цирке.\n\nНайдите его и снимите так, чтобы в кадре были и слоны, и вход.",
+    "points": 120,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре слоны и вход в заведение"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 11,
+    "title": "Ему не нужна голова",
+    "shortDescription": "Загадка: скульптура, у которой головы нет — и так задумано",
+    "description": "В городе стоит фигура без головы. Не сломана, не разрушена — так и задумано.\n\nНайдите её и снимите целиком.",
+    "points": 120,
+    "category": "monuments",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "Скульптура видна целиком"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 12,
+    "title": "Волшебная чаша",
+    "shortDescription": "Дойдите до креста и загадайте желание всей командой",
+    "description": "В точке на карте стоит чаша, к которой подходят не за водой: считается, что она исполняет желания.\n\nДойдите, повторите эталонный кадр и загадайте что-нибудь всей командой — минимум двое в кадре.",
+    "points": 130,
+    "category": "object_search",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "Чаша видна целиком",
+      "В кадре минимум два участника команды"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 20,
+    "title": "Пустые стулья",
+    "shortDescription": "Загадка: место памяти, где стоят стулья, на которые никто не сядет",
+    "description": "На месте, где раньше стоял дом, теперь стоят стулья. Пустые и в ряд. Каждый — за того, кто не вернулся.\n\nНайдите это место и снимите его. Позировать, улыбаться и вставать в кадр не нужно: это памятник погибшим, и задание засчитывается только за уважительный снимок.",
+    "points": 120,
+    "category": "monuments",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре мемориал целиком",
+      "В кадре нет позирующих участников"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 25,
+    "title": "Табличка, которая смотрит не туда",
+    "shortDescription": "Загадка: вывеска повёрнута криво — и это не небрежность",
+    "description": "На одном здании табличка у входа висит не прямо, а под углом. Не отвалилась и не перекосилась: её так поставили специально, и у этого есть причина, связанная с тем, чем это здание было раньше.\n\nНайдите её и снимите так, чтобы был виден и перекос, и вход.",
+    "points": 150,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре табличка и вход",
+      "Видно, что табличка стоит под углом"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 32,
+    "title": "Четыре эпохи разом",
+    "shortDescription": "Загадка: встаньте так, чтобы в кадр попали четыре эпохи",
+    "description": "Есть в центре точка, с которой видно сразу четыре времени: дома разных веков стоят вокруг вас одновременно.\n\nНайдите её и снимите одним кадром так, чтобы разница между постройками была очевидна.",
+    "points": 150,
+    "category": "creative",
+    "cardType": "riddle",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "Одним кадром сняты здания заметно разных эпох",
+      "Кадр снят с одной точки, а не собран из нескольких"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 34,
+    "title": "Улитка на входе",
+    "shortDescription": "Загадка: у входа в важное здание сидит улитка",
+    "description": "Люди годами заходят в это здание по делам и не замечают, что у входа их встречает улитка. Маленькая и не на виду.\n\nНайдите её и снимите крупно. Подсказка: смотрите не вперёд, а вниз и по сторонам от двери.",
+    "points": 150,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "Улитка видна крупно и узнаваемо"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 36,
+    "title": "Здание, которое горит по ночам",
+    "shortDescription": "Загадка: ночью из него вырывается огонь",
+    "description": "Одно здание в городе по ночам выпускает настоящий огонь. Днём оно выглядит обыкновенно, и мимо него проходят, ничего не подозревая.\n\nНайдите его и снимите фасад. Огня днём не будет — задание засчитывается за верное здание.",
+    "points": 120,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре фасад здания целиком"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 37,
+    "title": "Самая старая аптека",
+    "shortDescription": "Загадка: здесь лечили ещё до того, как это стало наукой",
+    "description": "Лекарства в этом месте отпускают дольше, чем в любом другом в городе. Вывеска у него старая, и это видно.\n\nНайдите её и снимите так, чтобы в кадр попала вывеска или витрина.",
+    "points": 120,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре вывеска или витрина аптеки"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 39,
+    "title": "Где торговались за товар",
+    "shortDescription": "Загадка: здание, в котором проходили торги",
+    "description": "В этом здании когда-то шли аукционы: сюда свозили товар, здесь за него торговались, отсюда увозили. Сейчас у него другая жизнь, но снаружи прошлое всё ещё читается.\n\nНайдите его и снимите фасад.",
+    "points": 150,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре фасад здания"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 40,
+    "title": "Самое старое кафе города",
+    "shortDescription": "Загадка: кофе здесь наливают дольше, чем существует половина Европы",
+    "description": "Кофе в этом доме пьют не первое столетие: сюда ходили композиторы, поэты и министры. Сейчас здесь и кофейня, и музей кофе — недавно после реставрации.\n\nНайдите его и снимите вход.",
+    "points": 120,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре вход в заведение или его вывеска"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 43,
+    "title": "Часы, которые следят за Луной",
+    "shortDescription": "Загадка: циферблат показывает не только время",
+    "description": "Эти часы показывают не только который час, но и в какой фазе Луна.\n\nНайдите их и снимите циферблат так, чтобы лунная часть была видна.",
+    "points": 150,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "Циферблат виден целиком",
+      "Различима часть, показывающая фазу Луны"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 47,
+    "title": "Подарок городу",
+    "shortDescription": "Загадка: огромное здание, через которое проходит весь город",
+    "description": "Через это здание за день проходит больше людей, чем живёт в ином городке. Оно огромное, и когда-то досталось городу как подарок.\n\nНайдите его и снимите так, чтобы был виден масштаб.",
+    "points": 90,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "easy",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре здание, и виден его масштаб"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 48,
+    "title": "Церковь без золота",
+    "shortDescription": "Загадка: протестантская церковь — найдите и снимите",
+    "description": "Найдите протестантскую церковь. Внутри у неё будет заметно меньше золота и статуй, чем ожидаешь от церкви: это и есть примета.\n\nСнимите фасад целиком.",
+    "points": 90,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "easy",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре фасад церкви целиком"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 49,
+    "title": "Ряд колонн",
+    "shortDescription": "Загадка: здание с колоннадой недалеко от синагоги",
+    "description": "Найдите здание, вход в которое держат колонны в ряд. Оно стоит недалеко от синагоги, и занимаются в нём деньгами, а не молитвой.\n\nСнимите колоннаду так, чтобы было видно все колонны.",
+    "points": 120,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре ряд колонн",
+      "Виден фасад здания, которому они принадлежат"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 50,
+    "title": "Рыцарь под ногами",
+    "shortDescription": "Загадка: он лежит на мостовой, и по нему ходят",
+    "description": "В центре города есть рыцарь, которого никто не замечает: он выложен прямо в брусчатке, и по нему каждый день ходят сотни человек.\n\nНайдите его и снимите сверху так, чтобы фигура читалась целиком.",
+    "points": 150,
+    "category": "object_search",
+    "cardType": "riddle",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "Фигура в мостовой видна целиком",
+      "Снято сверху, а не под острым углом"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 9,
+    "title": "Суд",
+    "shortDescription": "Дойдите до креста и повторите кадр",
+    "description": "Дойдите до точки на карте и повторите эталонный кадр: тот же ракурс, та же часть здания в кадре. Команда в кадре обязательна — минимум двое.",
+    "points": 130,
+    "category": "team",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "Ракурс совпадает с эталонным кадром",
+      "В кадре минимум два участника команды",
+      "Здание узнаётся"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 17,
+    "title": "Буква на ладони",
+    "shortDescription": "Поймайте букву с фасада себе на ладонь",
+    "description": "На здании в точке на карте висит большая буква. Встаньте так, чтобы на снимке она оказалась у вас на раскрытой ладони — обычный трюк с перспективой: рука ближе к камере, буква дальше.\n\nСнимать удобнее вдвоём: один держит руку, другой ловит ракурс.",
+    "points": 130,
+    "category": "advertising",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "Буква с фасада попадает точно на раскрытую ладонь",
+      "В кадре видна и рука, и здание",
+      "Перспектива не дорисована в редакторе"
+    ],
+    "minimumPeople": 1,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 21,
+    "title": "Мем у мэрии",
+    "shortDescription": "Повторите мем с эталонного кадра",
+    "description": "Дойдите до точки на карте и повторите мем с эталонного кадра всей командой. Чем ближе к оригиналу поза и выражение лиц, тем лучше.",
+    "points": 130,
+    "category": "creative",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "Сцена повторяет эталонный кадр",
+      "В кадре минимум два участника команды",
+      "Снято у здания, отмеченного на карте"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 22,
+    "title": "Место с открытки",
+    "shortDescription": "Найдите ракурс со старой открытки и повторите его",
+    "description": "Эталон к этой карточке — старая открытка. Встаньте туда, откуда её снимали, и повторите кадр как можно точнее: тот же угол, те же здания на тех же местах.\n\nГород с тех пор изменился — в этом и интерес.",
+    "points": 160,
+    "category": "creative",
+    "cardType": "photo",
+    "difficulty": "hard",
+    "validationMode": "manual",
+    "criteria": [
+      "Ракурс совпадает с открыткой",
+      "Узнаются те же здания на тех же местах"
+    ],
+    "minimumPeople": 0,
+    "maxAttempts": 3,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 26,
+    "title": "Церковь, где работал Бах",
+    "shortDescription": "Дойдите до креста и снимите командой",
+    "description": "Дойдите до точки на карте. Повторите эталонный кадр: тот же ракурс на церковь, команда в кадре — минимум двое.",
+    "points": 100,
+    "category": "team",
+    "cardType": "photo",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "Церковь узнаётся и ракурс совпадает с эталоном",
+      "В кадре минимум два участника команды"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 27,
+    "title": "Сделка",
+    "shortDescription": "Повторите позы двух бронзовых фигур",
+    "description": "У входа в пассаж стоит бронзовая сцена на двоих: один уговаривает, второй слушает. Повторите её — двое из команды встают в те же позы рядом с фигурами.\n\nБронзу трогать можно, забираться на неё нельзя.",
+    "points": 130,
+    "category": "monuments",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре бронзовые фигуры и двое участников",
+      "Позы участников повторяют позы фигур",
+      "Никто не забрался на скульптуру"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 28,
+    "title": "Церковь на площади",
+    "shortDescription": "Дойдите до креста и снимите командой",
+    "description": "Дойдите до точки на карте и повторите эталонный кадр. Команда в кадре — минимум двое.",
+    "points": 100,
+    "category": "team",
+    "cardType": "photo",
+    "difficulty": "easy",
+    "validationMode": "ai",
+    "criteria": [
+      "Церковь узнаётся и ракурс совпадает с эталоном",
+      "В кадре минимум два участника команды"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 42,
+    "title": "Круглый камень",
+    "shortDescription": "Дойдите до креста и снимите камень командой",
+    "description": "В точке на карте лежит камень правильной круглой формы. Дойдите, снимите его целиком и встаньте рядом — минимум двое.",
+    "points": 130,
+    "category": "object_search",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "Камень виден целиком",
+      "В кадре минимум два участника команды"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 46,
+    "title": "Русалки у фонтана",
+    "shortDescription": "Улягтесь у воды как на эталонном кадре",
+    "description": "Дойдите до фонтана на карте и повторите эталонный кадр: команда укладывается у воды в русалочьей позе. В воду лезть не нужно — снимок делается с бортика.",
+    "points": 130,
+    "category": "team",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "manual",
+    "criteria": [
+      "В кадре фонтан и минимум два участника команды",
+      "Поза повторяет эталонный кадр",
+      "Никто не залез в воду"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 51,
+    "title": "Поэт в полный рост",
+    "shortDescription": "Повторите позу памятника поэту",
+    "description": "Дойдите до точки на карте: там стоит памятник поэту в полный рост. Один из команды повторяет его позу рядом — стойка, поворот головы, положение рук.",
+    "points": 130,
+    "category": "monuments",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "В кадре памятник целиком и минимум один участник",
+      "Поза участника повторяет позу памятника",
+      "Никто не забрался на постамент"
+    ],
+    "minimumPeople": 1,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  },
+  {
+    "number": 52,
+    "title": "Учёный во дворе",
+    "shortDescription": "Найдите памятник во дворе университета и снимите командой",
+    "description": "Памятник в точке на карте стоит не на улице, а во дворе университетского кампуса — мимо него проходят студенты, а туристы не доходят. Найдите его и снимите вместе с командой: минимум двое в кадре.",
+    "points": 130,
+    "category": "monuments",
+    "cardType": "photo",
+    "difficulty": "medium",
+    "validationMode": "ai",
+    "criteria": [
+      "Памятник виден целиком, включая постамент",
+      "В кадре минимум два участника команды"
+    ],
+    "minimumPeople": 2,
+    "maxAttempts": 2,
+    "requireLocation": false,
+    "active": true
+  }
+]

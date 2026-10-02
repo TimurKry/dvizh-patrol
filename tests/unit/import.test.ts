@@ -271,14 +271,63 @@ describe('подготовка строки для базы', () => {
     expect(row.sort_order).toBe(1);
   });
 
-  it('обнуляет координаты, если геопозиция не нужна', () => {
+  /**
+   * Раньше координаты обнулялись, когда requireLocation выключен.
+   * С 0014 это разные вещи: крест на карте говорит, куда идти, а
+   * require_location проверяет, что телефон действительно там.
+   * Связав их, точку нельзя было показать, не включив проверку.
+   */
+  it('сохраняет координаты, даже когда геопозиция не проверяется', () => {
     const result = parseTaskImport(
       JSON.stringify([{ ...validTask, latitude: 51.3, longitude: 12.37 }]),
       'json',
     );
     const row = toTaskRow(result.items[0]!, 'event-1');
 
-    expect(row.latitude).toBeNull();
-    expect(row.longitude).toBeNull();
+    expect(row.require_location).toBe(false);
+    expect(row.latitude).toBe(51.3);
+    expect(row.longitude).toBe(12.37);
+  });
+
+  it('выводит режим карты, когда его нет в файле', () => {
+    const withPoint = parseTaskImport(
+      JSON.stringify([{ ...validTask, latitude: 51.3, longitude: 12.37 }]),
+      'json',
+    );
+    expect(toTaskRow(withPoint.items[0]!, 'event-1').map_mode).toBe('point');
+
+    const withoutPoint = parseTaskImport(JSON.stringify([validTask]), 'json');
+    expect(toTaskRow(withoutPoint.items[0]!, 'event-1').map_mode).toBe('none');
+
+    // Актив к месту не привязан, даже если координаты проставлены.
+    const activeCard = parseTaskImport(
+      JSON.stringify([{ ...validTask, cardType: 'active', latitude: 51.3, longitude: 12.37 }]),
+      'json',
+    );
+    expect(toTaskRow(activeCard.items[0]!, 'event-1').map_mode).toBe('none');
+  });
+
+  it('область принимается только вместе с режимом «area»', () => {
+    const ring = [
+      [12.36, 51.33],
+      [12.38, 51.33],
+      [12.38, 51.35],
+      [12.36, 51.33],
+    ];
+
+    const ok = parseTaskImport(
+      JSON.stringify([
+        { ...validTask, mapMode: 'area', areaPolygon: { type: 'Polygon', coordinates: [ring] } },
+      ]),
+      'json',
+    );
+    expect(ok.issues).toHaveLength(0);
+    expect(toTaskRow(ok.items[0]!, 'event-1').area_polygon).not.toBeNull();
+
+    const broken = parseTaskImport(
+      JSON.stringify([{ ...validTask, mapMode: 'area' }]),
+      'json',
+    );
+    expect(broken.issues.map((i) => i.field)).toContain('areaPolygon');
   });
 });

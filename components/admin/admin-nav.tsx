@@ -57,14 +57,19 @@ export function AdminNav({
         </Link>
         <p className="signal-label mt-1 hidden text-micro text-muted lg:block">Организатор</p>
 
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => startTransition(() => void adminLogoutAction())}
-          className="tap-target border border-hairline px-3 text-caption hover:border-signal hover:text-signal lg:hidden"
-        >
-          {pending ? '…' : 'Выйти'}
-        </button>
+        <div className="flex items-center gap-3 lg:hidden">
+          <Link href="/studio" className="text-caption text-muted hover:text-ink">
+            Студия
+          </Link>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => startTransition(() => void adminLogoutAction())}
+            className="tap-target border border-hairline px-3 text-caption hover:border-signal hover:text-signal"
+          >
+            {pending ? '…' : 'Выйти'}
+          </button>
+        </div>
       </div>
 
       <nav

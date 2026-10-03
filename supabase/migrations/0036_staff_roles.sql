@@ -63,15 +63,13 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.is_crm_staff() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_crm_staff() TO authenticated, service_role;
 
-DROP POLICY leads_admin_all ON public.leads;
-CREATE POLICY leads_crm_all ON public.leads
-  FOR ALL TO authenticated
+-- Правим условия на месте, а не пересоздаём политики: между
+-- DROP и CREATE таблица на мгновение осталась бы без правила.
+ALTER POLICY leads_admin_all ON public.leads
   USING (public.is_crm_staff())
   WITH CHECK (public.is_crm_staff());
 
-DROP POLICY lead_activities_admin_all ON public.lead_activities;
-CREATE POLICY lead_activities_crm_all ON public.lead_activities
-  FOR ALL TO authenticated
+ALTER POLICY lead_activities_admin_all ON public.lead_activities
   USING (public.is_crm_staff())
   WITH CHECK (public.is_crm_staff());
 
